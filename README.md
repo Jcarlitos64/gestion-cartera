@@ -8,12 +8,12 @@ Bienvenido a tu **asistente personal de inversiones**. Esta aplicación te permi
 1. [Primeros pasos](#primeros-pasos)
 2. [Estructura de la aplicación](#estructura-de-la-aplicación)
 3. [Guía paso a paso](#guía-paso-a-paso)
-   - [Configurar cartera nueva](#-configurar-cartera-nueva)
-   - [Añadir fondos y ETFs](#-añadir-fondos-y-etfs)
-   - [Analizar un activo con IA](#-analizar-un-activo-con-ia)
-   - [Importar cartera desde captura](#-importar-cartera-desde-captura)
-   - [Rebalancear cartera](#-rebalancear-cartera)
-   - [Plan DCA](#-plan-dca)
+   - [🔧 Configurar cartera nueva](#-configurar-cartera-nueva)
+   - [📈 Añadir fondos y ETFs](#-añadir-fondos-y-etfs)
+   - [🔍 Analizar un activo con IA](#-analizar-un-activo-con-ia)
+   - [📸 Importar cartera desde captura](#-importar-cartera-desde-captura)
+   - [🔄 Rebalancear cartera](#-rebalancear-cartera)
+   - [📅 Plan DCA](#-plan-dca)
 4. [Explicación de cada botón](#explicación-de-cada-botón)
 5. [Preguntas frecuentes](#preguntas-frecuentes)
 
@@ -34,16 +34,16 @@ Tienes dos opciones:
 
 ## 🏗️ ESTRUCTURA DE LA APLICACIÓN
 
-| Página | Función |
-|--------|---------|
-| **Dashboard** | Resumen global y gráfico de distribución |
-| **Cartera Principal** | Gestionar fondos, ETFs, efectivo y rebalanceos |
-| **Histórico** | Registro de todos los cambios y variaciones |
-| **Analizador** | Analizar activos con ayuda de IA |
-| **Composición** | Ver detalle de todos tus activos |
-| **Gráficos** | Evolución temporal de la cartera |
-| **Herramientas** | Exportar/importar datos, múltiples carteras, temas |
-| **Ayuda** | Esta guía completa |
+| Página | Función | Cómo llegar |
+|--------|---------|-------------|
+| **Dashboard** | Resumen global y gráfico de distribución | Menú principal > 🏠 Dashboard |
+| **Cartera Principal** | Gestionar fondos, ETFs, efectivo y rebalanceos | Menú principal > 📈 Cartera Principal |
+| **Histórico** | Registro de todos los cambios y variaciones | Menú principal > 🔄 Histórico |
+| **Analizador** | Analizar activos con ayuda de IA | Menú principal > 🔍 Analizador |
+| **Composición** | Ver detalle de todos tus activos | Menú principal > 📊 Composición |
+| **Gráficos** | Evolución temporal de la cartera | Menú principal > 📈 Gráficos |
+| **Herramientas** | Exportar/importar datos, múltiples carteras, temas | Menú principal > 🛠️ Herramientas |
+| **Ayuda** | Esta guía completa | Menú principal > ❓ Ayuda |
 
 ---
 
@@ -69,19 +69,20 @@ Tienes dos opciones:
 
 #### Para añadir un ETF o acción:
 1. Ve a **Cartera Principal**
-2. En la sección **"ETFs Y ACCIONES INDIVIDUALES"**, haz clic en **"+ Añadir ETF/Acción"**
+2. En la sección **"ETFs Y ACCIONES INDIVIDUALES"**, busca el botón **"+ Añadir ETF/Acción"**
 3. Rellena los datos:
-   - Tipo (ETF o Acción)
-   - ISIN/Ticker
-   - Nombre
-   - Cantidad
-   - Precio de compra
-   - Precio actual
+   - **Tipo**: ETF o Acción
+   - **ISIN/Ticker**: Código del activo
+   - **Nombre**: Nombre completo
+   - **Cantidad**: Número de participaciones/acciones
+   - **Precio de compra**: Lo que pagaste
+   - **Precio actual**: Valor actual
 4. Los cálculos de % y ganancia/pérdida se hacen automáticamente
 
 #### Para modificar fondos por categoría:
-- En la tabla **"FONDOS POR CATEGORÍA"** puedes editar directamente el **Importe Actual**
+- En la tabla **"FONDOS POR CATEGORÍA"** puedes editar directamente el **Importe Actual** (columna con campo de texto)
 - Al cambiar un valor, el efectivo se ajusta automáticamente
+- La **desviación** te indica si estás por encima (verde) o por debajo (rojo) del objetivo
 
 ---
 
@@ -89,48 +90,48 @@ Tienes dos opciones:
 
 Esta es la función más potente. Te permite obtener un análisis profesional de cualquier acción, fondo o ETF.
 
-#### PASO 1: Obtener el ISIN
+#### 📌 **PASO 1: Obtener el ISIN**
 - Busca el ISIN del activo (ej: US01609W1027 para Alibaba)
 - Si no lo sabes, busca en Google "ISIN de [nombre empresa]"
 
-#### PASO 2: Ir al Analizador
+#### 📌 **PASO 2: Ir al Analizador**
 - Haz clic en **"Analizador"** en el menú superior
 
-#### PASO 3: Usar el asistente (4 pasos)
+#### 📌 **PASO 3: Usar el asistente (4 pasos)**
 
-**PASO 1 - Introducir ISIN:**
+**🔹 PASO 1 - Introducir ISIN:**
 - Escribe el ISIN en el campo
 - Selecciona el tipo (Acción, Fondo o ETF)
 
-**PASO 2 - Aportar información (opcional pero recomendable):**
+**🔹 PASO 2 - Aportar información (opcional pero recomendable):**
 - **📸 Adjuntar captura** → Si tienes capturas de pantalla de gráficos o datos
 - **📋 Adjuntar texto** → Si has copiado texto de un extracto
 - **📄 Adjuntar documento** → Si tienes informes en PDF
 
 > 💡 Puedes adjuntar todo lo que quieras. La IA lo tendrá en cuenta.
 
-**PASO 3 - Generar prompt:**
+**🔹 PASO 3 - Generar prompt:**
 - Haz clic en **"GENERAR PROMPT COMPLETO"**
 - **Se copiará automáticamente** al portapapeles un prompt enorme con todo el contexto
 - **Se abrirá DeepSeek** en una nueva pestaña
 
-**PASO 4 - En DeepSeek:**
+**🔹 PASO 4 - En DeepSeek:**
 1. Pega el prompt (Ctrl+V / Cmd+V)
 2. Si adjuntaste capturas, súbelas ahora
-3. Pulsa Enter y espera
+3. Pulsa Enter y espera (puede tardar 30-60 segundos)
 4. DeepSeek te devolverá un **JSON** con todos los datos
 5. **Copia ese JSON** (selecciona todo y Ctrl+C)
 
-**PASO 5 - Volver a la aplicación:**
+**🔹 PASO 5 - Volver a la aplicación:**
 1. Vuelve a la pestaña del Analizador
 2. En el **PASO 4**, pega el JSON en el área de texto
 3. Haz clic en **"PROCESAR JSON Y VEREDICTO"**
 
 ✅ **¡Listo!** Verás:
 - Todos los campos rellenados automáticamente
-- Un veredicto claro: **COMPRAR, MANTENER o VENDER**
+- Un veredicto claro: **COMPRAR, MANTENER o VENDER** (con color de fondo)
 - Precio objetivo y stop loss recomendado
-- Análisis fundamental y técnico
+- Análisis fundamental, técnico y contexto geopolítico
 
 ---
 
@@ -138,170 +139,215 @@ Esta es la función más potente. Te permite obtener un análisis profesional de
 
 Si quieres cargar tu cartera real desde MyInvestor, tu banco o bróker:
 
-1. Ve a **"Importar Cartera"** desde el menú o desde Herramientas
+#### 📌 **Paso 1: Acceder**
+- Ve a **"Importar Cartera"** desde el menú o desde Herramientas
 
-2. **Opción A - Captura de pantalla:**
-   - Haz una captura de tu cartera
-   - Haz clic en **"📸 GENERAR PROMPT"**
-   - Se mostrará el prompt en pantalla
-   - **CÓPIALO MANUALMENTE** (Ctrl+C)
-   - Ve a DeepSeek, pégalo y adjunta la imagen
-   - Copia el JSON resultante
+#### 📌 **Paso 2: Elegir método**
 
-3. **Opción B - Texto copiado:**
-   - Copia el texto de tu extracto
-   - Pégalo en el área de texto
-   - Haz clic en **"📋 GENERAR PROMPT"**
-   - Copia el prompt manualmente
-   - Ve a DeepSeek y pégalo
-   - Copia el JSON resultante
+**Opción A - Captura de pantalla:**
+1. Haz una captura de tu cartera (pantallazo)
+2. Haz clic en **"📸 GENERAR PROMPT"** (NO copia nada automáticamente)
+3. Verás el prompt en un recuadro
+4. **Cópialo MANUALMENTE** (selecciona y Ctrl+C)
+5. Ve a DeepSeek, pega el prompt y adjunta la imagen
+6. Copia el JSON resultante
 
-4. **Paso final:**
-   - Pega el JSON en el área **"PEGA AQUÍ EL JSON"**
-   - Haz clic en **"IMPORTAR CARTERA"**
+**Opción B - Texto copiado:**
+1. Copia el texto de tu extracto bancario
+2. Pégalo en el área de texto
+3. Haz clic en **"📋 GENERAR PROMPT"**
+4. Copia el prompt manualmente
+5. Ve a DeepSeek y pégalo (sin imagen)
+6. Copia el JSON resultante
 
-✅ Los fondos y ETFs se cargarán automáticamente con todos sus datos.
+#### 📌 **Paso 3: Importar**
+1. Vuelve a la aplicación
+2. Pega el JSON en el área **"PEGA AQUÍ EL JSON"**
+3. Haz clic en **"IMPORTAR CARTERA"**
+
+✅ Los fondos y ETFs se cargarán automáticamente con todos sus datos. La página te redirigirá a Cartera Principal para que veas el resultado.
 
 ---
 
 ### 🔄 REBALANCEAR CARTERA
 
 #### Rebalanceo Directo:
-1. En **Cartera Principal**, haz clic en **"Calcular"** (en Rebalanceo Directo)
-2. Verás las acciones necesarias:
-   - 🔴 Categorías con superávit (se redistribuirán)
-   - 🟢 Categorías con déficit (recibirán)
-   - 💶 Uso de efectivo si es necesario
-3. Si estás de acuerdo, haz clic en **"Aplicar Rebalanceo"**
+1. En **Cartera Principal**, busca la sección **"Rebalanceo Directo"**
+2. Haz clic en **"Calcular"**
+3. Verás las acciones necesarias:
+   - 🔴 **Categorías con superávit**: tienen excedente (se redistribuirá)
+   - 🟢 **Categorías con déficit**: necesitan más dinero
+   - 💶 **Uso de efectivo**: si después de redistribuir sigue faltando
+4. Si estás de acuerdo, haz clic en **"Aplicar Rebalanceo"**
+5. Se guardará automáticamente en el histórico
 
 #### Rebalanceo vía DCA (Aportaciones periódicas):
-1. Ajusta el **aporte periódico** y la **periodicidad**
-2. Haz clic en **"Calcular Plan DCA"**
-3. Verás qué categorías necesitan aportes y cuántos periodos
-4. El sistema prioriza siempre las que tienen mayor déficit
+1. En la misma sección, ve a **"Rebalanceo vía DCA"**
+2. Ajusta el **aporte periódico** (cantidad)
+3. Selecciona la **periodicidad** (semanal, mensual...)
+4. Haz clic en **"Calcular Plan DCA"**
+5. Verás:
+   - Qué categorías necesitan aportes
+   - Cuánto dinero necesitan
+   - Cuántos periodos se requieren con el aporte actual
+   - Priorización automática de las más deficitarias
 
 ---
 
 ### 📅 PLAN DCA (Aportaciones Periódicas)
 
-1. En **Cartera Principal**, ve a la sección DCA
-2. Ajusta:
-   - **Aporte periódico** (cantidad)
-   - **Periodicidad** (semanal, mensual, trimestral, etc.)
-3. La **próxima fecha** se calcula automáticamente
-4. La tabla muestra cómo se distribuiría según % objetivo
-5. La **recomendación DCA** te dice cuánto falta en cada categoría
+1. En **Cartera Principal**, ve a la sección **"PLAN DCA"**
+2. Ajusta los parámetros:
+   - **Aporte periódico**: cantidad a invertir cada vez
+   - **Periodicidad**: semanal, mensual, trimestral, semestral o anual
+3. La **próxima fecha** se calcula automáticamente según la periodicidad
+4. La tabla **"Distribución de la aportación"** muestra cómo se repartiría según los porcentajes objetivo
+5. La **"Recomendación DCA"** te dice:
+   - Cuánto falta en cada categoría
+   - Cuántos periodos se necesitan
+   - Si la cartera está equilibrada
 
 ---
 
 ## 🎯 EXPLICACIÓN DE CADA BOTÓN
 
 ### En Dashboard
-| Botón | Qué hace |
-|-------|----------|
-| (Los cards) | Muestran totales de cartera, fondos, ETFs y otros |
+| Botón | Dónde está | Qué hace |
+|-------|------------|----------|
+| **Cards de resumen** | Parte superior | Muestran totales de cartera, fondos, ETFs y otros |
+| (Gráfico) | Centro | Muestra distribución actual en gráfico de tarta |
+| (Tabla) | Abajo | Últimos 5 movimientos con variación |
 
 ### En Cartera Principal
-| Botón | Qué hace |
-|-------|----------|
-| **Perfiles predefinidos** | Aplica porcentajes de ultraconservador a arriesgado |
-| **➕ Nuevo** (perfiles) | Crea un perfil personalizado |
-| **✏️ Editar** | Modifica perfil seleccionado |
-| **🗑️ Borrar** | Elimina perfil |
-| **📥 Cargar** | Aplica perfil seleccionado a los porcentajes |
-| **+ Añadir ETF/Acción** | Añade fila para nuevo activo |
-| **Calcular** (Rebalanceo) | Muestra acciones necesarias sin aplicar |
-| **Aplicar Rebalanceo** | Ejecuta el rebalanceo y guarda |
-| **Calcular Plan DCA** | Muestra distribución óptima de aportes |
-| **💾 GUARDAR TODO** | Guarda estado actual en histórico |
-| **📊 RESUMEN** | Muestra popup con totales |
+| Botón | Dónde está | Qué hace |
+|-------|------------|----------|
+| **UltraConservador / Conservador / Equilibrado / Crecimiento / Arriesgado** | Perfiles predefinidos | Aplica porcentajes preestablecidos |
+| **➕ Nuevo** | Perfiles personalizados | Abre modal para crear perfil propio |
+| **✏️ Editar** | Perfiles personalizados | Modifica perfil seleccionado |
+| **🗑️ Borrar** | Perfiles personalizados | Elimina perfil (pide confirmación) |
+| **📥 Cargar** | Perfiles personalizados | Aplica perfil seleccionado a los porcentajes |
+| **+ Añadir ETF/Acción** | Tabla de ETFs | Añade una fila nueva para un activo |
+| **Calcular** (en Rebalanceo Directo) | Sección Rebalanceo | Muestra acciones necesarias sin aplicar cambios |
+| **Aplicar Rebalanceo** | Sección Rebalanceo | Ejecuta el rebalanceo y guarda en histórico |
+| **Calcular Plan DCA** | Sección Rebalanceo vía DCA | Muestra distribución óptima de aportes |
+| **💾 GUARDAR TODO** | Botones generales | Guarda estado actual en histórico |
+| **📊 RESUMEN** | Botones generales | Muestra popup con totales actuales |
 
 ### En Analizador
-| Botón | Qué hace |
-|-------|----------|
-| **📋** (junto a ISIN) | Copia ISIN al portapapeles |
-| **🔍 Buscar** | Abre búsqueda en Yahoo Finance |
-| **📸 Adjuntar captura** | Añade captura a la lista (sin copiar) |
-| **📋 Adjuntar texto** | Añade texto a la lista |
-| **📄 Adjuntar documento** | Añade documento a la lista |
-| **🎯 GENERAR PROMPT COMPLETO** | Crea prompt con todo el contexto y lo copia |
-| **🔍 EJECUTAR BÚSQUEDA** | Mismo que generar prompt |
-| **📥 PROCESAR JSON Y VEREDICTO** | Carga el JSON y muestra análisis |
+| Botón | Dónde está | Qué hace |
+|-------|------------|----------|
+| **📋** (junto a ISIN) | Campo ISIN | Copia el ISIN al portapapeles |
+| **🔍 Buscar** | Campo Ticker Yahoo | Abre búsqueda en Yahoo Finance |
+| **📸 Adjuntar captura** | Asistente paso 2 | Añade captura a la lista (sin copiar) |
+| **📋 Adjuntar texto** | Asistente paso 2 | Añade texto a la lista |
+| **📄 Adjuntar documento** | Asistente paso 2 | Añade documento a la lista |
+| **🎯 GENERAR PROMPT COMPLETO** | Asistente paso 3 | Crea prompt con todo el contexto y lo copia |
+| **🔍 EJECUTAR BÚSQUEDA** | Asistente paso 3 | Mismo que generar prompt |
+| **📥 PROCESAR JSON Y VEREDICTO** | Asistente paso 4 | Carga el JSON y muestra análisis completo |
 
 ### En Histórico
-| Botón | Qué hace |
-|-------|----------|
-| **📥 Exportar CSV** | Descarga todo el histórico en Excel |
-| **🗑️ Limpiar Histórico** | Borra todos los registros (reinicía cartera) |
+| Botón | Dónde está | Qué hace |
+|-------|------------|----------|
+| **📥 Exportar CSV** | Parte superior | Descarga todo el histórico en formato Excel/CSV |
+| **🗑️ Limpiar Histórico** | Parte superior | Borra todos los registros (reinicía la cartera) |
 
 ### En Composición
-| Botón | Qué hace |
-|-------|----------|
-| **📥 Exportar CSV** | Descarga composición actual |
-| **🔄 Actualizar** | Recarga la página |
-| **📸 Importar desde captura** | Va a la página de importación |
+| Botón | Dónde está | Qué hace |
+|-------|------------|----------|
+| **📥 Exportar CSV** | Botones de acción | Descarga composición actual |
+| **🔄 Actualizar** | Botones de acción | Recarga la página |
+| **📸 Importar desde captura** | Botones de acción | Va a la página de importación |
 
 ### En Gráficos
-| Botón | Qué hace |
-|-------|----------|
-| **Últimos 7/30/90 días** | Filtra el rango de tiempo |
-| **Todo el histórico** | Muestra todos los datos |
+| Botón | Dónde está | Qué hace |
+|-------|------------|----------|
+| **Últimos 7 días** | Selector de rango | Filtra los últimos 7 días |
+| **Últimos 30 días** | Selector de rango | Filtra los últimos 30 días |
+| **Últimos 90 días** | Selector de rango | Filtra los últimos 90 días |
+| **Todo el histórico** | Selector de rango | Muestra todos los datos disponibles |
 
 ### En Herramientas
-| Botón | Qué hace |
-|-------|----------|
-| **Exportar a archivo** | Guarda backup completo (JSON) |
-| **Importar desde archivo** | Restaura backup |
-| **➕ Nueva** (cartera) | Crea cartera independiente |
-| **📂 Cargar** | Cambia a cartera seleccionada |
-| **✏️ Renombrar** | Cambia nombre de cartera |
-| **🗑️ Borrar** | Elimina cartera |
-| **Guardar configuración** (alertas) | Guarda preferencias de notificaciones |
-| **☀️ Claro / 🌙 Oscuro** | Cambia tema de la app |
-| **📥 IR A IMPORTAR CARTERA** | Va a página de importación |
+| Botón | Dónde está | Qué hace |
+|-------|------------|----------|
+| **Exportar a archivo** | Exportar/Importar | Guarda backup completo (archivo JSON) |
+| **Importar desde archivo** | Exportar/Importar | Restaura backup desde archivo |
+| **➕ Nueva** | Múltiples carteras | Crea cartera independiente |
+| **📂 Cargar** | Múltiples carteras | Cambia a cartera seleccionada |
+| **✏️ Renombrar** | Múltiples carteras | Cambia nombre de cartera |
+| **🗑️ Borrar** | Múltiples carteras | Elimina cartera (excepto 'default') |
+| **Guardar configuración** | Alertas | Guarda preferencias de notificaciones |
+| **☀️ Claro** | Tema | Cambia a tema claro |
+| **🌙 Oscuro** | Tema | Cambia a tema oscuro |
+| **📥 IR A IMPORTAR CARTERA** | Importar desde captura | Va a página de importación |
 
 ---
 
 ## ❓ PREGUNTAS FRECUENTES
 
-### ¿Por qué al pegar el JSON da error?
-- Revisa que el JSON tenga **todas las comillas** cerradas
-- Asegúrate de que no haya texto antes o después del JSON
-- Usa un validador online si tienes dudas
+### 🔴 ERRORES COMUNES
 
-### ¿Se pueden tener varias carteras?
-Sí. En **Herramientas → Múltiples Carteras** puedes crear, renombrar y cambiar entre carteras independientes.
+#### ¿Por qué al pegar el JSON da error "Unexpected token"?
+- **Causa**: El JSON tiene un error de formato
+- **Solución**: Revisa que:
+  - Todas las comillas estén cerradas
+  - No haya comas después del último elemento
+  - No haya texto antes o después del JSON (solo el JSON)
+  - Puedes probar en https://jsonlint.com para validar
 
-### ¿Cómo guardo mis datos?
-Los datos se guardan **automáticamente** en tu navegador. Puedes hacer backup con **Exportar a archivo**.
+#### ¿Por qué la web se ve sin estilos (todo texto) en Vercel?
+- **Causa**: Problema con las rutas de CSS
+- **Solución**: Asegúrate de:
+  1. Las rutas en los HTML son `href="css/estilo.css"` (sin / al inicio)
+  2. Has subido el archivo **`.nojekyll`** a la raíz del proyecto
+  3. Las carpetas `css` y `js` están en el mismo nivel que los HTML
 
-### ¿Puedo usar otra IA que no sea DeepSeek?
-Sí. En el Analizador tienes botones para Gemini, ChatGPT y Claude. El proceso es el mismo.
+#### ¿Por qué no se guardan mis datos al recargar?
+- **Causa**: El localStorage del navegador se borró o está lleno
+- **Solución**: 
+  - Usa la función **Exportar a archivo** para hacer backup
+  - Comprueba que no navegas en modo incógnito
 
-### ¿Qué hago si la web se ve sin estilos en Vercel?
-Asegúrate de:
-1. Las rutas a CSS son `href="css/estilo.css"` (sin / al inicio)
-2. Has subido el archivo **`.nojekyll`** a la raíz
+### 💡 CONSEJOS ÚTILES
 
-### ¿Los perfiles personalizados se guardan?
-Sí, se guardan en el navegador y también en los backups.
+#### ¿Puedo usar otra IA que no sea DeepSeek?
+Sí. En el Analizador tienes botones para:
+- **Gemini** (Google)
+- **ChatGPT** (OpenAI)
+- **Claude** (Anthropic)
 
-### ¿Cómo sé si debo COMPRAR, MANTENER o VENDER?
-El Analizador te dará un veredicto basado en:
-- Análisis fundamental (PER, BPA, crecimiento...)
-- Análisis técnico (tendencias, soportes...)
-- Contexto geopolítico y macroeconómico
-- Movimientos de grandes inversores
-- Noticias recientes
+El proceso es el mismo: generas el prompt, lo copias, vas a la IA, lo pegas y vuelves con el JSON.
+
+#### ¿Cómo sé qué perfil de riesgo elegir?
+| Perfil | Descripción | Para quién |
+|--------|-------------|------------|
+| **UltraConservador** | 95% RF, 5% RV | Jubilados, aversión total al riesgo |
+| **Conservador** | 80% RF, 20% RV | Perfil prudente, cerca de jubilación |
+| **Equilibrado** | 50% RF, 50% RV | Horizonte medio, tolerancia media |
+| **Crecimiento** | 30% RF, 70% RV | Horizonte largo, busca crecimiento |
+| **Arriesgado** | 10% RF, 90% RV | Joven, alta tolerancia, busca máximo crecimiento |
+
+#### ¿Los perfiles personalizados se guardan?
+Sí, se guardan en el navegador y también en los backups que hagas con **Exportar a archivo**.
+
+#### ¿Cómo interpreto el veredicto del Analizador?
+- **COMPRAR (verde)** → El activo está infravalorado, con buen contexto y perspectivas positivas
+- **MANTENER (amarillo)** → Dudas, esperar mejores señales, o está en precio justo
+- **VENDER (rojo)** → Sobrevalorado, riesgos altos, o mejor oportunidad en otro lado
+
+El veredicto incluye:
+- Precio objetivo (a cuánto podría llegar)
+- Stop loss (cuándo cortar pérdidas)
+- Fundamento (por qué se recomienda eso)
 
 ---
 
-## 🆘 SOPORTE
+## 🆘 ¿NECESITAS AYUDA?
 
-Si encuentras algún error o necesitas ayuda:
-- Revisa esta guía
-- Asegúrate de tener la última versión
-- Comprueba que los JSON sean válidos
+Si encuentras algún error o necesitas asistencia:
+1. Revisa esta guía
+2. Asegúrate de tener la última versión
+3. Comprueba que los JSON sean válidos
+4. Exporta un backup antes de hacer cambios importantes
 
 ---
 
