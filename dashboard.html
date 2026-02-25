@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Sistema de Cartera</title>
+    <link rel="stylesheet" href="css/estilo.css">
+    <style>
+        .grafico-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        canvas { max-height: 300px; width: 100% !important; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="menu">
+            <h1>📊 DASHBOARD DE CARTERA</h1>
+            <div class="nav">
+                <button style="background: #4CAF50; color: white;" onclick="location.href='dashboard.html'">🏠 Dashboard</button>
+                <button style="background: #2196F3; color: white;" onclick="location.href='cartera.html'">📈 Cartera Principal</button>
+                <button style="background: #FF9800; color: white;" onclick="location.href='rebalanceos.html'">🔄 Histórico</button>
+                <button style="background: #9C27B0; color: white;" onclick="location.href='analisis.html'">🔍 Analizador</button>
+                <button style="background: #00BCD4; color: white;" onclick="location.href='composicion.html'">📊 Composición</button>
+                <button style="background: #f44336; color: white;" onclick="location.href='graficos.html'">📈 Gráficos</button>
+                <button style="background: #607D8B; color: white;" onclick="location.href='herramientas.html'">🛠️ Herramientas</button>
+                <button style="background: #ff9800; color: white;" onclick="location.href='ayuda.html'">❓ Ayuda</button>
+            </div>
+        </div>
+
+        <div class="resumen-grid">
+            <div class="resumen-card">
+                <h4>Total Cartera</h4>
+                <p id="totalCartera">0 €</p>
+            </div>
+            <div class="resumen-card">
+                <h4>Fondos</h4>
+                <p id="totalFondos">0 €</p>
+            </div>
+            <div class="resumen-card">
+                <h4>ETFs/Acciones</h4>
+                <p id="totalETFs">0 €</p>
+            </div>
+            <div class="resumen-card">
+                <h4>Efectivo + Inmob.</h4>
+                <p id="totalOtros">0 €</p>
+            </div>
+        </div>
+
+        <div class="grafico-container">
+            <h2>📊 DISTRIBUCIÓN ACTUAL</h2>
+            <canvas id="graficoDistribucion"></canvas>
+        </div>
+
+        <div class="card">
+            <h2>🔄 ÚLTIMOS MOVIMIENTOS</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Total Anterior</th>
+                        <th>Total Nuevo</th>
+                        <th>Variación</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaUltimosMovimientos"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let tema = localStorage.getItem('tema') || 'claro';
+            UI.aplicarTema(tema);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ayuda - Sistema de Gestión Financiera</title>
+    <link rel="stylesheet" href="css/estilo.css">
+    <style>
+        .buscador {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        .seccion {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 5px solid #667eea;
+        }
+        .seccion h4 { color: #333; margin-bottom: 10px; font-size: 18px; }
+        .seccion p { color: #555; line-height: 1.6; margin-bottom: 8px; }
+        .seccion ul { margin-left: 20px; color: #555; }
+        .seccion li { margin-bottom: 5px; }
+        .badge { display: inline-block; background: #667eea; color: white; padding: 3px 8px; border-radius: 5px; font-size: 12px; margin-right: 5px; }
+        .boton-ejemplo { display: inline-block; background: #4CAF50; color: white; padding: 3px 10px; border-radius: 5px; font-size: 12px; margin: 2px 0; }
+        .no-resultados { text-align: center; padding: 40px; color: #666; font-size: 18px; display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="menu">
+            <h1>❓ AYUDA - SISTEMA DE GESTIÓN FINANCIERA</h1>
+            <div class="nav">
+                <button style="background: #4CAF50; color: white;" onclick="location.href='dashboard.html'">🏠 Dashboard</button>
+                <button style="background: #2196F3; color: white;" onclick="location.href='cartera.html'">📈 Cartera Principal</button>
+                <button style="background: #FF9800; color: white;" onclick="location.href='rebalanceos.html'">🔄 Histórico</button>
+                <button style="background: #9C27B0; color: white;" onclick="location.href='analisis.html'">🔍 Analizador</button>
+                <button style="background: #00BCD4; color: white;" onclick="location.href='composicion.html'">📊 Composición</button>
+                <button style="background: #f44336; color: white;" onclick="location.href='graficos.html'">📈 Gráficos</button>
+                <button style="background: #607D8B; color: white;" onclick="location.href='herramientas.html'">🛠️ Herramientas</button>
+                <button style="background: #ff9800; color: white;" onclick="location.href='ayuda.html'">❓ Ayuda</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🔍 BUSCADOR RÁPIDO</h2>
+            <input type="text" class="buscador" id="buscador" placeholder="Escribe lo que buscas (ej: rebalanceo, JSON, perfil...)">
+        </div>
+
+        <div class="card">
+            <h2>📚 GUÍA COMPLETA DE LA APLICACIÓN</h2>
+
+            <div class="seccion" data-buscar="dashboard resumen gráfico últimos movimientos">
+                <h4>🏠 DASHBOARD</h4>
+                <p>Muestra de un vistazo:</p>
+                <ul>
+                    <li>Totales: Cartera, Fondos, ETFs, Efectivo+Inmobiliario</li>
+                    <li>Gráfico de tarta con distribución actual</li>
+                    <li>Últimos 5 movimientos del histórico</li>
+                </ul>
+            </div>
+
+            <div class="seccion" data-buscar="cartera fondos etf efectivo rebalanceo dca porcentajes perfiles">
+                <h4>📈 CARTERA PRINCIPAL</h4>
+                <ul>
+                    <li><span class="badge">5 perfiles predefinidos</span> Ultraconservador a Arriesgado</li>
+                    <li><span class="badge">Perfiles personalizados</span> Crea, edita y borra tus propios perfiles</li>
+                    <li><span class="badge">Fondos por categoría</span> Tabla con % objetivo, importes y desviaciones</li>
+                    <li><span class="badge">ETFs/Acciones</span> Añade activos individuales</li>
+                    <li><span class="badge">DCA</span> Plan de aportaciones periódicas</li>
+                    <li><span class="badge">Rebalanceo</span> Calcula y aplica ajustes</li>
+                </ul>
+            </div>
+
+            <div class="seccion" data-buscar="histórico rebalanceos variación exportar csv">
+                <h4>🔄 HISTÓRICO</h4>
+                <ul>
+                    <li>Registro automático de cada guardado</li>
+                    <li>Muestra fecha, importes y variación</li>
+                    <li>Botones: Exportar CSV y Limpiar histórico</li>
+                </ul>
+            </div>
+
+            <div class="seccion" data-buscar="analizador isin json prompt deepseek gemini yahoo">
+                <h4>🔍 ANALIZADOR</h4>
+                <ul>
+                    <li>Introduce ISIN/Ticker</li>
+                    <li>Genera prompts para IAs (DeepSeek, Gemini, ChatGPT, Claude)</li>
+                    <li>Procesa JSON con datos financieros</li>
+                    <li>Análisis básico de ratios</li>
+                </ul>
+            </div>
+
+            <div class="seccion" data-buscar="composición porcentajes fondos etf">
+                <h4>📊 COMPOSICIÓN</h4>
+                <ul>
+                    <li>Desglose detallado por categorías</li>
+                    <li>Lista de ETFs con rendimiento</li>
+                    <li>Exportar a CSV</li>
+                </ul>
+            </div>
+
+            <div class="seccion" data-buscar="gráficos evolución rango fechas">
+                <h4>📈 GRÁFICOS</h4>
+                <ul>
+                    <li>Selector de rango: 7, 30, 90 días o todo</li>
+                    <li>Evolución del total</li>
+                    <li>Evolución por categorías</li>
+                    <li>Estadísticas: variación, mejor/peor momento</li>
+                </ul>
+            </div>
+
+            <div class="seccion" data-buscar="herramientas exportar importar múltiples carteras alertas tema">
+                <h4>🛠️ HERRAMIENTAS</h4>
+                <ul>
+                    <li>Exportar/Importar datos (backup)</li>
+                    <li>Múltiples carteras independientes</li>
+                    <li>Configuración de alertas</li>
+                    <li>Cambio de tema claro/oscuro</li>
+                </ul>
+            </div>
+
+            <div class="seccion" data-buscar="importar captura pantalla json">
+                <h4>📸 IMPORTAR DESDE CAPTURA</h4>
+                <ul>
+                    <li>Haz captura de tu cartera</li>
+                    <li>Envía a DeepSeek con el prompt</li>
+                    <li>Pega el JSON y carga los datos</li>
+                </ul>
+            </div>
+
+            <div id="noResultados" class="no-resultados">❌ No se encontraron resultados</div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('buscador').addEventListener('input', function(e) {
+            let termino = e.target.value.toLowerCase().trim();
+            let secciones = document.querySelectorAll('.seccion');
+            let algunVisible = false;
+            
+            secciones.forEach(sec => {
+                let textoBuscar = sec.getAttribute('data-buscar').toLowerCase();
+                let textoVisible = sec.innerText.toLowerCase();
+                if (termino === '' || textoBuscar.includes(termino) || textoVisible.includes(termino)) {
+                    sec.style.display = 'block';
+                    algunVisible = true;
+                } else {
+                    sec.style.display = 'none';
+                }
+            });
+            
+            document.getElementById('noResultados').style.display = algunVisible ? 'none' : 'block';
+        });
+
+        window.onload = function() {
+            let tema = localStorage.getItem('tema') || 'claro';
+            if (typeof UI !== 'undefined' && UI.aplicarTema) {
+                UI.aplicarTema(tema);
+            } else {
+                document.body.style.background = tema === 'oscuro' ? '#1a1a1a' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            }
+        };
+    </script>
+    <script src="js/ui.js"></script>
+</body>
+</html>

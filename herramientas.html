@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Herramientas - Gestión Financiera</title>
+    <link rel="stylesheet" href="css/estilo.css">
+    <style>
+        .perfil-select {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            min-width: 200px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        label { display: block; margin: 10px 0; cursor: pointer; }
+        input[type="checkbox"] { margin-right: 8px; transform: scale(1.2); }
+        hr { margin: 20px 0; border: 0; border-top: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="menu">
+            <h1>🛠️ HERRAMIENTAS AVANZADAS</h1>
+            <div class="nav">
+                <button style="background: #4CAF50; color: white;" onclick="location.href='dashboard.html'">🏠 Dashboard</button>
+                <button style="background: #2196F3; color: white;" onclick="location.href='cartera.html'">📈 Cartera Principal</button>
+                <button style="background: #FF9800; color: white;" onclick="location.href='rebalanceos.html'">🔄 Histórico</button>
+                <button style="background: #9C27B0; color: white;" onclick="location.href='analisis.html'">🔍 Analizador</button>
+                <button style="background: #00BCD4; color: white;" onclick="location.href='composicion.html'">📊 Composición</button>
+                <button style="background: #f44336; color: white;" onclick="location.href='graficos.html'">📈 Gráficos</button>
+                <button style="background: #607D8B; color: white;" onclick="location.href='herramientas.html'">🛠️ Herramientas</button>
+                <button style="background: #ff9800; color: white;" onclick="location.href='ayuda.html'">❓ Ayuda</button>
+            </div>
+        </div>
+
+        <!-- 1. EXPORTAR / IMPORTAR DATOS -->
+        <div class="card">
+            <h2>📥 EXPORTAR / IMPORTAR DATOS</h2>
+            <button class="btn-primary" onclick="exportarDatos()">Exportar a archivo</button>
+            <input type="file" id="importarArchivo" accept=".json" style="display: none;" onchange="importarDatos(event)">
+            <button class="btn-secondary" onclick="document.getElementById('importarArchivo').click()">Importar desde archivo</button>
+            <p style="color:#666; margin-top:10px;">Se guardarán todos los datos: histórico, perfiles, carteras, alertas, tema.</p>
+        </div>
+
+        <!-- 2. MÚLTIPLES CARTERAS -->
+        <div class="card">
+            <h2>📂 MÚLTIPLES CARTERAS</h2>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <select id="selectorCartera" class="perfil-select"></select>
+                <button class="btn-primary" onclick="crearCartera()">➕ Nueva</button>
+                <button class="btn-secondary" onclick="cargarCartera()">📂 Cargar</button>
+                <button class="btn-secondary" onclick="renombrarCartera()">✏️ Renombrar</button>
+                <button class="btn-warning" onclick="borrarCartera()">🗑️ Borrar</button>
+            </div>
+            <p style="color:#666; margin-top:10px;">Cada cartera guarda su propio histórico, perfiles y porcentajes.</p>
+        </div>
+
+        <!-- 3. ALERTAS -->
+        <div class="card">
+            <h2>🔔 ALERTAS</h2>
+            <p>Condiciones para mostrar notificaciones:</p>
+            <label><input type="checkbox" id="alertaRebalanceo"> Mostrar alerta cuando haya que rebalancear (desviación >5%)</label>
+            <label><input type="checkbox" id="alertaETFperdida"> Mostrar alerta cuando un ETF baje más del 10% desde compra</label>
+            <button class="btn-primary" onclick="guardarAlertas()">Guardar configuración</button>
+        </div>
+
+        <!-- 4. TEMA CLARO/OSCURO -->
+        <div class="card">
+            <h2>🎨 TEMA DE LA APLICACIÓN</h2>
+            <button class="btn-primary" onclick="cambiarTema('claro')">☀️ Claro</button>
+            <button class="btn-secondary" onclick="cambiarTema('oscuro')">🌙 Oscuro</button>
+        </div>
+
+        <!-- 5. IMPORTAR DESDE CAPTURA -->
+        <div class="card">
+            <h2>📸 IMPORTAR DESDE CAPTURA</h2>
+            <p>La forma más rápida de cargar tu cartera: haz una captura, envíala a DeepSeek y pega el JSON.</p>
+            <button class="btn-primary" onclick="location.href='importar-cartera.html'">📥 IR A IMPORTAR CARTERA</button>
+        </div>
+
+        <!-- 6. SINCRONIZACIÓN EN LA NUBE -->
+        <div class="card">
+            <h2>☁️ SINCRONIZACIÓN EN LA NUBE</h2>
+            <p>Para sincronizar entre dispositivos, usa la función de <strong>Exportar/Importar</strong> manualmente.</p>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/ui.js"></script>
+    <script>
+        let carteraActiva = localStorage.getItem('carteraActiva') || 'default';
+
+        function guardarEstadoEnCartera() {
+            let carteras = JSON.parse(localStorage.getItem('carteras')) || {};
+            
+            let datosActuales = {
+                historico: Storage.obtenerHistorico(),
+                perfiles: Storage.cargarPerfiles(),
+                porcentajes: Storage.obtenerPorcentajes(),
+                alertas: Storage.cargarAlertas(),
+                tema: localStorage.getItem('tema') || 'claro'
+            };
+            
+            carteras[carteraActiva] = datosActuales;
+            localStorage.setItem('carteras', JSON.stringify(carteras));
+        }
+
+        function actualizarSelectorCartera() {
+            let select = document.getElementById('selectorCartera');
+            if (!select) return;
+            
+            let carteras = JSON.parse(localStorage.getItem('carteras')) || {};
+            let activa = localStorage.getItem('carteraActiva') || 'default';
+            
+            select.innerHTML = '';
+            for (let nombre in carteras) {
+                let opt = document.createElement('option');
+                opt.value = nombre;
+                opt.text = nombre + (nombre === activa ? ' (activa)' : '');
+                select.appendChild(opt);
+            }
+            
+            if (Object.keys(carteras).length === 0) {
+                carteras['default'] = { historico: [], perfiles: [], porcentajes: {} };
+                localStorage.setItem('carteras', JSON.stringify(carteras));
+                localStorage.setItem('carteraActiva', 'default');
+            }
+        }
+
+        function exportarDatos() {
+            guardarEstadoEnCartera();
+            Storage.exportarTodo();
+        }
+
+        function importarDatos(event) {
+            let file = event.target.files[0];
+            if (!file) return;
+            
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                let resultado = Storage.importarDatos(e.target.result);
+                if (resultado.success) {
+                    UI.mostrarAlerta(resultado.message, 'info');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    UI.mostrarAlerta(resultado.message, 'warning');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function crearCartera() {
+            let nombre = prompt('Nombre de la nueva cartera:');
+            if (!nombre) return;
+            
+            let carteras = JSON.parse(localStorage.getItem('carteras')) || {};
+            if (carteras[nombre]) {
+                UI.mostrarAlerta('Ya existe una cartera con ese nombre', 'warning');
+                return;
+            }
+            
+            guardarEstadoEnCartera();
+            
+            carteras[nombre] = { historico: [], perfiles: [], porcentajes: {} };
+            localStorage.setItem('carteras', JSON.stringify(carteras));
+            localStorage.setItem('carteraActiva', nombre);
+            
+            Storage.limpiarHistorico();
+            localStorage.removeItem('perfilesPersonalizados');
+            Storage.guardarPorcentajes({ monetario:5, rfCorto:15, rfMedio:25, rv:40, alternativos:15 });
+            
+            actualizarSelectorCartera();
+            UI.mostrarAlerta('✅ Nueva cartera creada y activada', 'info');
+        }
+
+        function cargarCartera() {
+            let select = document.getElementById('selectorCartera');
+            let nombre = select.value;
+            if (!nombre) return;
+            
+            guardarEstadoEnCartera();
+            
+            if (Storage.cargarCartera(nombre)) {
+                UI.mostrarAlerta('✅ Cartera cargada correctamente', 'info');
+                actualizarSelectorCartera();
+            } else {
+                UI.mostrarAlerta('❌ Error al cargar la cartera', 'warning');
+            }
+        }
+
+        function renombrarCartera() {
+            let select = document.getElementById('selectorCartera');
+            let nombre = select.value;
+            if (!nombre) return;
+            
+            let nuevo = prompt('Nuevo nombre para la cartera:', nombre);
+            if (!nuevo || nuevo === nombre) return;
+            
+            let carteras = JSON.parse(localStorage.getItem('carteras')) || {};
+            if (carteras[nuevo]) {
+                UI.mostrarAlerta('Ya existe una cartera con ese nombre', 'warning');
+                return;
+            }
+            
+            carteras[nuevo] = carteras[nombre];
+            delete carteras[nombre];
+            localStorage.setItem('carteras', JSON.stringify(carteras));
+            
+            if (localStorage.getItem('carteraActiva') === nombre) {
+                localStorage.setItem('carteraActiva', nuevo);
+            }
+            
+            actualizarSelectorCartera();
+            UI.mostrarAlerta('✅ Cartera renombrada', 'info');
+        }
+
+        function borrarCartera() {
+            let select = document.getElementById('selectorCartera');
+            let nombre = select.value;
+            if (!nombre) return;
+            
+            if (nombre === 'default') {
+                UI.mostrarAlerta('No se puede borrar la cartera por defecto', 'warning');
+                return;
+            }
+            
+            if (!confirm(`¿Borrar la cartera "${nombre}"?`)) return;
+            
+            let carteras = JSON.parse(localStorage.getItem('carteras')) || {};
+            delete carteras[nombre];
+            localStorage.setItem('carteras', JSON.stringify(carteras));
+            
+            if (localStorage.getItem('carteraActiva') === nombre) {
+                localStorage.setItem('carteraActiva', 'default');
+                Storage.cargarCartera('default');
+            }
+            
+            actualizarSelectorCartera();
+            UI.mostrarAlerta('✅ Cartera borrada', 'info');
+        }
+
+        function guardarAlertas() {
+            let alertas = {
+                rebalanceo: document.getElementById('alertaRebalanceo').checked,
+                etfPerdida: document.getElementById('alertaETFperdida').checked
+            };
+            Storage.guardarAlertas(alertas);
+            UI.mostrarAlerta('✅ Configuración de alertas guardada', 'info');
+        }
+
+        function cambiarTema(tema) {
+            localStorage.setItem('tema', tema);
+            UI.aplicarTema(tema);
+            UI.mostrarAlerta(`✅ Tema ${tema} aplicado`, 'info');
+        }
+
+        window.onload = function() {
+            actualizarSelectorCartera();
+            
+            let alertas = Storage.cargarAlertas();
+            document.getElementById('alertaRebalanceo').checked = alertas.rebalanceo || false;
+            document.getElementById('alertaETFperdida').checked = alertas.etfPerdida || false;
+            
+            let tema = localStorage.getItem('tema') || 'claro';
+            UI.aplicarTema(tema);
+        };
+    </script>
+</body>
+</html>

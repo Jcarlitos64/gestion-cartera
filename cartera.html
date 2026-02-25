@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Cartera - Rebalanceo</title>
+    <link rel="stylesheet" href="css/estilo.css">
+    <style>
+        .total-referencia {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        /* Estilos para manejar textos largos en tablas */
+        .tabla-contenedor {
+            overflow-x: auto;
+            max-width: 100%;
+            margin: 15px 0;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px;
+            background: white;
+        }
+        
+        td, th {
+            padding: 12px 8px;
+            border: 1px solid #ddd;
+            text-align: center;
+            vertical-align: middle;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        
+        td.texto-largo {
+            max-width: 200px;
+            min-width: 120px;
+            position: relative;
+            cursor: default;
+        }
+        
+        .texto-largo-contenido {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+            max-width: 100%;
+            padding: 2px 0;
+        }
+        
+        .texto-largo-contenido:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 0;
+            top: 100%;
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 13px;
+            white-space: normal;
+            word-wrap: break-word;
+            max-width: 400px;
+            min-width: 200px;
+            width: max-content;
+            z-index: 1000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            border: 1px solid #555;
+            line-height: 1.4;
+            margin-top: 5px;
+            pointer-events: none;
+        }
+        
+        .nombre-fondo {
+            max-width: 250px;
+            min-width: 150px;
+            text-align: left;
+        }
+        
+        .nombre-fondo .texto-largo-contenido {
+            text-align: left;
+            padding-left: 5px;
+        }
+        
+        .btn-perfil {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+            transition: all 0.3s;
+            flex: 1 1 auto;
+            min-width: 120px;
+        }
+        .btn-perfil:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .grid-5 {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+        .importe-actual {
+            width: 100px;
+            padding: 5px;
+            text-align: right;
+        }
+        
+        @media (max-width: 768px) {
+            .tabla-contenedor {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                margin: 10px -10px;
+                border-radius: 0;
+            }
+            
+            table {
+                min-width: 1000px;
+            }
+            
+            .grid-5 {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="menu">
+            <h1>📈 GESTIÓN DE CARTERA - REBALANCEO</h1>
+            <div class="nav">
+                <button style="background: #4CAF50; color: white;" onclick="location.href='dashboard.html'">🏠 Dashboard</button>
+                <button style="background: #2196F3; color: white;" onclick="location.href='cartera.html'">📈 Cartera Principal</button>
+                <button style="background: #FF9800; color: white;" onclick="location.href='rebalanceos.html'">🔄 Histórico</button>
+                <button style="background: #9C27B0; color: white;" onclick="location.href='analisis.html'">🔍 Analizador</button>
+                <button style="background: #00BCD4; color: white;" onclick="location.href='composicion.html'">📊 Composición</button>
+                <button style="background: #f44336; color: white;" onclick="location.href='graficos.html'">📈 Gráficos</button>
+                <button style="background: #607D8B; color: white;" onclick="location.href='herramientas.html'">🛠️ Herramientas</button>
+                <button style="background: #ff9800; color: white;" onclick="location.href='ayuda.html'">❓ Ayuda</button>
+            </div>
+        </div>
+
+        <!-- Resumen rápido -->
+        <div class="resumen-grid">
+            <div class="resumen-card"><h4>Total Cartera</h4><p id="totalCartera">0 €</p></div>
+            <div class="resumen-card"><h4>Fondos</h4><p id="totalFondos">0 €</p></div>
+            <div class="resumen-card"><h4>ETFs/Acc.</h4><p id="totalETFs">0 €</p></div>
+            <div class="resumen-card"><h4>Efectivo+Inm.</h4><p id="totalOtros">0 €</p></div>
+        </div>
+
+        <!-- Configuración inicial (solo si no hay datos) -->
+        <div class="card" id="configInicial" style="display: none;">
+            <h2>⚙️ CONFIGURACIÓN INICIAL</h2>
+            <p>No hay datos históricos. Introduce el capital total y cómo lo distribuyes inicialmente:</p>
+            <div class="grid-5" style="margin: 20px 0;">
+                <div><label>Capital total (€):</label> <input type="number" id="capitalInicial" step="0.01" value="100000"></div>
+                <div><label>Fondos (€):</label> <input type="number" id="fondosInicial" step="0.01" value="0"></div>
+                <div><label>ETFs/Acc. (€):</label> <input type="number" id="etfsInicial" step="0.01" value="0"></div>
+                <div><label>Inmobiliario (€):</label> <input type="number" id="inmobiliarioInicial" step="0.01" value="0"></div>
+                <div><label>Efectivo (calc):</label> <input type="number" id="efectivoInicial" step="0.01" readonly style="background:#e9ecef;"></div>
+            </div>
+            <p>Selecciona un perfil de riesgo (los porcentajes se cargarán en la sección de abajo):</p>
+            <button class="btn-primary" onclick="Cartera.inicializar()">INICIAR CARTERA</button>
+        </div>
+
+        <!-- Perfiles predefinidos (5 perfiles) -->
+        <div class="card">
+            <h2>🎯 PERFILES PREDEFINIDOS</h2>
+            <div class="perfiles-predet">
+                <button class="btn-perfil" style="background: #1a237e;" onclick="Perfiles.aplicarPredefinido('ultraconservador')">🛡️ UltraConservador</button>
+                <button class="btn-perfil" style="background: #283593;" onclick="Perfiles.aplicarPredefinido('conservador')">🛡️ Conservador</button>
+                <button class="btn-perfil" style="background: #ff8f00;" onclick="Perfiles.aplicarPredefinido('equilibrado')">⚖️ Equilibrado</button>
+                <button class="btn-perfil" style="background: #e65100;" onclick="Perfiles.aplicarPredefinido('crecimiento')">📈 Crecimiento</button>
+                <button class="btn-perfil" style="background: #b71c1c;" onclick="Perfiles.aplicarPredefinido('arriesgado')">🚀 Arriesgado</button>
+            </div>
+        </div>
+
+        <!-- Gestión de perfiles personalizados -->
+        <div class="card">
+            <h2>📋 PERFILES PERSONALIZADOS</h2>
+            <div class="perfiles-personalizados">
+                <select id="selectorPerfil" class="perfil-select"></select>
+                <button class="btn-personalizado btn-add" onclick="abrirModalNuevoPerfil()">➕ Nuevo</button>
+                <button class="btn-personalizado btn-edit" onclick="abrirModalEditarPerfil()">✏️ Editar</button>
+                <button class="btn-personalizado btn-delete" onclick="borrarPerfilSeleccionado()">🗑️ Borrar</button>
+                <button class="btn-personalizado btn-load" onclick="cargarPerfilSeleccionado()">📥 Cargar</button>
+            </div>
+        </div>
+
+        <!-- Porcentajes objetivo (editables) -->
+        <div class="card">
+            <h2>📊 PORCENTAJES OBJETIVO (EDITABLES)</h2>
+            <div class="porcentajes-grid">
+                <div class="porcentaje-item"><label>Monetario</label><input type="number" id="pctMonetario" step="0.1" value="5"></div>
+                <div class="porcentaje-item"><label>RF Corto</label><input type="number" id="pctRFCorto" step="0.1" value="15"></div>
+                <div class="porcentaje-item"><label>RF Medio</label><input type="number" id="pctRFMedio" step="0.1" value="25"></div>
+                <div class="porcentaje-item"><label>Renta Variable</label><input type="number" id="pctRV" step="0.1" value="40"></div>
+                <div class="porcentaje-item"><label>Alternativos</label><input type="number" id="pctAlternativos" step="0.1" value="15"></div>
+                <div class="porcentaje-item"><label>TOTAL</label><input type="text" id="totalPorcentajes" readonly value="100%" style="background:#e9ecef;"></div>
+            </div>
+            <p style="color:#666; font-size:14px;">Los porcentajes se aplican sobre el total de fondos (no sobre el total global).</p>
+        </div>
+
+        <!-- Fondos por categoría -->
+        <div class="card">
+            <h2>📈 FONDOS POR CATEGORÍA</h2>
+            <div class="tabla-contenedor">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Categoría</th>
+                            <th>% Objetivo</th>
+                            <th>Importe Anterior</th>
+                            <th>Importe Actual</th>
+                            <th>Objetivo</th>
+                            <th>Desviación</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Monetario</td>
+                            <td id="dispPctMon">5%</td>
+                            <td id="antMon">0 €</td>
+                            <td><input type="number" id="impMon" class="importe-actual" step="0.01" value="0" data-valor-anterior="0"></td>
+                            <td id="objMon">0 €</td>
+                            <td id="desvMon">-</td>
+                        </tr>
+                        <tr>
+                            <td>RF Corto</td>
+                            <td id="dispPctRFC">15%</td>
+                            <td id="antRFC">0 €</td>
+                            <td><input type="number" id="impRFC" class="importe-actual" step="0.01" value="0" data-valor-anterior="0"></td>
+                            <td id="objRFC">0 €</td>
+                            <td id="desvRFC">-</td>
+                        </tr>
+                        <tr>
+                            <td>RF Medio</td>
+                            <td id="dispPctRFM">25%</td>
+                            <td id="antRFM">0 €</td>
+                            <td><input type="number" id="impRFM" class="importe-actual" step="0.01" value="0" data-valor-anterior="0"></td>
+                            <td id="objRFM">0 €</td>
+                            <td id="desvRFM">-</td>
+                        </tr>
+                        <tr>
+                            <td>Renta Variable</td>
+                            <td id="dispPctRV">40%</td>
+                            <td id="antRV">0 €</td>
+                            <td><input type="number" id="impRV" class="importe-actual" step="0.01" value="0" data-valor-anterior="0"></td>
+                            <td id="objRV">0 €</td>
+                            <td id="desvRV">-</td>
+                        </tr>
+                        <tr>
+                            <td>Alternativos</td>
+                            <td id="dispPctAlt">15%</td>
+                            <td id="antAlt">0 €</td>
+                            <td><input type="number" id="impAlt" class="importe-actual" step="0.01" value="0" data-valor-anterior="0"></td>
+                            <td id="objAlt">0 €</td>
+                            <td id="desvAlt">-</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ETFs y Acciones -->
+        <div class="card">
+            <h2>📊 ETFs Y ACCIONES INDIVIDUALES</h2>
+            <div style="margin-bottom:10px;">
+                <button class="btn-add" onclick="ETFs.agregar()">+ Añadir ETF/Acción</button>
+            </div>
+            <div id="sinETFs" style="text-align: center; padding: 20px; color: #666; background: #f9f9f9; border-radius: 5px; display: none;">
+                No hay ETFs o acciones registradas. Haz clic en "Añadir ETF/Acción" para comenzar.
+            </div>
+            <div id="tablaETFsContainer" class="tabla-contenedor">
+                <table id="tablaETFs">
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>ISIN/Ticker</th>
+                            <th>Nombre</th>
+                            <th>Cantidad</th>
+                            <th>Precio Compra</th>
+                            <th>Precio Actual</th>
+                            <th>Valor Actual</th>
+                            <th>% Cartera</th>
+                            <th>G/P %</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoETFs"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Efectivo e Inmobiliario -->
+        <div class="card">
+            <h2>💰 EFECTIVO Y OTROS ACTIVOS</h2>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                <div><label>Efectivo (€):</label> <input type="number" id="efectivo" step="0.01" value="0"></div>
+                <div><label>Inmobiliario (€):</label> <input type="number" id="inmobiliario" step="0.01" value="0"></div>
+            </div>
+        </div>
+
+        <!-- Panel DCA -->
+        <div class="card">
+            <h2>📅 PLAN DCA (Aportaciones Periódicas)</h2>
+            <div class="dca-panel">
+                <div class="dca-grid">
+                    <div><label>Aporte periódico (€):</label> <input type="number" id="aporteMensual" step="0.01" value="1000"></div>
+                    <div><label>Periodicidad:</label> 
+                        <select id="periocidad">
+                            <option value="semanal">Semanal</option>
+                            <option value="mensual" selected>Mensual</option>
+                            <option value="trimestral">Trimestral</option>
+                            <option value="semestral">Semestral</option>
+                            <option value="anual">Anual</option>
+                        </select>
+                    </div>
+                    <div><label>Próxima fecha:</label> <input type="date" id="fechaAporte"></div>
+                </div>
+                <h3>Distribución de la aportación (según % objetivo):</h3>
+                <div class="tabla-contenedor">
+                    <table>
+                        <thead><tr><th>Categoría</th><th>% Objetivo</th><th>Cantidad (€)</th></tr></thead>
+                        <tbody id="tablaDCA"></tbody>
+                    </table>
+                </div>
+                <h3>Recomendación DCA:</h3>
+                <div id="recomendacionDCA" style="background: #e9ecef; padding: 15px; border-radius: 8px; min-height: 50px;"></div>
+            </div>
+        </div>
+
+        <!-- Opciones de rebalanceo -->
+        <div class="card">
+            <h2>🔄 OPCIONES DE REBALANCEO</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h3>Rebalanceo Directo</h3>
+                    <div id="accionesDirectas" style="min-height: 100px; background: #f8f9fa; padding: 10px; border-radius: 5px;"></div>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button class="btn-primary" onclick="Cartera.aplicarRebalanceoDirecto()">Aplicar Rebalanceo</button>
+                        <button class="btn-secondary" onclick="Cartera.calcularRebalanceo()">Calcular</button>
+                    </div>
+                </div>
+                <div>
+                    <h3>Rebalanceo vía DCA</h3>
+                    <div id="accionesDCA" style="min-height: 100px; background: #f8f9fa; padding: 10px; border-radius: 5px;"></div>
+                    <button class="btn-warning" onclick="Cartera.calcularRebalanceoDCA()" style="margin-top:10px;">Calcular Plan DCA</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones generales -->
+        <div class="button-group">
+            <button class="btn-primary" onclick="Cartera.guardarTodo()">💾 GUARDAR TODO</button>
+            <button class="btn-secondary" onclick="Cartera.mostrarResumen()">📊 RESUMEN</button>
+        </div>
+        
+        <!-- Información útil -->
+        <div class="info-box">
+            <h4>📌 Consejos rápidos</h4>
+            <p>• Los porcentajes objetivo se aplican sobre el total de fondos</p>
+            <p>• Puedes ajustar los importes actuales manualmente</p>
+            <p>• El rebalanceo directo redistribuye el excedente antes de usar efectivo</p>
+            <p>• El plan DCA prioriza las categorías con mayor déficit</p>
+            <p>• Pasa el ratón sobre nombres largos para ver el texto completo</p>
+        </div>
+    </div>
+
+    <!-- Modal para nuevo/editar perfil -->
+    <div id="modalPerfil" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3 id="modalTitulo">Nuevo perfil</h3>
+            <input type="text" id="modalNombre" placeholder="Nombre del perfil">
+            <div class="grid-5" style="margin: 15px 0;">
+                <div><label>Mon</label><input type="number" id="modalMon" step="0.1" value="0" oninput="actualizarModalTotal()"></div>
+                <div><label>RFC</label><input type="number" id="modalRFC" step="0.1" value="0" oninput="actualizarModalTotal()"></div>
+                <div><label>RFM</label><input type="number" id="modalRFM" step="0.1" value="0" oninput="actualizarModalTotal()"></div>
+                <div><label>RV</label><input type="number" id="modalRV" step="0.1" value="0" oninput="actualizarModalTotal()"></div>
+                <div><label>Alt</label><input type="number" id="modalAlt" step="0.1" value="0" oninput="actualizarModalTotal()"></div>
+            </div>
+            <p id="modalTotal">Total: 0%</p>
+            <div class="button-group">
+                <button class="btn-primary" onclick="guardarPerfilModal()">Guardar</button>
+                <button class="btn-warning" onclick="cerrarModalPerfil()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/perfiles.js"></script>
+    <script src="js/etfs.js"></script>
+    <script src="js/cartera.js"></script>
+    <script>
+        // ==============================================
+        // FUNCIONES GLOBALES PARA EL MODAL DE PERFILES
+        // ==============================================
+        let editandoIndex = -1;
+
+        function abrirModalNuevoPerfil() {
+            editandoIndex = -1;
+            document.getElementById('modalTitulo').innerText = 'Nuevo perfil';
+            document.getElementById('modalNombre').value = '';
+            document.getElementById('modalMon').value = 0;
+            document.getElementById('modalRFC').value = 0;
+            document.getElementById('modalRFM').value = 0;
+            document.getElementById('modalRV').value = 0;
+            document.getElementById('modalAlt').value = 0;
+            actualizarModalTotal();
+            document.getElementById('modalPerfil').style.display = 'flex';
+        }
+
+        function abrirModalEditarPerfil() {
+            let select = document.getElementById('selectorPerfil');
+            let idx = select.value;
+            if (idx === '') { 
+                UI.mostrarAlerta('Selecciona un perfil', 'warning'); 
+                return; 
+            }
+            let p = Perfiles.personalizados[idx];
+            editandoIndex = parseInt(idx);
+            document.getElementById('modalTitulo').innerText = 'Editar perfil';
+            document.getElementById('modalNombre').value = p.nombre;
+            document.getElementById('modalMon').value = p.monetario;
+            document.getElementById('modalRFC').value = p.rfCorto;
+            document.getElementById('modalRFM').value = p.rfMedio;
+            document.getElementById('modalRV').value = p.rv;
+            document.getElementById('modalAlt').value = p.alternativos;
+            actualizarModalTotal();
+            document.getElementById('modalPerfil').style.display = 'flex';
+        }
+
+        function borrarPerfilSeleccionado() {
+            let select = document.getElementById('selectorPerfil');
+            let idx = select.value;
+            if (idx === '') { 
+                UI.mostrarAlerta('Selecciona un perfil', 'warning'); 
+                return; 
+            }
+            if (!confirm('¿Borrar este perfil?')) return;
+            Perfiles.eliminarPersonalizado(parseInt(idx));
+            Perfiles.actualizarSelector('selectorPerfil');
+        }
+
+        function cargarPerfilSeleccionado() {
+            let select = document.getElementById('selectorPerfil');
+            let idx = select.value;
+            if (idx === '') { 
+                UI.mostrarAlerta('Selecciona un perfil', 'warning'); 
+                return; 
+            }
+            Perfiles.aplicarPersonalizado(parseInt(idx));
+        }
+
+        function actualizarModalTotal() {
+            let m = parseFloat(document.getElementById('modalMon').value) || 0;
+            let rfc = parseFloat(document.getElementById('modalRFC').value) || 0;
+            let rfm = parseFloat(document.getElementById('modalRFM').value) || 0;
+            let rv = parseFloat(document.getElementById('modalRV').value) || 0;
+            let alt = parseFloat(document.getElementById('modalAlt').value) || 0;
+            document.getElementById('modalTotal').innerText = 'Total: ' + (m + rfc + rfm + rv + alt).toFixed(1) + '%';
+        }
+
+        function guardarPerfilModal() {
+            let nombre = document.getElementById('modalNombre').value.trim();
+            if (!nombre) { 
+                UI.mostrarAlerta('El nombre es obligatorio', 'warning'); 
+                return; 
+            }
+            let m = parseFloat(document.getElementById('modalMon').value) || 0;
+            let rfc = parseFloat(document.getElementById('modalRFC').value) || 0;
+            let rfm = parseFloat(document.getElementById('modalRFM').value) || 0;
+            let rv = parseFloat(document.getElementById('modalRV').value) || 0;
+            let alt = parseFloat(document.getElementById('modalAlt').value) || 0;
+            
+            let resultado;
+            if (editandoIndex === -1) {
+                resultado = Perfiles.agregarPersonalizado(nombre, m, rfc, rfm, rv, alt);
+            } else {
+                resultado = Perfiles.editarPersonalizado(editandoIndex, nombre, m, rfc, rfm, rv, alt);
+            }
+            
+            if (resultado.success) {
+                Perfiles.actualizarSelector('selectorPerfil');
+                cerrarModalPerfil();
+                UI.mostrarAlerta('✅ Perfil guardado', 'info');
+            } else {
+                UI.mostrarAlerta(resultado.message, 'warning');
+            }
+        }
+
+        function cerrarModalPerfil() {
+            document.getElementById('modalPerfil').style.display = 'none';
+        }
+
+        // Inicializar tema y perfiles
+        document.addEventListener('DOMContentLoaded', function() {
+            let tema = localStorage.getItem('tema') || 'claro';
+            UI.aplicarTema(tema);
+            
+            // Inicializar Perfiles
+            Perfiles.init();
+            
+            // Forzar actualización de la UI después de cargar
+            setTimeout(() => {
+                if (typeof Cartera !== 'undefined') {
+                    Cartera.actualizarUI();
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>

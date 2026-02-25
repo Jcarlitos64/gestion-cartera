@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Importar Cartera</title>
+    <link rel="stylesheet" href="css/estilo.css">
+    <style>
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .info-box.warning {
+            background: #fff3e0;
+            border-left-color: #FF9800;
+        }
+        .info-box.success {
+            background: #e8f5e9;
+            border-left-color: #4CAF50;
+        }
+        .btn-captura {
+            background: #FF5722;
+            color: white;
+            padding: 15px 25px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px 0;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        .btn-captura:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 87, 34, 0.4);
+        }
+        .btn-texto {
+            background: #2196F3;
+            color: white;
+            padding: 15px 25px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px 0;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        .btn-texto:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4);
+        }
+        .btn-copiar-prompt {
+            background: #9C27B0;
+            color: white;
+            padding: 12px 20px;
+            font-size: 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px 0;
+            transition: all 0.3s;
+        }
+        .btn-copiar-prompt:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(156, 39, 176, 0.4);
+        }
+        .prompt-box {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .json-preview {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+        .tabla-ejemplo {
+            font-size: 12px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        .tabla-ejemplo table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+        .tabla-ejemplo th {
+            background: #f0f0f0;
+            padding: 8px;
+            font-size: 12px;
+            color: #333;
+        }
+        .tabla-ejemplo td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .opciones-importacion {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        @media (max-width: 768px) {
+            .opciones-importacion {
+                grid-template-columns: 1fr;
+            }
+        }
+        .pasos {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .pasos ol {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+        .badge {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+        .advertencia {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            padding: 12px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+        .numero-paso {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="menu">
+            <h1>📥 IMPORTAR CARTERA DESDE CAPTURA O TEXTO</h1>
+            <div class="nav">
+                <button style="background: #4CAF50; color: white;" onclick="location.href='dashboard.html'">🏠 Dashboard</button>
+                <button style="background: #2196F3; color: white;" onclick="location.href='cartera.html'">📈 Cartera Principal</button>
+                <button style="background: #FF9800; color: white;" onclick="location.href='rebalanceos.html'">🔄 Histórico</button>
+                <button style="background: #9C27B0; color: white;" onclick="location.href='analisis.html'">🔍 Analizador</button>
+                <button style="background: #00BCD4; color: white;" onclick="location.href='composicion.html'">📊 Composición</button>
+                <button style="background: #f44336; color: white;" onclick="location.href='graficos.html'">📈 Gráficos</button>
+                <button style="background: #607D8B; color: white;" onclick="location.href='herramientas.html'">🛠️ Herramientas</button>
+                <button style="background: #ff9800; color: white;" onclick="location.href='ayuda.html'">❓ Ayuda</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="info-box success">
+                <h4>📸📋 DOS FORMAS DE IMPORTAR TU CARTERA</h4>
+                <p>Tienes DOS opciones para importar tus datos. Elige la que te resulte más cómoda:</p>
+            </div>
+
+            <div class="advertencia">
+                <strong>⚠️ IMPORTANTE:</strong> Los botones "PREPARAR CAPTURA" y "PREPARAR TEXTO" NO copian nada automáticamente. 
+                En su lugar, generan el prompt en pantalla para que tú MISMO lo copies manualmente. 
+                Así no perderás lo que ya tengas en el portapapeles (como una imagen o texto copiado).
+            </div>
+
+            <div class="opciones-importacion">
+                <!-- OPCIÓN 1: CAPTURA DE PANTALLA -->
+                <div class="info-box warning">
+                    <h4>📸 OPCIÓN 1: CAPTURA DE PANTALLA</h4>
+                    <p><span class="badge">Recomendado</span> Ideal si puedes hacer una captura de tu cartera</p>
+                    
+                    <div class="pasos">
+                        <p><span class="numero-paso">1</span> Haz una captura de pantalla de tu cartera</p>
+                        <p><span class="numero-paso">2</span> Pulsa el botón <strong>"📸 GENERAR PROMPT"</strong> (no copia nada)</p>
+                        <p><span class="numero-paso">3</span> Verás el prompt en el recuadro de abajo</p>
+                        <p><span class="numero-paso">4</span> Cópialo MANUALMENTE (Ctrl+C / Cmd+C)</p>
+                        <p><span class="numero-paso">5</span> Ve a DeepSeek y pega el prompt (Ctrl+V)</p>
+                        <p><span class="numero-paso">6</span> Adjunta la imagen en DeepSeek</p>
+                        <p><span class="numero-paso">7</span> Copia el JSON que te devuelva DeepSeek</p>
+                        <p><span class="numero-paso">8</span> Pégalo en el área "PEGA AQUÍ EL JSON" de abajo</p>
+                    </div>
+                    
+                    <button class="btn-captura" onclick="generarPromptCaptura()">📸 GENERAR PROMPT (mostrar en pantalla)</button>
+                </div>
+
+                <!-- OPCIÓN 2: TEXTO COPIADO -->
+                <div class="info-box">
+                    <h4>📋 OPCIÓN 2: TEXTO COPIADO</h4>
+                    <p>Ideal si puedes seleccionar y copiar texto de tu extracto</p>
+                    
+                    <div class="pasos">
+                        <p><span class="numero-paso">1</span> Selecciona y copia el texto de tu extracto bancario</p>
+                        <p><span class="numero-paso">2</span> Pega el texto en el área de abajo</p>
+                        <p><span class="numero-paso">3</span> Pulsa el botón <strong>"📋 GENERAR PROMPT"</strong></p>
+                        <p><span class="numero-paso">4</span> Verás el prompt generado en el recuadro</p>
+                        <p><span class="numero-paso">5</span> Cópialo MANUALMENTE (Ctrl+C / Cmd+C)</p>
+                        <p><span class="numero-paso">6</span> Ve a DeepSeek y pega el prompt (Ctrl+V)</p>
+                        <p><span class="numero-paso">7</span> Copia el JSON que te devuelva DeepSeek</p>
+                        <p><span class="numero-paso">8</span> Pégalo en el área "PEGA AQUÍ EL JSON" de abajo</p>
+                    </div>
+                    
+                    <textarea id="textoCartera" rows="4" style="width:100%; font-family:monospace; padding:10px; margin:10px 0;" placeholder='Pega aquí el texto copiado de tu extracto (MyInvestor, banco, etc.)'></textarea>
+                    <button class="btn-texto" onclick="generarPromptTexto()">📋 GENERAR PROMPT (mostrar en pantalla)</button>
+                </div>
+            </div>
+
+            <!-- Área donde se muestran los prompts generados -->
+            <div id="promptGeneradoContainer" style="display: none;">
+                <h3>📋 PROMPT GENERADO (cópialo manualmente):</h3>
+                <div class="prompt-box" id="promptGenerado"></div>
+                <button class="btn-copiar-prompt" onclick="copiarPromptManual()">📋 COPIAR PROMPT AL PORTAPAPELES</button>
+                <p style="color:#666; font-size:13px; margin-top:5px;">Usa este botón SOLO si no tienes nada importante en el portapapeles.</p>
+            </div>
+
+            <div class="pasos">
+                <h4>📋 PASO FINAL (para ambas opciones):</h4>
+                <p>Después de obtener el JSON de DeepSeek, pégalo aquí y haz clic en IMPORTAR:</p>
+            </div>
+
+            <h2>📋 PEGA AQUÍ EL JSON DE TU CARTERA</h2>
+            
+            <div class="info-box" style="background: #f5f5f5;">
+                <h4>📊 EJEMPLO DE JSON QUE RECIBIRÁS (con fondos y ETFs):</h4>
+                <div class="tabla-ejemplo">
+                    <pre style="font-size:11px; background: #fff; padding: 10px; border-radius: 5px;">
+{
+  "efectivo": 10000,
+  "inmobiliario": 0,
+  "fondos": [
+    {
+      "isin": "ES0137988004",
+      "nombre": "Fondo Monetario Test",
+      "categoria": "monetario",
+      "cantidad": 1000,
+      "precioCompra": 10.50,
+      "precioActual": 10.75
+    },
+    {
+      "isin": "ES0173354035",
+      "nombre": "Fondo RF Corto Test",
+      "categoria": "rfCorto",
+      "cantidad": 500,
+      "precioCompra": 25.30,
+      "precioActual": 26.10
+    }
+  ],
+  "etfs": [
+    {
+      "tipo": "ETF",
+      "isin": "IE00B53SZB19",
+      "nombre": "iShares NASDAQ 100",
+      "cantidad": 50,
+      "precioCompra": 45.20,
+      "precioActual": 48.10
+    }
+  ]
+}</pre>
+                </div>
+                <p style="margin-top:10px; font-size:13px; color:#666;">
+                    <strong>📌 Nota:</strong> Los fondos deben incluir su categoría (monetario, rfCorto, rfMedio, rv, alternativos)
+                </p>
+            </div>
+
+            <textarea id="jsonCartera" rows="12" style="width:100%; font-family:monospace; padding:10px; margin:15px 0;" placeholder='Pega aquí el JSON que te devuelva DeepSeek...'></textarea>
+            
+            <div class="button-group">
+                <button class="btn-primary" onclick="importarJSON()" style="font-size:18px; padding:15px 30px;">📥 IMPORTAR CARTERA</button>
+                <button class="btn-secondary" onclick="location.href='cartera.html'">VER CARTERA ACTUAL</button>
+                <button class="btn-info" onclick="location.href='ayuda.html#importar'">❓ AYUDA</button>
+            </div>
+
+            <div style="margin-top:20px; padding:15px; background:#fff3cd; border-radius:5px;">
+                <p><strong>⚠️ IMPORTANTE:</strong> Al importar:</p>
+                <ul style="margin-left:20px; margin-top:5px;">
+                    <li>Se creará un <strong>nuevo registro en el histórico</strong></li>
+                    <li>Los fondos se clasificarán automáticamente por categorías</li>
+                    <li>Los ETFs y acciones aparecerán en su tabla correspondiente</li>
+                    <li>La cartera se actualizará automáticamente</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/ui.js"></script>
+    <script>
+        // ==============================================
+        // FUNCIÓN PARA GENERAR PROMPT DE CAPTURA (sin copiar)
+        // ==============================================
+        function generarPromptCaptura() {
+            let prompt = `📸 **IMPORTAR CARTERA DESDE CAPTURA**
+
+Adjunto una captura de pantalla de mi cartera de inversión.
+
+Por favor, extrae TODOS los datos que aparecen en la imagen y devuélveme un JSON con la siguiente estructura EXACTA:
+
+{
+  "efectivo": número (efectivo disponible),
+  "inmobiliario": número (inversiones inmobiliarias),
+  "fondos": [
+    {
+      "isin": "código ISIN del fondo",
+      "nombre": "nombre del fondo",
+      "categoria": "monetario" o "rfCorto" o "rfMedio" o "rv" o "alternativos",
+      "cantidad": número (participaciones),
+      "precioCompra": número (precio de compra),
+      "precioActual": número (precio actual)
+    }
+  ],
+  "etfs": [
+    {
+      "tipo": "ETF" o "ACCION",
+      "isin": "código ISIN",
+      "nombre": "nombre del activo",
+      "cantidad": número,
+      "precioCompra": número,
+      "precioActual": número
+    }
+  ]
+}
+
+IMPORTANTE: 
+- Incluye CADA FONDO individualmente en el array "fondos", no solo los totales.
+- Clasifica cada fondo en su categoría correcta según su tipo de inversión.
+- Si algún dato no está visible, omítelo.
+- Devuélveme SOLO el JSON, sin texto adicional.`;
+
+            document.getElementById('promptGenerado').innerText = prompt;
+            document.getElementById('promptGeneradoContainer').style.display = 'block';
+            
+            // Hacer scroll hasta el prompt
+            document.getElementById('promptGeneradoContainer').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ==============================================
+        // FUNCIÓN PARA GENERAR PROMPT DE TEXTO (sin copiar)
+        // ==============================================
+        function generarPromptTexto() {
+            let texto = document.getElementById('textoCartera').value.trim();
+            
+            if (!texto) {
+                UI.mostrarAlerta('⚠️ Por favor, pega primero el texto de tu extracto', 'warning');
+                return;
+            }
+            
+            let prompt = `📋 **IMPORTAR CARTERA DESDE TEXTO**
+
+He copiado el siguiente texto de mi extracto de inversiones:
+
+--- INICIO DEL TEXTO ---
+${texto}
+--- FIN DEL TEXTO ---
+
+Por favor, interpreta este texto y extrae TODOS los datos de mi cartera. Devuélveme un JSON con la siguiente estructura EXACTA:
+
+{
+  "efectivo": número (efectivo disponible),
+  "inmobiliario": número (inversiones inmobiliarias),
+  "fondos": [
+    {
+      "isin": "código ISIN del fondo",
+      "nombre": "nombre del fondo",
+      "categoria": "monetario" o "rfCorto" o "rfMedio" o "rv" o "alternativos",
+      "cantidad": número (participaciones),
+      "precioCompra": número (precio de compra),
+      "precioActual": número (precio actual)
+    }
+  ],
+  "etfs": [
+    {
+      "tipo": "ETF" o "ACCION",
+      "isin": "código ISIN",
+      "nombre": "nombre del activo",
+      "cantidad": número,
+      "precioCompra": número,
+      "precioActual": número
+    }
+  ]
+}
+
+IMPORTANTE:
+- Incluye CADA FONDO individualmente en el array "fondos".
+- Clasifica cada fondo por su categoría según el tipo de inversión.
+- Si un dato no aparece claramente, omítelo.
+- Devuélveme SOLO el JSON, sin texto adicional.`;
+
+            document.getElementById('promptGenerado').innerText = prompt;
+            document.getElementById('promptGeneradoContainer').style.display = 'block';
+            
+            // Hacer scroll hasta el prompt
+            document.getElementById('promptGeneradoContainer').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ==============================================
+        // FUNCIÓN PARA COPIAR EL PROMPT MANUALMENTE (con advertencia)
+        // ==============================================
+        function copiarPromptManual() {
+            let prompt = document.getElementById('promptGenerado').innerText;
+            
+            if (confirm('⚠️ Esto SOBRESCRIBIRÁ lo que tengas en el portapapeles. ¿Seguro que no tienes una imagen o texto copiado que necesites?')) {
+                navigator.clipboard.writeText(prompt).then(() => {
+                    UI.mostrarAlerta('✅ Prompt copiado al portapapeles', 'info');
+                }).catch(() => {
+                    UI.mostrarAlerta('❌ No se pudo copiar', 'warning');
+                });
+            }
+        }
+
+        // ==============================================
+        // FUNCIÓN PARA IMPORTAR EL JSON
+        // ==============================================
+        function importarJSON() {
+            let texto = document.getElementById('jsonCartera').value.trim();
+            if (!texto) {
+                UI.mostrarAlerta('❌ No hay texto para procesar', 'warning');
+                return;
+            }
+            
+            try {
+                let datos = JSON.parse(texto);
+                
+                // Validar estructura básica
+                if (!datos.fondos && !datos.etfs && datos.efectivo === undefined) {
+                    throw new Error('El JSON no tiene la estructura esperada');
+                }
+                
+                // Asegurar que fondos y etfs sean arrays
+                if (!datos.fondos) datos.fondos = [];
+                if (!datos.etfs) datos.etfs = [];
+                if (!datos.efectivo) datos.efectivo = 0;
+                if (!datos.inmobiliario) datos.inmobiliario = 0;
+                
+                // Validar que cada fondo tenga categoría válida
+                const categoriasValidas = ['monetario', 'rfCorto', 'rfMedio', 'rv', 'alternativos'];
+                datos.fondos.forEach((f, i) => {
+                    if (!categoriasValidas.includes(f.categoria)) {
+                        console.warn(`Fondo ${i} con categoría inválida: ${f.categoria}. Se asignará por defecto.`);
+                        f.categoria = 'rv';
+                    }
+                });
+                
+                // Guardar usando la función de storage.js
+                Storage.guardarTodo(datos);
+                
+                UI.mostrarAlerta('✅ Cartera importada correctamente. Redirigiendo...', 'info');
+                
+                setTimeout(() => {
+                    window.location.href = 'cartera.html';
+                }, 2000);
+                
+            } catch (e) {
+                UI.mostrarAlerta('❌ Error en el JSON: ' + e.message, 'warning');
+                console.error('Error detallado:', e);
+            }
+        }
+
+        // Inicializar tema
+        document.addEventListener('DOMContentLoaded', function() {
+            let tema = localStorage.getItem('tema') || 'claro';
+            UI.aplicarTema(tema);
+        });
+    </script>
+</body>
+</html>

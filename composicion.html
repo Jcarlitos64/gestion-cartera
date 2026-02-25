@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Composición Detallada de la Cartera</title>
+    <link rel="stylesheet" href="css/estilo.css">
+    <style>
+        .resumen-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .resumen-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .resumen-card h3 { font-size: 16px; opacity: 0.9; margin-bottom: 10px; }
+        .resumen-card p { font-size: 28px; font-weight: bold; }
+        .button-group { 
+            display: flex; 
+            gap: 15px; 
+            justify-content: center; 
+            margin-top: 20px; 
+            flex-wrap: wrap;
+        }
+        
+        /* Estilos para manejar textos largos en tablas */
+        .tabla-contenedor {
+            overflow-x: auto;
+            max-width: 100%;
+            margin: 15px 0;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px; /* Forzar scroll horizontal en pantallas pequeñas */
+            background: white;
+        }
+        
+        td, th {
+            padding: 12px 8px;
+            border: 1px solid #ddd;
+            text-align: center;
+            vertical-align: middle;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        
+        /* Para celdas con texto muy largo */
+        td.texto-largo {
+            max-width: 200px;
+            min-width: 120px;
+            position: relative;
+            cursor: default;
+        }
+        
+        .texto-largo-contenido {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+            max-width: 100%;
+            padding: 2px 0;
+        }
+        
+        /* Tooltip personalizado al hacer hover */
+        .texto-largo-contenido:hover {
+            position: relative;
+            background: #f0f0f0;
+            border-radius: 3px;
+        }
+        
+        .texto-largo-contenido:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 0;
+            top: 100%;
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 13px;
+            white-space: normal;
+            word-wrap: break-word;
+            max-width: 400px;
+            min-width: 200px;
+            width: max-content;
+            z-index: 1000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            border: 1px solid #555;
+            line-height: 1.4;
+            margin-top: 5px;
+            pointer-events: none;
+        }
+        
+        /* Para pantallas pequeñas */
+        @media (max-width: 768px) {
+            .tabla-contenedor {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                margin: 10px -10px;
+                border-radius: 0;
+            }
+            
+            table {
+                min-width: 1000px;
+            }
+            
+            td, th {
+                padding: 8px 5px;
+                font-size: 0.85em;
+            }
+            
+            .resumen-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+        }
+        
+        /* Estilo para el nombre del fondo */
+        .nombre-fondo {
+            max-width: 250px;
+            min-width: 150px;
+            text-align: left;
+        }
+        
+        .nombre-fondo .texto-largo-contenido {
+            text-align: left;
+            padding-left: 5px;
+        }
+        
+        .positivo { color: #4CAF50; font-weight: bold; }
+        .negativo { color: #f44336; font-weight: bold; }
+        
+        .categoria-header {
+            background: #e9ecef;
+            font-weight: bold;
+            text-align: left;
+            padding: 8px 15px;
+            margin-top: 15px;
+            border-radius: 5px;
+        }
+        
+        .total-row {
+            background: #f0f0f0;
+            font-weight: bold;
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .info-box h4 {
+            color: #0d47a1;
+            margin-bottom: 10px;
+        }
+        
+        .info-box p {
+            color: #333;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        /* Estilo para ISIN */
+        .isin-cell {
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="menu">
+            <h1>📊 COMPOSICIÓN DETALLADA DE LA CARTERA</h1>
+            <div class="nav">
+                <button style="background: #4CAF50; color: white;" onclick="location.href='dashboard.html'">🏠 Dashboard</button>
+                <button style="background: #2196F3; color: white;" onclick="location.href='cartera.html'">📈 Cartera Principal</button>
+                <button style="background: #FF9800; color: white;" onclick="location.href='rebalanceos.html'">🔄 Histórico</button>
+                <button style="background: #9C27B0; color: white;" onclick="location.href='analisis.html'">🔍 Analizador</button>
+                <button style="background: #00BCD4; color: white;" onclick="location.href='composicion.html'">📊 Composición</button>
+                <button style="background: #f44336; color: white;" onclick="location.href='graficos.html'">📈 Gráficos</button>
+                <button style="background: #607D8B; color: white;" onclick="location.href='herramientas.html'">🛠️ Herramientas</button>
+                <button style="background: #ff9800; color: white;" onclick="location.href='ayuda.html'">❓ Ayuda</button>
+            </div>
+        </div>
+
+        <!-- Resumen de la cartera -->
+        <div class="resumen-grid">
+            <div class="resumen-card">
+                <h3>Total Cartera</h3>
+                <p id="totalCartera">0 €</p>
+            </div>
+            <div class="resumen-card">
+                <h3>Total Fondos</h3>
+                <p id="totalFondos">0 €</p>
+            </div>
+            <div class="resumen-card">
+                <h3>Total ETFs/Acc.</h3>
+                <p id="totalETFs">0 €</p>
+            </div>
+            <div class="resumen-card">
+                <h3>Efectivo+Inmob.</h3>
+                <p id="totalOtros">0 €</p>
+            </div>
+        </div>
+
+        <!-- Resumen por categorías de fondos -->
+        <div class="card">
+            <h2>📈 RESUMEN POR CATEGORÍAS DE FONDOS</h2>
+            <div class="tabla-contenedor">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Categoría</th>
+                            <th>Importe (€)</th>
+                            <th>% sobre fondos</th>
+                            <th>% sobre total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaResumenCategorias"></tbody>
+                    <tfoot id="footerResumenCategorias" style="font-weight: bold; background: #f0f0f0;"></tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- Fondos individuales -->
+        <div class="card">
+            <h2>📊 FONDOS DE INVERSIÓN INDIVIDUALES</h2>
+            <div id="sinFondos" style="text-align: center; padding: 30px; color: #666; background: #f9f9f9; border-radius: 5px; border: 1px dashed #ccc;">
+                No hay fondos individuales registrados. Puedes importarlos desde una captura.
+            </div>
+            <div id="tablaFondosContainer" class="tabla-contenedor" style="display: none;">
+                <table id="tablaFondos">
+                    <thead>
+                        <tr>
+                            <th>Categoría</th>
+                            <th>ISIN</th>
+                            <th>Nombre</th>
+                            <th>Participaciones</th>
+                            <th>Precio Compra</th>
+                            <th>Precio Actual</th>
+                            <th>Valor Actual</th>
+                            <th>% Cartera</th>
+                            <th>G/P %</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoFondos"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ETFs y Acciones -->
+        <div class="card">
+            <h2>📈 ETFs Y ACCIONES INDIVIDUALES</h2>
+            <div id="sinETFs" style="text-align: center; padding: 30px; color: #666; background: #f9f9f9; border-radius: 5px; border: 1px dashed #ccc;">
+                No hay ETFs o acciones registradas. Puedes importarlos desde una captura.
+            </div>
+            <div id="tablaETFsContainer" class="tabla-contenedor" style="display: none;">
+                <table id="tablaETFs">
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>ISIN/Ticker</th>
+                            <th>Nombre</th>
+                            <th>Cantidad</th>
+                            <th>Precio Compra</th>
+                            <th>Precio Actual</th>
+                            <th>Valor Actual</th>
+                            <th>% Cartera</th>
+                            <th>G/P %</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoETFs"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Efectivo y otros activos -->
+        <div class="card">
+            <h2>💰 EFECTIVO Y OTROS ACTIVOS</h2>
+            <div class="tabla-contenedor">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Activo</th>
+                            <th>Importe (€)</th>
+                            <th>% sobre total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Efectivo</td><td id="efectivo">0 €</td><td id="pctEfectivo">0%</td></tr>
+                        <tr><td>Inmobiliario</td><td id="inmobiliario">0 €</td><td id="pctInmobiliario">0%</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="button-group">
+            <button class="btn-primary" onclick="exportarCSV()">📥 Exportar CSV</button>
+            <button class="btn-secondary" onclick="window.location.reload()">🔄 Actualizar</button>
+            <button class="btn-info" onclick="location.href='importar-cartera.html'">📸 Importar desde captura</button>
+        </div>
+
+        <!-- Información sobre importación -->
+        <div class="info-box">
+            <h4>📸 ¿Cómo importar desde captura?</h4>
+            <p>1. Haz una captura de tu cartera (MyInvestor, banco, bróker...)</p>
+            <p>2. Ve a <strong>Herramientas → Importar desde captura</strong> o haz clic en el botón de arriba</p>
+            <p>3. Sigue las instrucciones para obtener el JSON y pegarlo</p>
+            <p>4. Los fondos se clasificarán automáticamente por categorías</p>
+            <p style="margin-top:10px; font-size:13px; color:#666;">💡 Pasa el ratón sobre los nombres largos para ver el texto completo</p>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/ui.js"></script>
+    <script>
+        // ==============================================
+        // FUNCIONES DE COMPOSICIÓN
+        // ==============================================
+        
+        function cargarComposicion() {
+            let historico = Storage.obtenerHistorico();
+            
+            if (historico.length === 0) {
+                // No hay datos
+                document.querySelectorAll('.resumen-card p').forEach(p => p.innerText = '0 €');
+                document.getElementById('tablaResumenCategorias').innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">No hay datos históricos</td></tr>';
+                document.getElementById('footerResumenCategorias').innerHTML = '';
+                document.getElementById('efectivo').innerText = '0 €';
+                document.getElementById('inmobiliario').innerText = '0 €';
+                document.getElementById('sinFondos').style.display = 'block';
+                document.getElementById('tablaFondosContainer').style.display = 'none';
+                document.getElementById('sinETFs').style.display = 'block';
+                document.getElementById('tablaETFsContainer').style.display = 'none';
+                return;
+            }
+
+            let ultimo = historico[historico.length - 1];
+            
+            // Calcular totales
+            let fondos = (ultimo.monetario || 0) + (ultimo.rfCorto || 0) + (ultimo.rfMedio || 0) + (ultimo.rv || 0) + (ultimo.alternativos || 0);
+            let etfsTotal = (ultimo.etfs || []).reduce((sum, e) => sum + (e.cantidad * e.precioActual), 0);
+            let otros = (ultimo.efectivo || 0) + (ultimo.inmobiliario || 0);
+            let total = fondos + etfsTotal + otros;
+
+            // Actualizar resúmenes
+            document.getElementById('totalFondos').innerText = fondos.toFixed(2) + ' €';
+            document.getElementById('totalETFs').innerText = etfsTotal.toFixed(2) + ' €';
+            document.getElementById('totalOtros').innerText = otros.toFixed(2) + ' €';
+            document.getElementById('totalCartera').innerText = total.toFixed(2) + ' €';
+
+            // Tabla resumen por categorías
+            let categorias = [
+                { nombre: 'Monetario', valor: ultimo.monetario || 0 },
+                { nombre: 'RF Corto', valor: ultimo.rfCorto || 0 },
+                { nombre: 'RF Medio', valor: ultimo.rfMedio || 0 },
+                { nombre: 'Renta Variable', valor: ultimo.rv || 0 },
+                { nombre: 'Alternativos', valor: ultimo.alternativos || 0 }
+            ];
+            
+            let htmlResumen = '';
+            categorias.forEach(c => {
+                let pctSobreFondos = fondos > 0 ? (c.valor / fondos * 100).toFixed(1) : '0';
+                let pctSobreTotal = total > 0 ? (c.valor / total * 100).toFixed(1) : '0';
+                htmlResumen += `<tr><td>${c.nombre}</td><td>${c.valor.toFixed(2)} €</td><td>${pctSobreFondos}%</td><td>${pctSobreTotal}%</td></tr>`;
+            });
+            
+            document.getElementById('tablaResumenCategorias').innerHTML = htmlResumen;
+            document.getElementById('footerResumenCategorias').innerHTML = `<tr><td><strong>TOTAL FONDOS</strong></td><td><strong>${fondos.toFixed(2)} €</strong></td><td><strong>100%</strong></td><td><strong>${total > 0 ? (fondos / total * 100).toFixed(1) : 0}%</strong></td></tr>`;
+
+            // ==============================================
+            // FONDOS INDIVIDUALES
+            // ==============================================
+            let fondosIndividuales = ultimo.fondos || [];
+            
+            if (fondosIndividuales.length === 0) {
+                document.getElementById('sinFondos').style.display = 'block';
+                document.getElementById('tablaFondosContainer').style.display = 'none';
+            } else {
+                document.getElementById('sinFondos').style.display = 'none';
+                document.getElementById('tablaFondosContainer').style.display = 'block';
+                
+                let htmlFondos = '';
+                
+                // Ordenar por categoría para mejor visualización
+                fondosIndividuales.sort((a, b) => (a.categoria || '').localeCompare(b.categoria || ''));
+                
+                fondosIndividuales.forEach(f => {
+                    let valorActual = (f.cantidad || 0) * (f.precioActual || 0);
+                    let valorCompra = (f.cantidad || 0) * (f.precioCompra || 0);
+                    let rend = valorCompra > 0 ? ((valorActual - valorCompra) / valorCompra * 100).toFixed(1) : 0;
+                    let pct = total > 0 ? (valorActual / total * 100).toFixed(1) : 0;
+                    
+                    // Traducir categoría
+                    let categoriaTexto = {
+                        'monetario': 'Monetario',
+                        'rfCorto': 'RF Corto',
+                        'rfMedio': 'RF Medio',
+                        'rv': 'Renta Variable',
+                        'alternativos': 'Alternativos'
+                    }[f.categoria] || f.categoria || 'Sin categoría';
+                    
+                    // Escapar comillas para el tooltip
+                    let nombreSeguro = (f.nombre || 'Sin nombre').replace(/"/g, '&quot;');
+                    let isinSeguro = (f.isin || '-').replace(/"/g, '&quot;');
+                    
+                    // Crear tooltip con información completa
+                    let tooltipInfo = `ISIN: ${f.isin || '-'}\nNombre: ${f.nombre || 'Sin nombre'}\nParticipaciones: ${(f.cantidad || 0).toFixed(4)}\nP.Compra: ${(f.precioCompra || 0).toFixed(4)} €\nP.Actual: ${(f.precioActual || 0).toFixed(4)} €`;
+                    
+                    htmlFondos += `<tr>
+                        <td>${categoriaTexto}</td>
+                        <td class="texto-largo isin-cell">
+                            <span class="texto-largo-contenido" data-tooltip="${isinSeguro}">${f.isin || '-'}</span>
+                        </td>
+                        <td class="texto-largo nombre-fondo">
+                            <span class="texto-largo-contenido" data-tooltip="${nombreSeguro}">${f.nombre || 'Sin nombre'}</span>
+                        </td>
+                        <td>${(f.cantidad || 0).toFixed(4)}</td>
+                        <td>${(f.precioCompra || 0).toFixed(4)} €</td>
+                        <td>${(f.precioActual || 0).toFixed(4)} €</td>
+                        <td>${valorActual.toFixed(2)} €</td>
+                        <td>${pct}%</td>
+                        <td class="${rend >= 0 ? 'positivo' : 'negativo'}">${rend}%</td>
+                    </tr>`;
+                });
+                
+                document.getElementById('cuerpoFondos').innerHTML = htmlFondos;
+            }
+
+            // ==============================================
+            // ETFs Y ACCIONES
+            // ==============================================
+            let etfs = ultimo.etfs || [];
+            
+            if (etfs.length === 0) {
+                document.getElementById('sinETFs').style.display = 'block';
+                document.getElementById('tablaETFsContainer').style.display = 'none';
+            } else {
+                document.getElementById('sinETFs').style.display = 'none';
+                document.getElementById('tablaETFsContainer').style.display = 'block';
+                
+                let htmlETFs = '';
+                etfs.forEach(e => {
+                    let valorActual = (e.cantidad || 0) * (e.precioActual || 0);
+                    let valorCompra = (e.cantidad || 0) * (e.precioCompra || 0);
+                    let rend = valorCompra > 0 ? ((valorActual - valorCompra) / valorCompra * 100).toFixed(1) : 0;
+                    let pct = total > 0 ? (valorActual / total * 100).toFixed(1) : 0;
+                    
+                    // Escapar comillas para el tooltip
+                    let nombreSeguro = (e.nombre || 'Sin nombre').replace(/"/g, '&quot;');
+                    let isinSeguro = (e.isin || '-').replace(/"/g, '&quot;');
+                    
+                    htmlETFs += `<tr>
+                        <td>${e.tipo || 'ETF'}</td>
+                        <td class="texto-largo isin-cell">
+                            <span class="texto-largo-contenido" data-tooltip="${isinSeguro}">${e.isin || '-'}</span>
+                        </td>
+                        <td class="texto-largo nombre-fondo">
+                            <span class="texto-largo-contenido" data-tooltip="${nombreSeguro}">${e.nombre || 'Sin nombre'}</span>
+                        </td>
+                        <td>${(e.cantidad || 0).toFixed(4)}</td>
+                        <td>${(e.precioCompra || 0).toFixed(4)} €</td>
+                        <td>${(e.precioActual || 0).toFixed(4)} €</td>
+                        <td>${valorActual.toFixed(2)} €</td>
+                        <td>${pct}%</td>
+                        <td class="${rend >= 0 ? 'positivo' : 'negativo'}">${rend}%</td>
+                    </tr>`;
+                });
+                
+                document.getElementById('cuerpoETFs').innerHTML = htmlETFs;
+            }
+
+            // Efectivo e inmobiliario
+            document.getElementById('efectivo').innerText = (ultimo.efectivo || 0).toFixed(2) + ' €';
+            document.getElementById('inmobiliario').innerText = (ultimo.inmobiliario || 0).toFixed(2) + ' €';
+            document.getElementById('pctEfectivo').innerText = (total > 0 ? ((ultimo.efectivo || 0) / total * 100).toFixed(1) : 0) + '%';
+            document.getElementById('pctInmobiliario').innerText = (total > 0 ? ((ultimo.inmobiliario || 0) / total * 100).toFixed(1) : 0) + '%';
+        }
+
+        function exportarCSV() {
+            let historico = Storage.obtenerHistorico();
+            if (historico.length === 0) {
+                UI.mostrarAlerta('No hay datos para exportar', 'warning');
+                return;
+            }
+            
+            let ultimo = historico[historico.length - 1];
+            let total = (ultimo.monetario || 0) + (ultimo.rfCorto || 0) + (ultimo.rfMedio || 0) + (ultimo.rv || 0) + (ultimo.alternativos || 0) + 
+                        (ultimo.etfs || []).reduce((sum, e) => sum + (e.cantidad * e.precioActual), 0) + 
+                        (ultimo.efectivo || 0) + (ultimo.inmobiliario || 0);
+            
+            let csv = "Tipo,ISIN,Nombre,Cantidad,PrecioCompra,PrecioActual,ValorActual,% Cartera\n";
+            
+            // Fondos individuales
+            (ultimo.fondos || []).forEach(f => {
+                let valorActual = (f.cantidad || 0) * (f.precioActual || 0);
+                let pct = total > 0 ? (valorActual / total * 100).toFixed(1) : 0;
+                let categoria = {
+                    'monetario': 'Fondo Monetario',
+                    'rfCorto': 'Fondo RF Corto',
+                    'rfMedio': 'Fondo RF Medio',
+                    'rv': 'Fondo RV',
+                    'alternativos': 'Fondo Alternativos'
+                }[f.categoria] || 'Fondo';
+                
+                csv += `${categoria},${f.isin || ''},${f.nombre || ''},${f.cantidad || 0},${f.precioCompra || 0},${f.precioActual || 0},${valorActual.toFixed(2)},${pct}%\n`;
+            });
+            
+            // ETFs y acciones
+            (ultimo.etfs || []).forEach(e => {
+                let valorActual = (e.cantidad || 0) * (e.precioActual || 0);
+                let pct = total > 0 ? (valorActual / total * 100).toFixed(1) : 0;
+                csv += `${e.tipo || 'ETF'},${e.isin || ''},${e.nombre || ''},${e.cantidad || 0},${e.precioCompra || 0},${e.precioActual || 0},${valorActual.toFixed(2)},${pct}%\n`;
+            });
+            
+            // Efectivo e inmobiliario
+            if (ultimo.efectivo) {
+                let pct = total > 0 ? ((ultimo.efectivo || 0) / total * 100).toFixed(1) : 0;
+                csv += `Efectivo,Efectivo,Efectivo,1,${ultimo.efectivo},${ultimo.efectivo},${ultimo.efectivo},${pct}%\n`;
+            }
+            if (ultimo.inmobiliario) {
+                let pct = total > 0 ? ((ultimo.inmobiliario || 0) / total * 100).toFixed(1) : 0;
+                csv += `Inmobiliario,Inmobiliario,Inmobiliario,1,${ultimo.inmobiliario},${ultimo.inmobiliario},${ultimo.inmobiliario},${pct}%\n`;
+            }
+
+            let blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+            let link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `composicion_${new Date().toISOString().slice(0,10)}.csv`;
+            link.click();
+        }
+
+        // Inicializar
+        window.onload = function() {
+            cargarComposicion();
+            let tema = localStorage.getItem('tema') || 'claro';
+            if (typeof UI !== 'undefined' && UI.aplicarTema) {
+                UI.aplicarTema(tema);
+            }
+        };
+    </script>
+</body>
+</html>

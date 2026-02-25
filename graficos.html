@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gráficos de Evolución</title>
+    <link rel="stylesheet" href="css/estilo.css">
+    <style>
+        .selector-fechas {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        .btn-rango {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            background: #e9ecef;
+            transition: all 0.3s;
+        }
+        .btn-rango:hover, .btn-rango.activo {
+            background: #4CAF50;
+            color: white;
+        }
+        .grafico-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 30px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            height: 400px;
+        }
+        canvas { width: 100% !important; height: 100% !important; }
+        .stats-evolucion {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="menu">
+            <h1>📈 GRÁFICOS DE EVOLUCIÓN</h1>
+            <div class="nav">
+                <button style="background: #4CAF50; color: white;" onclick="location.href='dashboard.html'">🏠 Dashboard</button>
+                <button style="background: #2196F3; color: white;" onclick="location.href='cartera.html'">📈 Cartera Principal</button>
+                <button style="background: #FF9800; color: white;" onclick="location.href='rebalanceos.html'">🔄 Histórico</button>
+                <button style="background: #9C27B0; color: white;" onclick="location.href='analisis.html'">🔍 Analizador</button>
+                <button style="background: #00BCD4; color: white;" onclick="location.href='composicion.html'">📊 Composición</button>
+                <button style="background: #f44336; color: white;" onclick="location.href='graficos.html'">📈 Gráficos</button>
+                <button style="background: #607D8B; color: white;" onclick="location.href='herramientas.html'">🛠️ Herramientas</button>
+                <button style="background: #ff9800; color: white;" onclick="location.href='ayuda.html'">❓ Ayuda</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📊 RANGO DE TIEMPO</h2>
+            <div class="selector-fechas">
+                <button class="btn-rango" onclick="Graficos.cambiarRango(7, event)">Últimos 7 días</button>
+                <button class="btn-rango" onclick="Graficos.cambiarRango(30, event)">Últimos 30 días</button>
+                <button class="btn-rango" onclick="Graficos.cambiarRango(90, event)">Últimos 90 días</button>
+                <button class="btn-rango" onclick="Graficos.cambiarRango(0, event)">Todo el histórico</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>💰 EVOLUCIÓN DEL TOTAL</h2>
+            <div class="grafico-container">
+                <canvas id="graficoTotal"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📊 EVOLUCIÓN POR CATEGORÍAS</h2>
+            <div class="grafico-container">
+                <canvas id="graficoCategorias"></canvas>
+            </div>
+        </div>
+
+        <div class="stats-evolucion">
+            <div class="stat-card"><h4>Variación total</h4><p id="variacionTotal">0%</p></div>
+            <div class="stat-card"><h4>Mejor momento</h4><p id="mejorMomento">0 €</p></div>
+            <div class="stat-card"><h4>Peor momento</h4><p id="peorMomento">0 €</p></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/graficos.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let tema = localStorage.getItem('tema') || 'claro';
+            UI.aplicarTema(tema);
+        });
+    </script>
+</body>
+</html>
