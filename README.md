@@ -8,18 +8,18 @@ Bienvenido a tu **asistente personal de inversiones**. Esta aplicación te permi
 1. [Primeros pasos](#primeros-pasos)
 2. [Estructura de la aplicación](#estructura-de-la-aplicación)
 3. [Guía paso a paso](#guía-paso-a-paso)
-   - [🔧 Configurar cartera nueva](#-configurar-cartera-nueva)
-   - [📈 Añadir fondos y ETFs](#-añadir-fondos-y-etfs)
-   - [🔍 Analizar un activo con IA](#-analizar-un-activo-con-ia)
-   - [📸 Importar cartera desde captura](#-importar-cartera-desde-captura)
-   - [🔄 Rebalancear cartera](#-rebalancear-cartera)
-   - [📅 Plan DCA](#-plan-dca)
+   - [Configurar cartera nueva](#configurar-cartera-nueva)
+   - [Añadir fondos y ETFs](#añadir-fondos-y-etfs)
+   - [Analizar un activo con IA](#analizar-un-activo-con-ia)
+   - [Importar cartera desde captura](#importar-cartera-desde-captura)
+   - [Rebalancear cartera](#rebalancear-cartera)
+   - [Plan DCA](#plan-dca)
 4. [Explicación de cada botón](#explicación-de-cada-botón)
 5. [Preguntas frecuentes](#preguntas-frecuentes)
 
 ---
 
-## 🚀 PRIMEROS PASOS
+## PRIMEROS PASOS
 
 ### Acceso a la aplicación
 - **Web:** `https://tu-proyecto.vercel.app`
@@ -32,7 +32,7 @@ Tienes dos opciones:
 
 ---
 
-## 🏗️ ESTRUCTURA DE LA APLICACIÓN
+## ESTRUCTURA DE LA APLICACIÓN
 
 | Página | Función | Cómo llegar |
 |--------|---------|-------------|
@@ -47,9 +47,9 @@ Tienes dos opciones:
 
 ---
 
-## 📘 GUÍA PASO A PASO
+## GUÍA PASO A PASO
 
-### 🔧 CONFIGURAR CARTERA NUEVA
+### Configurar cartera nueva
 
 1. Desde `index.html`, haz clic en **"CONFIGURAR NUEVA CARTERA"**
 2. Introduce tu **Capital Total**
@@ -65,7 +65,7 @@ Tienes dos opciones:
 
 ---
 
-### 📈 AÑADIR FONDOS Y ETFs
+### Añadir fondos y ETFs
 
 #### Para añadir un ETF o acción:
 1. Ve a **Cartera Principal**
@@ -86,7 +86,7 @@ Tienes dos opciones:
 
 ---
 
-### 🔍 ANALIZAR UN ACTIVO CON IA (Flujo completo)
+### Analizar un activo con IA
 
 Esta es la función más potente. Te permite obtener un análisis profesional de cualquier acción, fondo o ETF.
 
@@ -135,7 +135,7 @@ Esta es la función más potente. Te permite obtener un análisis profesional de
 
 ---
 
-### 📸 IMPORTAR CARTERA DESDE CAPTURA
+### Importar cartera desde captura
 
 Si quieres cargar tu cartera real desde MyInvestor, tu banco o bróker:
 
@@ -169,7 +169,7 @@ Si quieres cargar tu cartera real desde MyInvestor, tu banco o bróker:
 
 ---
 
-### 🔄 REBALANCEAR CARTERA
+### Rebalancear cartera
 
 #### Rebalanceo Directo:
 1. En **Cartera Principal**, busca la sección **"Rebalanceo Directo"**
@@ -194,7 +194,7 @@ Si quieres cargar tu cartera real desde MyInvestor, tu banco o bróker:
 
 ---
 
-### 📅 PLAN DCA (Aportaciones Periódicas)
+### Plan DCA
 
 1. En **Cartera Principal**, ve a la sección **"PLAN DCA"**
 2. Ajusta los parámetros:
@@ -209,7 +209,7 @@ Si quieres cargar tu cartera real desde MyInvestor, tu banco o bróker:
 
 ---
 
-## 🎯 EXPLICACIÓN DE CADA BOTÓN
+## EXPLICACIÓN DE CADA BOTÓN
 
 ### En Dashboard
 | Botón | Dónde está | Qué hace |
@@ -282,9 +282,9 @@ Si quieres cargar tu cartera real desde MyInvestor, tu banco o bróker:
 
 ---
 
-## ❓ PREGUNTAS FRECUENTES
+## PREGUNTAS FRECUENTES
 
-### 🔴 ERRORES COMUNES
+### ERRORES COMUNES
 
 #### ¿Por qué al pegar el JSON da error "Unexpected token"?
 - **Causa**: El JSON tiene un error de formato
@@ -307,7 +307,7 @@ Si quieres cargar tu cartera real desde MyInvestor, tu banco o bróker:
   - Usa la función **Exportar a archivo** para hacer backup
   - Comprueba que no navegas en modo incógnito
 
-### 💡 CONSEJOS ÚTILES
+### CONSEJOS ÚTILES
 
 #### ¿Puedo usar otra IA que no sea DeepSeek?
 Sí. En el Analizador tienes botones para:
