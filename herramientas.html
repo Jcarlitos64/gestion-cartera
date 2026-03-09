@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Herramientas - Gestión de Cartera</title>
+    <link rel="stylesheet" href="css/estilo.css">
+    <style>
+        #barraEstado { background:#f8f9fa; padding:10px 15px; border-radius:8px; margin-top:15px; font-size:13px; border-left:4px solid #667eea; }
+        .herramienta-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+        .herr-box { background:#f8f9fa; border-radius:12px; padding:25px; text-align:center; transition:all .2s; }
+        .herr-box:hover { box-shadow:0 4px 15px rgba(0,0,0,.1); transform:translateY(-2px); }
+        .herr-icon { font-size:44px; margin-bottom:12px; }
+        .herr-box h3 { margin-bottom:8px; color:#333; }
+        .herr-box p  { color:#666; font-size:13px; margin-bottom:15px; line-height:1.5; }
+        .info-box { background:#e3f2fd; border-left:4px solid #2196F3; padding:15px 20px; border-radius:5px; margin:15px 0; font-size:14px; line-height:1.7; }
+        .info-box.warn { background:#fff3e0; border-left-color:#ff9800; }
+        .info-box.success { background:#e8f5e9; border-left-color:#4CAF50; }
+        label { display:flex; align-items:center; gap:10px; margin:12px 0; cursor:pointer; font-size:14px; }
+        input[type="checkbox"] { width:18px; height:18px; cursor:pointer; accent-color:#667eea; }
+        hr { margin:20px 0; border:0; border-top:1px solid #eee; }
+        #dropZone { border:3px dashed #ccc; border-radius:12px; padding:40px; text-align:center; cursor:pointer; transition:all .2s; color:#888; }
+        #dropZone:hover, #dropZone.drag-over { border-color:#667eea; background:#f0f4ff; color:#667eea; }
+        #dropZone .drop-icon { font-size:40px; margin-bottom:10px; }
+        #infoArchivoCargado { display:none; background:#e8f5e9; border-left:4px solid #4CAF50; padding:12px 16px; border-radius:6px; margin-top:12px; font-size:13px; }
+        @media(max-width:768px){ .herramienta-grid{grid-template-columns:1fr;} }
+    </style>
+</head>
+<body>
+<div class="container">
+
+<div class="menu">
+    <h1>🛠️ HERRAMIENTAS</h1>
+    <div class="nav">
+        <button style="background:#4CAF50;" onclick="location.href='dashboard.html'">🏠 Dashboard</button>
+        <button style="background:#2196F3;" onclick="location.href='cartera.html'">📈 Cartera</button>
+        <button style="background:#FF9800;" onclick="location.href='rebalanceos.html'">🔄 Histórico</button>
+        <button style="background:#9C27B0;" onclick="location.href='analisis.html'">🔍 Analizador</button>
+        <button style="background:#00BCD4;" onclick="location.href='composicion.html'">📊 Composición</button>
+        <button style="background:#f44336;" onclick="location.href='graficos.html'">📈 Gráficos</button>
+        <button style="background:#607D8B;" onclick="location.href='herramientas.html'">🛠️ Herramientas</button>
+        <button style="background:#009688;" onclick="location.href='calculadora.html'">🧮 Calculadora</button>
+        <button style="background:#FF5722;" onclick="location.href='importar-cartera.html'">📥 Importar</button>
+        <button style="background:#795548;" onclick="location.href='ayuda.html'">❓ Ayuda</button>
+    </div>
+    <div id="barraEstado">Cargando...</div>
+</div>
+
+<!-- CARGAR / GUARDAR -->
+<div class="card">
+    <h2>💾 GESTIÓN DE ARCHIVOS</h2>
+    <div class="herramienta-grid">
+
+        <!-- Cargar -->
+        <div>
+            <h3 style="margin-bottom:12px;">📂 Cargar archivo JSON</h3>
+            <div id="dropZone" onclick="g('inputCargar').click()"
+                 ondragover="e=>{e.preventDefault();this.classList.add('drag-over')}"
+                 ondragleave="this.classList.remove('drag-over')"
+                 ondrop="onDrop(event)">
+                <div class="drop-icon">📂</div>
+                <p><strong>Haz clic o arrastra aquí</strong> tu archivo <code>.json</code></p>
+                <p style="font-size:12px;color:#aaa;margin-top:6px;">Formatos aceptados: .json</p>
+            </div>
+            <input type="file" id="inputCargar" accept=".json" style="display:none" onchange="cargarArchivo(this)">
+            <div id="infoArchivoCargado">✅ Archivo cargado correctamente.</div>
+        </div>
+
+        <!-- Guardar -->
+        <div>
+            <h3 style="margin-bottom:12px;">💾 Guardar archivo JSON</h3>
+            <div class="herr-box" style="margin-bottom:0;">
+                <div class="herr-icon">💾</div>
+                <h3>Guardar datos actuales</h3>
+                <p>Descarga un archivo .json con todos los datos en memoria: cartera, histórico, configuración y perfiles.</p>
+                <button class="btn-primary" onclick="guardarDatos()">💾 Guardar ahora</button>
+            </div>
+            <div style="margin-top:12px;">
+                <label for="nombreGuardar" style="font-weight:600;font-size:13px;margin-bottom:5px;display:block;">Nombre del archivo:</label>
+                <input type="text" id="nombreGuardar" value="mi-cartera.json" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:14px;">
+            </div>
+        </div>
+    </div>
+
+    <div class="info-box" style="margin-top:20px;">
+        📌 Los datos se guardan automáticamente en la memoria del navegador (<strong>localStorage</strong>) mientras navegas entre páginas.
+        Para no perder los datos al cerrar el navegador, <strong>guarda siempre el archivo JSON</strong> en tu PC.
+    </div>
+</div>
+
+<!-- EXPORTAR CSV -->
+<div class="card">
+    <h2>📥 EXPORTAR DATOS</h2>
+    <div class="herramienta-grid">
+        <div class="herr-box">
+            <div class="herr-icon">📊</div>
+            <h3>Exportar histórico CSV</h3>
+            <p>Exporta el registro histórico completo en formato CSV, compatible con Excel y Google Sheets.</p>
+            <button class="btn-primary" onclick="exportarHistoricoCSV()">📊 Exportar histórico</button>
+        </div>
+        <div class="herr-box">
+            <div class="herr-icon">📋</div>
+            <h3>Exportar composición CSV</h3>
+            <p>Exporta la composición actual de la cartera (fondos, ETFs, efectivo) en formato CSV.</p>
+            <button class="btn-secondary" onclick="exportarComposicionCSV()">📋 Exportar composición</button>
+        </div>
+    </div>
+</div>
+
+<!-- IMPORTAR DESDE IA -->
+<div class="card">
+    <h2>📸 IMPORTAR DESDE CAPTURA / IA</h2>
+    <p style="color:#666;margin-bottom:15px;">La forma más rápida de actualizar tu cartera: haz una captura de pantalla de tu broker, envíala a una IA (DeepSeek, ChatGPT…) y pega el JSON resultante.</p>
+    <button class="btn-warning" style="font-size:15px;" onclick="location.href='importar-cartera.html'">📥 Ir a Importar Cartera</button>
+</div>
+
+<!-- ALERTAS -->
+<div class="card">
+    <h2>🔔 ALERTAS Y NOTIFICACIONES</h2>
+    <p style="color:#666;margin-bottom:15px;">Configura cuándo quieres recibir avisos en la barra de estado:</p>
+    <label>
+        <input type="checkbox" id="alertaRebalanceo">
+        Avisar cuando alguna categoría tenga una desviación mayor del 10% respecto al objetivo
+    </label>
+    <label>
+        <input type="checkbox" id="alertaETFperdida">
+        Avisar cuando algún ETF/Acción baje más del 10% desde el precio de compra
+    </label>
+    <button class="btn-primary" style="margin-top:10px;" onclick="guardarAlertas()">💾 Guardar alertas</button>
+</div>
+
+<!-- TEMA -->
+<div class="card">
+    <h2>🎨 TEMA DE LA APLICACIÓN</h2>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="btn-primary" onclick="aplicarTema('claro')">☀️ Tema Claro</button>
+        <button class="btn-secondary" onclick="aplicarTema('oscuro')">🌙 Tema Oscuro</button>
+    </div>
+</div>
+
+<!-- ACTUALIZACIÓN AUTOMÁTICA PRECIOS ETFs -->
+<div class="card">
+    <h2>🔄 ACTUALIZACIÓN AUTOMÁTICA DE PRECIOS</h2>
+    <div class="info-box" style="background:#e3f2fd;border-left:4px solid #2196F3;padding:14px;border-radius:8px;margin-bottom:15px;font-size:13px;">
+        <strong>📡 ¿Cómo funciona?</strong> Usando una API gratuita, la app puede actualizar automáticamente el precio actual de tus ETFs y acciones cotizadas.
+        Solo funciona con <strong>tickers de bolsa</strong> (AAPL, SAN, IWDA…), no con ISINs de fondos de inversión españoles.
+    </div>
+
+    <!-- Selección de proveedor -->
+    <div style="margin-bottom:16px;">
+        <label style="font-weight:700;font-size:14px;display:block;margin-bottom:8px;">Proveedor de datos:</label>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;">
+            <label style="border:2px solid #e0e0e0;border-radius:10px;padding:12px;cursor:pointer;transition:all .2s;" id="lbl-twelvedata">
+                <input type="radio" name="apiProvider" value="twelvedata" checked onchange="cambiarProveedor(this)"> 
+                <strong>Twelve Data</strong><br>
+                <small style="color:#666">800 req/día gratis. Stocks, ETFs, Forex</small>
+            </label>
+            <label style="border:2px solid #e0e0e0;border-radius:10px;padding:12px;cursor:pointer;transition:all .2s;" id="lbl-alphavantage">
+                <input type="radio" name="apiProvider" value="alphavantage" onchange="cambiarProveedor(this)"> 
+                <strong>Alpha Vantage</strong><br>
+                <small style="color:#666">25 req/día gratis. Muy completo.</small>
+            </label>
+            <label style="border:2px solid #e0e0e0;border-radius:10px;padding:12px;cursor:pointer;transition:all .2s;" id="lbl-fmp">
+                <input type="radio" name="apiProvider" value="fmp" onchange="cambiarProveedor(this)"> 
+                <strong>Financial Modeling Prep</strong><br>
+                <small style="color:#666">250 req/día gratis.</small>
+            </label>
+        </div>
+    </div>
+
+    <!-- API Key -->
+    <div style="margin-bottom:14px;">
+        <label style="font-weight:700;font-size:14px;display:block;margin-bottom:6px;">
+            🔑 API Key <span id="apiKeyLink" style="font-weight:400;font-size:12px;"></span>
+        </label>
+        <div style="display:flex;gap:8px;align-items:center;">
+            <input type="text" id="apiKeyInput" placeholder="Pega tu API key aquí (es gratuita)"
+                style="flex:1;padding:10px 14px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;font-family:monospace;">
+            <button class="btn-primary" onclick="guardarApiKey()" style="padding:10px 18px;">💾 Guardar</button>
+        </div>
+        <p style="font-size:11px;color:#aaa;margin-top:5px;">La key se guarda solo en tu navegador (localStorage). Nunca se envía a ningún servidor nuestro.</p>
+    </div>
+
+    <!-- Estado y botón actualizar -->
+    <div id="apiEstado" style="font-size:13px;color:#888;margin-bottom:12px;"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn-primary" onclick="actualizarPreciosETFs()" id="btnActualizar" style="background:linear-gradient(135deg,#43e97b,#38f9d7);color:#1a5c30;">
+            🔄 Actualizar precios ahora
+        </button>
+        <button class="btn-secondary" onclick="verTickers()">👁️ Ver tickers configurados</button>
+    </div>
+
+    <!-- Resultado actualización -->
+    <div id="resultadoActualizacion" style="display:none;margin-top:15px;"></div>
+
+    <!-- Info sobre tickers -->
+    <div id="infoTickers" style="display:none;margin-top:15px;background:#f8f9fa;border-radius:8px;padding:14px;font-size:13px;">
+        <strong>📋 ETFs/Acciones en tu cartera:</strong>
+        <div id="listaTickers" style="margin-top:8px;"></div>
+        <p style="color:#999;margin-top:8px;font-size:12px;">
+            El ticker es el campo ISIN/Ticker de cada ETF. Para que funcione la actualización automática, 
+            usa el ticker de bolsa (ej: <code>IWDA</code>, <code>CSPX</code>, <code>AAPL</code>) en lugar del ISIN.
+        </p>
+    </div>
+</div>
+
+<!-- PELIGROSO -->
+<div class="card">
+    <h2 style="color:#c62828;">⚠️ ZONA DE PELIGRO</h2>
+    <div class="info-box warn">⚠️ Las siguientes acciones son irreversibles. Asegúrate de haber guardado tu archivo JSON antes de continuar.</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:15px;">
+        <button class="btn-warning" onclick="limpiarHistorico()">🗑️ Limpiar histórico</button>
+        <button style="background:#c62828;color:white;padding:12px 25px;border:none;border-radius:8px;cursor:pointer;font-weight:600;" onclick="borrarTodo()">💣 Borrar todos los datos</button>
+    </div>
+</div>
+
+</div>
+
+<script>
+const fmtE = v => isNaN(v)||v==null?'0,00 €':v.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+const g    = id => document.getElementById(id);
+
+function toast(msg,tipo='info'){
+    const t=document.createElement('div');
+    t.style.cssText='position:fixed;bottom:22px;right:22px;padding:13px 20px;border-radius:10px;'
+        +'box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:9999;cursor:pointer;max-width:340px;'
+        +'font-size:14px;color:white;background:'+(tipo==='warning'?'#e65100':tipo==='error'?'#c62828':'#2196F3')+';';
+    t.innerHTML=msg+' <span style="opacity:.6;margin-left:8px">✖</span>';
+    t.onclick=()=>t.remove();
+    document.body.appendChild(t);
+    setTimeout(()=>{if(t.parentNode)t.remove();},5000);
+}
+
+function cargarDatosLS(){ try{return JSON.parse(localStorage.getItem('carteraActual'))||null;}catch(e){return null;} }
+
+function barraEstado(){
+    const el=g('barraEstado');if(!el)return;
+    const datos=cargarDatosLS();
+    if(!datos){
+        el.innerHTML='📂 Sin datos. <a href="configuracion-inicial.html" style="color:#667eea;font-weight:600">Configura tu cartera</a> o carga un archivo abajo.';
+        return;
+    }
+    const hist=datos.historico||[],ult=hist.length?hist[hist.length-1]:null;
+    el.innerHTML=ult
+        ?`📁 Último guardado: <strong>${ult.fecha} ${ult.hora}</strong> &nbsp;|&nbsp; Total: <strong>${fmtE(ult.total||0)}</strong> &nbsp;|&nbsp; ${hist.length} registro(s)`
+        :'📂 Datos en memoria sin guardar aún.';
+}
+
+// ── Cargar archivo ──────────────────────────────────────────────
+function cargarArchivo(input){
+    const file=input?.files?.[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=e=>{
+        try{
+            const datos=JSON.parse(e.target.result);
+            if(!datos.cartera && !datos.version){ toast('Archivo JSON no válido para esta aplicación.','warning'); return; }
+            localStorage.setItem('carteraActual',JSON.stringify(datos));
+            g('nombreGuardar').value=file.name;
+            g('infoArchivoCargado').style.display='block';
+            g('infoArchivoCargado').innerHTML=`✅ <strong>${file.name}</strong> cargado · ${(datos.historico||[]).length} registro(s) · Total: ${fmtE((datos.historico||[]).slice(-1)[0]?.total||0)}`;
+            barraEstado();
+            toast('✅ Archivo cargado. Ya puedes navegar a Cartera.','info');
+        } catch(err){ toast('❌ Error al leer el archivo: '+err.message,'error'); }
+    };
+    reader.readAsText(file);
+}
+
+function onDrop(e){
+    e.preventDefault();
+    g('dropZone').classList.remove('drag-over');
+    const file=e.dataTransfer?.files?.[0]; if(!file) return;
+    const fakeInput={files:[file]};
+    cargarArchivo(fakeInput);
+}
+
+// ── Guardar archivo ─────────────────────────────────────────────
+function guardarDatos(){
+    const datos=cargarDatosLS();
+    if(!datos){ toast('No hay datos que guardar.','warning'); return; }
+    let nombre=(g('nombreGuardar').value||'').trim()||'mi-cartera.json';
+    if(!nombre.endsWith('.json')) nombre+='.json';
+    const blob=new Blob([JSON.stringify(datos,null,2)],{type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nombre;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href);
+    toast('✅ Archivo guardado en Descargas','info');
+}
+
+// ── Exportar CSV histórico ──────────────────────────────────────
+function exportarHistoricoCSV(){
+    const datos=cargarDatosLS();
+    const hist=datos?.historico||[];
+    if(!hist.length){ toast('No hay histórico que exportar.','warning'); return; }
+    let csv='\uFEFF'+'#,Fecha,Hora,Monetario,RF Corto,RF Medio,RV,Alternativos,ETFs,Efectivo,Inmobiliario,Total,Variación\n';
+    hist.forEach((h,i)=>{
+        const ant=i>0?hist[i-1]:null;
+        const varV=ant?(h.total||0)-(ant.total||0):0;
+        const etfs=(h.etfs||[]).reduce((s,e)=>s+(e.cantidad||0)*(e.precioActual||0),0);
+        csv+=`${i+1},"${h.fecha}","${h.hora}",${(h.monetario||0).toFixed(2)},${(h.rfCorto||0).toFixed(2)},${(h.rfMedio||0).toFixed(2)},${(h.rv||0).toFixed(2)},${(h.alternativos||0).toFixed(2)},${etfs.toFixed(2)},${(h.efectivo||0).toFixed(2)},${(h.inmobiliario||0).toFixed(2)},${(h.total||0).toFixed(2)},${varV.toFixed(2)}\n`;
+    });
+    descargarBlob(csv,'text/csv','historico_'+new Date().toISOString().slice(0,10)+'.csv');
+}
+
+// ── Exportar CSV composición ────────────────────────────────────
+function exportarComposicionCSV(){
+    const datos=cargarDatosLS();
+    if(!datos){ toast('No hay datos que exportar.','warning'); return; }
+    const c=datos.cartera||{};
+    const etfs=c.etfs||[];
+    const total=((c.monetario||0)+(c.rfCorto||0)+(c.rfMedio||0)+(c.rv||0)+(c.alternativos||0))
+        +etfs.reduce((s,e)=>s+(e.cantidad||0)*(e.precioActual||0),0)+(c.efectivo||0)+(c.inmobiliario||0);
+    let csv='\uFEFF'+'Tipo,Nombre,ISIN,Cantidad,P.Compra,P.Actual,Valor,% Total\n';
+    [['Monetario',c.monetario],['RF Corto',c.rfCorto],['RF Medio',c.rfMedio],['RV',c.rv],['Alternativos',c.alternativos]].forEach(([n,v])=>{
+        csv+=`Fondo,"${n}",,1,${(v||0).toFixed(2)},${(v||0).toFixed(2)},${(v||0).toFixed(2)},${total>0?((v||0)/total*100).toFixed(2):0}\n`;
+    });
+    etfs.forEach(e=>{
+        const val=(e.cantidad||0)*(e.precioActual||0);
+        csv+=`${e.tipo||'ETF'},"${e.nombre||''}", "${e.isin||''}",${e.cantidad||0},${(e.precioCompra||0).toFixed(4)},${(e.precioActual||0).toFixed(4)},${val.toFixed(2)},${total>0?(val/total*100).toFixed(2):0}\n`;
+    });
+    csv+=`Efectivo,Efectivo,,1,${(c.efectivo||0).toFixed(2)},${(c.efectivo||0).toFixed(2)},${(c.efectivo||0).toFixed(2)},${total>0?((c.efectivo||0)/total*100).toFixed(2):0}\n`;
+    descargarBlob(csv,'text/csv','composicion_'+new Date().toISOString().slice(0,10)+'.csv');
+}
+
+function descargarBlob(contenido,tipo,nombre){
+    const blob=new Blob([contenido],{type:tipo+';charset=utf-8;'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nombre;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href);
+    toast('✅ Archivo exportado','info');
+}
+
+// ── Alertas ─────────────────────────────────────────────────────
+function guardarAlertas(){
+    const datos=cargarDatosLS()||{version:'3.0',cartera:{},configuracion:{},historico:[]};
+    datos.configuracion=datos.configuracion||{};
+    datos.configuracion.alertas={
+        rebalanceo:g('alertaRebalanceo').checked,
+        etfPerdida:g('alertaETFperdida').checked
+    };
+    localStorage.setItem('carteraActual',JSON.stringify(datos));
+    toast('✅ Alertas guardadas','info');
+}
+
+function cargarAlertas(){
+    const datos=cargarDatosLS();
+    const a=datos?.configuracion?.alertas||{};
+    if(g('alertaRebalanceo')) g('alertaRebalanceo').checked=!!a.rebalanceo;
+    if(g('alertaETFperdida'))  g('alertaETFperdida').checked=!!a.etfPerdida;
+}
+
+// ── Tema ─────────────────────────────────────────────────────────
+function aplicarTema(tema){
+    const datos=cargarDatosLS()||{version:'3.0',cartera:{},configuracion:{},historico:[]};
+    datos.configuracion=datos.configuracion||{};
+    datos.configuracion.tema=tema;
+    localStorage.setItem('carteraActual',JSON.stringify(datos));
+    if(tema==='oscuro'){
+        document.body.style.background='#1a1a2e';
+        document.querySelectorAll('.card,.menu').forEach(el=>{el.style.background='#16213e';el.style.color='#eee';});
+    } else {
+        document.body.style.background='';
+        document.querySelectorAll('.card,.menu').forEach(el=>{el.style.background='';el.style.color='';});
+    }
+    toast('✅ Tema «'+tema+'» aplicado','info');
+}
+
+// ── Zona de peligro ──────────────────────────────────────────────
+function limpiarHistorico(){
+    if(!confirm('¿Eliminar todo el histórico de registros? Esta acción no se puede deshacer.')) return;
+    const datos=cargarDatosLS(); if(!datos) return;
+    datos.historico=[];
+    localStorage.setItem('carteraActual',JSON.stringify(datos));
+    barraEstado();
+    toast('🗑️ Histórico eliminado. Guarda el archivo para que sea permanente.','warning');
+}
+
+function borrarTodo(){
+    if(!confirm('⚠️ ¿Borrar TODOS los datos de la aplicación? Perderás toda la cartera, histórico y perfiles.')) return;
+    if(!confirm('Última confirmación: ¿seguro que quieres borrar todo?')) return;
+    localStorage.removeItem('carteraActual');
+    barraEstado();
+    toast('💣 Todos los datos eliminados.','error');
+}
+
+// ── Init ─────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', ()=>{
+    barraEstado();
+    cargarAlertas();
+    initApiSection();
+});
+
+// ══════════════════════════════════════════════════════
+//  ACTUALIZACIÓN AUTOMÁTICA DE PRECIOS ETFs
+// ══════════════════════════════════════════════════════
+const PROVIDERS = {
+    twelvedata:    { name:'Twelve Data',   url:'https://api.twelvedata.com/price?symbol={TICKER}&apikey={KEY}', register:'https://twelvedata.com/register', parse: d => parseFloat(d.price) },
+    alphavantage:  { name:'Alpha Vantage', url:'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={TICKER}&apikey={KEY}', register:'https://www.alphavantage.co/support/#api-key', parse: d => parseFloat(d['Global Quote']?.['05. price']) },
+    fmp:           { name:'FMP',           url:'https://financialmodelingprep.com/api/v3/quote-short/{TICKER}?apikey={KEY}', register:'https://financialmodelingprep.com/register', parse: d => Array.isArray(d) ? parseFloat(d[0]?.price) : NaN }
+};
+
+function initApiSection() {
+    const prov = localStorage.getItem('apiProvider') || 'twelvedata';
+    const key  = localStorage.getItem('apiKey_'+prov) || '';
+    document.querySelector(`input[value="${prov}"]`).checked = true;
+    g('apiKeyInput').value = key;
+    actualizarLinkRegistro(prov);
+    g('apiEstado').innerHTML = key ? `✅ API Key configurada para <strong>${PROVIDERS[prov].name}</strong>` : '⚠️ Sin API Key. Regístrate gratis en el proveedor para obtener una.';
+}
+
+function cambiarProveedor(radio) {
+    const prov = radio.value;
+    localStorage.setItem('apiProvider', prov);
+    const key = localStorage.getItem('apiKey_'+prov) || '';
+    g('apiKeyInput').value = key;
+    actualizarLinkRegistro(prov);
+}
+
+function actualizarLinkRegistro(prov) {
+    const p = PROVIDERS[prov];
+    g('apiKeyLink').innerHTML = `— <a href="${p.register}" target="_blank" style="color:#667eea;">Obtener key gratuita en ${p.name} →</a>`;
+}
+
+function guardarApiKey() {
+    const prov = document.querySelector('input[name="apiProvider"]:checked').value;
+    const key  = g('apiKeyInput').value.trim();
+    if(!key) { toast('Introduce una API Key', 'error'); return; }
+    localStorage.setItem('apiKey_'+prov, key);
+    localStorage.setItem('apiProvider', prov);
+    g('apiEstado').innerHTML = `✅ API Key guardada para <strong>${PROVIDERS[prov].name}</strong>`;
+    toast('✅ API Key guardada', 'ok');
+}
+
+function verTickers() {
+    const panel = g('infoTickers');
+    if(panel.style.display === 'block') { panel.style.display='none'; return; }
+    panel.style.display = 'block';
+    try {
+        const datos = JSON.parse(localStorage.getItem('carteraActual'));
+        const etfs = datos?.cartera?.etfs || [];
+        if(!etfs.length) { g('listaTickers').innerHTML = '<em style="color:#999">No hay ETFs/acciones en tu cartera.</em>'; return; }
+        g('listaTickers').innerHTML = etfs.map(e => `
+            <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #eee;">
+                <span style="background:#667eea;color:white;padding:2px 8px;border-radius:5px;font-size:11px;font-family:monospace;font-weight:700;">${e.isin||'—'}</span>
+                <span style="flex:1;">${e.nombre||'Sin nombre'}</span>
+                <span style="color:#888;font-size:12px;">Actual: ${(e.precioActual||0).toFixed(4)} €</span>
+            </div>`).join('');
+    } catch(e) { g('listaTickers').innerHTML = '<em>Error leyendo datos.</em>'; }
+}
+
+async function actualizarPreciosETFs() {
+    const prov = document.querySelector('input[name="apiProvider"]:checked').value;
+    const key  = localStorage.getItem('apiKey_'+prov);
+    if(!key) { toast('Configura tu API Key primero', 'error'); return; }
+
+    const datos = JSON.parse(localStorage.getItem('carteraActual'));
+    const etfs = datos?.cartera?.etfs || [];
+    if(!etfs.length) { toast('No hay ETFs en tu cartera', 'info'); return; }
+
+    const btn = g('btnActualizar');
+    btn.textContent = '⏳ Actualizando...'; btn.disabled = true;
+
+    const resDiv = g('resultadoActualizacion');
+    resDiv.style.display = 'block';
+    resDiv.innerHTML = '<p style="color:#888;">Consultando precios…</p>';
+
+    const p = PROVIDERS[prov];
+    let actualizados = 0, errores = [], html = '';
+
+    for (const etf of etfs) {
+        const ticker = (etf.isin||'').trim();
+        if(!ticker || ticker.startsWith('ES') || ticker.startsWith('LU') || ticker.length > 12) {
+            errores.push(`${ticker} — parece un ISIN, no un ticker. Usa el símbolo de bolsa (ej: IWDA).`);
+            continue;
+        }
+        try {
+            const url = p.url.replace('{TICKER}', encodeURIComponent(ticker)).replace('{KEY}', key);
+            const resp = await fetch(url);
+            const json = await resp.json();
+            const precio = p.parse(json);
+            if(!precio || isNaN(precio)) throw new Error('Respuesta no válida: ' + JSON.stringify(json).substring(0,80));
+            const anterior = etf.precioActual || precio;
+            const cambio = ((precio - anterior)/anterior*100).toFixed(2);
+            etf.precioActual = precio;
+            actualizados++;
+            html += `<div style="padding:6px 0;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">
+                <span><strong>${ticker}</strong> — ${etf.nombre||''}</span>
+                <span style="color:${cambio>=0?'#2e7d32':'#c62828'};font-weight:700;">${precio.toFixed(4)} € <small>(${cambio>=0?'+':''}${cambio}%)</small></span>
+            </div>`;
+        } catch(err) {
+            errores.push(`${ticker} — ${err.message}`);
+        }
+        await new Promise(r => setTimeout(r, 300)); // respetar rate limit
+    }
+
+    if(actualizados > 0) {
+        localStorage.setItem('carteraActual', JSON.stringify(datos));
+    }
+
+    resDiv.innerHTML = `
+        <div style="background:#e8f5e9;border-radius:8px;padding:12px;margin-bottom:10px;">
+            <strong>✅ ${actualizados} ETF(s) actualizados</strong><br>${html||'<em style="color:#999">Ninguno</em>'}
+        </div>
+        ${errores.length ? `<div style="background:#fff3e0;border-radius:8px;padding:12px;font-size:12px;color:#555;">
+            <strong>⚠️ ${errores.length} error(es):</strong><br>${errores.map(e=>`• ${e}`).join('<br>')}
+        </div>` : ''}`;
+
+    btn.textContent = '🔄 Actualizar precios ahora'; btn.disabled = false;
+    if(actualizados > 0) toast(`✅ ${actualizados} precios actualizados`, 'ok');
+}
+</script>
+</body>
+</html>

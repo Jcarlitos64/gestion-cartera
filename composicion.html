@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Composición de la Cartera</title>
+    <link rel="stylesheet" href="css/estilo.css">
+    <style>
+        #barraEstado { background:#f8f9fa; padding:10px 15px; border-radius:8px; margin-top:15px; font-size:13px; border-left:4px solid #667eea; }
+        .tabla-contenedor { overflow-x:auto; margin:15px 0; border-radius:8px; }
+        .pct-bar-wrap { display:flex; align-items:center; gap:10px; min-width:160px; }
+        .pct-bar      { height:10px; border-radius:5px; flex-shrink:0; }
+        .cat-fondos   { background:linear-gradient(90deg,#667eea,#764ba2); }
+        .cat-etfs     { background:linear-gradient(90deg,#4facfe,#00f2fe); }
+        .cat-otros    { background:linear-gradient(90deg,#43e97b,#38f9d7); }
+        .positivo { color:#2e7d32; font-weight:600; }
+        .negativo { color:#c62828; font-weight:600; }
+        .seccion-titulo { font-size:13px; font-weight:700; text-transform:uppercase; color:#667eea; letter-spacing:.5px; }
+        .two-cols { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+        .grafico-wrap { position:relative; height:260px; }
+        @media(max-width:768px){ .two-cols{grid-template-columns:1fr;} }
+    </style>
+</head>
+<body>
+<div class="container">
+
+<div class="menu">
+    <h1>📊 COMPOSICIÓN DE LA CARTERA</h1>
+    <div class="nav">
+        <button style="background:#4CAF50;" onclick="location.href='dashboard.html'">🏠 Dashboard</button>
+        <button style="background:#2196F3;" onclick="location.href='cartera.html'">📈 Cartera</button>
+        <button style="background:#FF9800;" onclick="location.href='rebalanceos.html'">🔄 Histórico</button>
+        <button style="background:#9C27B0;" onclick="location.href='analisis.html'">🔍 Analizador</button>
+        <button style="background:#00BCD4;" onclick="location.href='composicion.html'">📊 Composición</button>
+        <button style="background:#f44336;" onclick="location.href='graficos.html'">📈 Gráficos</button>
+        <button style="background:#607D8B;" onclick="location.href='herramientas.html'">🛠️ Herramientas</button>
+        <button style="background:#FF5722;" onclick="location.href='importar-cartera.html'">📥 Importar</button>
+        <button style="background:#795548;" onclick="location.href='ayuda.html'">❓ Ayuda</button>
+    </div>
+    <div id="barraEstado">Cargando...</div>
+</div>
+
+<!-- Resumen -->
+<div class="resumen-grid">
+    <div class="resumen-card"><h4>Total Cartera</h4><p id="totalCartera">0 €</p></div>
+    <div class="resumen-card"><h4>Total Fondos</h4><p id="totalFondos">0 €</p></div>
+    <div class="resumen-card">
+        <h4>Total ETFs / Acc.</h4>
+        <p id="totalETFs">0 €</p>
+        <div id="etfsDesglose" style="display:none;margin-top:6px;font-size:12px;line-height:1.7;">
+            <span style="color:rgba(255,255,255,.75);">Invertido: </span><strong id="etfsInvComp" style="color:white;">0 €</strong><br>
+            <span style="color:rgba(255,255,255,.75);">Pendiente: </span><strong id="etfsPendComp" style="color:#ffe082;">0 €</strong>
+        </div>
+    </div>
+    <div class="resumen-card"><h4>Efectivo + Inm.</h4><p id="totalOtros">0 €</p></div>
+</div>
+
+<!-- Gráficos -->
+<div class="two-cols">
+    <div class="card">
+        <h2>🍩 Distribución por tipo</h2>
+        <div class="grafico-wrap"><canvas id="graficoDona"></canvas></div>
+    </div>
+    <div class="card">
+        <h2>📊 Fondos vs Objetivo</h2>
+        <div class="grafico-wrap"><canvas id="graficoBarras"></canvas></div>
+    </div>
+</div>
+
+<!-- Fondos por categoría -->
+<div class="card">
+    <h2>📈 FONDOS POR CATEGORÍA</h2>
+    <div class="tabla-contenedor">
+        <table>
+            <thead>
+                <tr><th>Categoría</th><th>% Objetivo</th><th>Importe</th><th>% sobre fondos</th><th>% sobre total</th><th>Desviación</th></tr>
+            </thead>
+            <tbody id="tablaFondos"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ETFs y acciones -->
+<div class="card">
+    <h2>📊 ETFs Y ACCIONES</h2>
+    <div id="sinETFs" style="text-align:center;padding:25px;color:#999;background:#fafafa;border-radius:8px;border:2px dashed #ddd;">
+        No hay ETFs ni acciones registradas.
+    </div>
+    <div id="tablaETFsWrap" class="tabla-contenedor" style="display:none;">
+        <table>
+            <thead>
+                <tr><th>Tipo</th><th>ISIN/Ticker</th><th>Nombre</th><th>Cantidad</th><th>P.Compra</th><th>P.Actual</th><th>Valor</th><th>% Total</th><th>G/P €</th><th>G/P %</th></tr>
+            </thead>
+            <tbody id="tablaETFs"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Efectivo e inmobiliario -->
+<div class="card">
+    <h2>💰 EFECTIVO E INMOBILIARIO</h2>
+    <div class="tabla-contenedor">
+        <table>
+            <thead><tr><th>Tipo</th><th>Importe</th><th>% sobre total</th></tr></thead>
+            <tbody id="tablaOtros"></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="button-group">
+    <button class="btn-primary" onclick="exportarCSV()">📥 Exportar CSV</button>
+    <button class="btn-secondary" onclick="location.href='cartera.html'">← Volver a Cartera</button>
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const fmtE = v => isNaN(v)||v==null?'0,00 €':v.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+const fmtP = (v,d=1)=>(isNaN(v)?0:v).toFixed(d)+'%';
+const g    = id => document.getElementById(id);
+
+function cargarDatos(){ try{return JSON.parse(localStorage.getItem('carteraActual'))||null;}catch(e){return null;} }
+
+function barraEstado(datos){
+    const el=g('barraEstado');if(!el)return;
+    if(!datos){el.innerHTML='📂 Sin datos. <a href="configuracion-inicial.html" style="color:#667eea">Configura tu cartera</a>';return;}
+    const hist=datos.historico||[];const ult=hist.length?hist[hist.length-1]:null;
+    el.innerHTML=ult?`📁 Último guardado: <strong>${ult.fecha} ${ult.hora}</strong> &nbsp;|&nbsp; Total: <strong>${fmtE(ult.total||0)}</strong>`:'📂 Sin registros guardados aún.';
+}
+
+function init() {
+    const datos=cargarDatos();
+    barraEstado(datos);
+    const c=datos?.cartera||{};
+    const cfg=datos?.configuracion||{};
+    const pcts=cfg.porcentajes||{monetario:5,rfCorto:15,rfMedio:25,rv:40,alternativos:15};
+    const etfs=c.etfs||[];
+
+    const fondoVals=[c.monetario||0,c.rfCorto||0,c.rfMedio||0,c.rv||0,c.alternativos||0];
+    const pctVals=[pcts.monetario,pcts.rfCorto,pcts.rfMedio,pcts.rv,pcts.alternativos];
+    const fondoNombres=['Monetario','RF Corto','RF Medio','Renta Variable','Alternativos'];
+    const totalFondos=fondoVals.reduce((a,b)=>a+b,0);
+    const etfsInvertido=etfs.reduce((s,e)=>s+(e.cantidad||0)*(e.precioActual||0),0);
+    const etfsPresupuesto=parseFloat(c.etfsValorInicial)||0;
+    const etfsPendiente=Math.max(0, etfsPresupuesto - etfsInvertido);
+    const totalETFs=etfsInvertido+etfsPendiente;
+    const efectivo=c.efectivo||0, inm=c.inmobiliario||0;
+    const totalOtros=efectivo+inm;
+    const total=totalFondos+totalETFs+totalOtros;
+
+    // Resumen
+    g('totalCartera').textContent=fmtE(total);
+    g('totalFondos').textContent =fmtE(totalFondos);
+    g('totalETFs').textContent   =fmtE(totalETFs);
+    g('totalOtros').textContent  =fmtE(totalOtros);
+    // Desglose ETFs invertido / pendiente
+    const desglose=g('etfsDesglose');
+    if(desglose) {
+        if(etfsPendiente > 0.005) {
+            desglose.style.display='block';
+            g('etfsInvComp').textContent  = fmtE(etfsInvertido);
+            g('etfsPendComp').textContent = fmtE(etfsPendiente);
+        } else {
+            desglose.style.display='none';
+        }
+    }
+
+    // Tabla fondos
+    g('tablaFondos').innerHTML=fondoNombres.map((n,i)=>{
+        const obj=totalFondos*pctVals[i]/100;
+        const pctF=totalFondos>0?fondoVals[i]/totalFondos*100:0;
+        const pctT=total>0?fondoVals[i]/total*100:0;
+        const desv=obj>0?(fondoVals[i]-obj)/obj*100:0;
+        const cls=Math.abs(desv)<=5?'positivo':Math.abs(desv)<=15?'':' style="color:#e65100;font-weight:600"';
+        const barW=Math.min(pctF/100*120,120);
+        return `<tr>
+            <td><strong>${n}</strong></td>
+            <td>${pctVals[i]}%</td>
+            <td>${fmtE(fondoVals[i])}</td>
+            <td>
+                <div class="pct-bar-wrap">
+                    <div class="pct-bar cat-fondos" style="width:${barW}px"></div>
+                    <span>${fmtP(pctF)}</span>
+                </div>
+            </td>
+            <td>${fmtP(pctT)}</td>
+            <td class="${Math.abs(desv)<=5?'positivo':Math.abs(desv)<=15?'negativo':''}"
+                style="${Math.abs(desv)>15?'color:#c62828;font-weight:700':''}"
+            >${desv>=0?'+':''}${fmtP(desv)}</td>
+        </tr>`;
+    }).join('');
+
+    // Tabla ETFs
+    if(etfs.length){
+        g('sinETFs').style.display='none';
+        g('tablaETFsWrap').style.display='block';
+        g('tablaETFs').innerHTML=etfs.map(e=>{
+            const val=(e.cantidad||0)*(e.precioActual||0);
+            const costo=(e.cantidad||0)*(e.precioCompra||0);
+            const gpE=val-costo, gpP=costo>0?gpE/costo*100:0;
+            const pctT=total>0?val/total*100:0;
+            const cls=gpE>=0?'positivo':'negativo';
+            return `<tr>
+                <td>${e.tipo||'ETF'}</td>
+                <td>${e.isin||'—'}</td>
+                <td>${e.nombre||'—'}</td>
+                <td>${e.cantidad||0}</td>
+                <td>${fmtE(e.precioCompra)}</td>
+                <td>${fmtE(e.precioActual)}</td>
+                <td><strong>${fmtE(val)}</strong></td>
+                <td>${fmtP(pctT)}</td>
+                <td class="${cls}">${gpE>=0?'+':''}${fmtE(gpE)}</td>
+                <td class="${cls}">${gpP>=0?'+':''}${fmtP(gpP)}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    // Tabla otros
+    g('tablaOtros').innerHTML=[
+        {tipo:'💵 Efectivo',val:efectivo},
+        {tipo:'🏠 Inmobiliario',val:inm}
+    ].map(x=>`<tr><td>${x.tipo}</td><td>${fmtE(x.val)}</td><td>${fmtP(total>0?x.val/total*100:0)}</td></tr>`).join('');
+
+    // Gráfico dona
+    const colors=['#667eea','#764ba2','#f093fb','#f5576c','#4facfe'];
+    const donaData=[...fondoVals,totalETFs,efectivo,inm].map((v,i)=>v);
+    const donaLabels=[...fondoNombres,'ETFs/Acc.','Efectivo','Inmobiliario'];
+    const filtered=donaLabels.map((l,i)=>({l,v:donaData[i],c:[...colors,'#43e97b','#fa709a','#fee140'][i]})).filter(x=>x.v>0);
+    new Chart(g('graficoDona'),{
+        type:'doughnut',
+        data:{labels:filtered.map(x=>x.l),datasets:[{data:filtered.map(x=>x.v),backgroundColor:filtered.map(x=>x.c),borderWidth:2}]},
+        options:{responsive:true,maintainAspectRatio:false,
+            plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:12}},
+            tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmtE(ctx.raw)} (${fmtP(total>0?ctx.raw/total*100:0)})`}}}}
+    });
+
+    // Gráfico barras actual vs objetivo
+    new Chart(g('graficoBarras'),{
+        type:'bar',
+        data:{
+            labels:fondoNombres.map(n=>n.replace('Renta Variable','R.Variable')),
+            datasets:[
+                {label:'Actual (€)',data:fondoVals,backgroundColor:'rgba(102,126,234,.8)',borderRadius:4},
+                {label:'Objetivo (€)',data:pctVals.map(p=>totalFondos*p/100),backgroundColor:'rgba(76,175,80,.6)',borderRadius:4}
+            ]
+        },
+        options:{responsive:true,maintainAspectRatio:false,
+            scales:{y:{ticks:{callback:v=>fmtE(v)},grid:{color:'rgba(0,0,0,.05)'}},x:{grid:{display:false}}},
+            plugins:{legend:{position:'top'},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmtE(ctx.raw)}`}}}}
+    });
+}
+
+function exportarCSV() {
+    const datos=cargarDatos();
+    if(!datos){ alert('No hay datos para exportar.'); return; }
+    const c=datos.cartera||{};
+    const etfs=c.etfs||[];
+    const etfsInv=etfs.reduce((s,e)=>s+(e.cantidad||0)*(e.precioActual||0),0);
+    const etfsPres=parseFloat(c.etfsValorInicial)||0;
+    const etfsPend=Math.max(0, etfsPres - etfsInv);
+    const total=((c.monetario||0)+(c.rfCorto||0)+(c.rfMedio||0)+(c.rv||0)+(c.alternativos||0))
+        +(etfsInv+etfsPend)+(c.efectivo||0)+(c.inmobiliario||0);
+
+    let csv='\uFEFF'+'Tipo,ISIN,Nombre,Cantidad,P.Compra,P.Actual,Valor,% Total\n';
+    const fondos=[['Monetario',c.monetario||0],['RF Corto',c.rfCorto||0],['RF Medio',c.rfMedio||0],['RV',c.rv||0],['Alternativos',c.alternativos||0]];
+    fondos.forEach(([n,v])=>csv+=`Fondo,,${n},1,${v.toFixed(2)},${v.toFixed(2)},${v.toFixed(2)},${total>0?(v/total*100).toFixed(2):0}\n`);
+    etfs.forEach(e=>{
+        const val=(e.cantidad||0)*(e.precioActual||0);
+        csv+=`${e.tipo||'ETF'},"${e.isin||''}","${e.nombre||''}",${e.cantidad||0},${(e.precioCompra||0).toFixed(4)},${(e.precioActual||0).toFixed(4)},${val.toFixed(2)},${total>0?(val/total*100).toFixed(2):0}\n`;
+    });
+    if(etfsPend>0.005) csv+=`ETF (pendiente),,Sin asignar aún,,,,${etfsPend.toFixed(2)},${total>0?(etfsPend/total*100).toFixed(2):0}\n`;
+    csv+=`Efectivo,,Efectivo,1,${(c.efectivo||0).toFixed(2)},${(c.efectivo||0).toFixed(2)},${(c.efectivo||0).toFixed(2)},${total>0?((c.efectivo||0)/total*100).toFixed(2):0}\n`;
+    csv+=`Inmobiliario,,Inmobiliario,1,${(c.inmobiliario||0).toFixed(2)},${(c.inmobiliario||0).toFixed(2)},${(c.inmobiliario||0).toFixed(2)},${total>0?((c.inmobiliario||0)/total*100).toFixed(2):0}\n`;
+
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download=`composicion_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click(); URL.revokeObjectURL(a.href);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

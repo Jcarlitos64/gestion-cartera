@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Gestión de Cartera</title>
+    <link rel="stylesheet" href="css/estilo.css">
+    <style>
+        .grafico-wrap { position:relative; height:280px; margin-top:15px; }
+        .stats-grid   { display:grid; grid-template-columns:repeat(4,1fr); gap:15px; margin-bottom:25px; }
+        .stat-card    { background:linear-gradient(135deg,#667eea,#764ba2); color:white; padding:20px; border-radius:12px; text-align:center; }
+        .stat-card h4 { font-size:13px; opacity:.85; margin-bottom:8px; }
+        .stat-card p  { font-size:22px; font-weight:700; }
+        .estado-badge { display:inline-block; padding:4px 14px; border-radius:20px; font-size:13px; font-weight:600; }
+        .badge-ok     { background:#4CAF50; color:white; }
+        .badge-warn   { background:#ff9800; color:white; }
+        .badge-alert  { background:#f44336; color:white; }
+        #barraEstado  { background:#f8f9fa; padding:10px 15px; border-radius:8px; margin-top:15px; font-size:13px; border-left:4px solid #667eea; }
+        .two-cols     { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+        .movimiento-positivo { color:#2e7d32; font-weight:600; }
+        .movimiento-negativo { color:#c62828; font-weight:600; }
+        @media(max-width:768px){ .stats-grid{grid-template-columns:1fr 1fr;} .two-cols{grid-template-columns:1fr;} }
+        .glos { cursor:help; border-bottom:2px dotted #667eea; position:relative; display:inline-block; }
+        .glos::after { content:attr(data-tip); position:absolute; bottom:130%; left:50%; transform:translateX(-50%); background:#1e1e2e; color:#cdd6f4; padding:8px 12px; border-radius:8px; font-size:12px; white-space:normal; min-width:200px; max-width:280px; line-height:1.5; opacity:0; pointer-events:none; transition:opacity .2s; z-index:999; box-shadow:0 4px 12px rgba(0,0,0,.3); }
+        .glos:hover::after { opacity:1; }
+        .alerta-dash { border-radius:10px; padding:13px 18px; margin-bottom:10px; display:flex; align-items:center; gap:10px; font-size:13px; font-weight:600; color:white; }
+        .alerta-roja    { background:linear-gradient(135deg,#ff6b6b,#ee5a24); animation:pulso 2s infinite; }
+        .alerta-naranja { background:linear-gradient(135deg,#f39c12,#e67e22); }
+        @keyframes pulso { 0%,100%{opacity:1} 50%{opacity:.85} }
+    </style>
+</head>
+<body>
+<div class="container">
+
+<div class="menu">
+    <h1>🏠 DASHBOARD DE CARTERA</h1>
+    <div class="nav">
+        <button style="background:#4CAF50;" onclick="location.href='dashboard.html'">🏠 Dashboard</button>
+        <button style="background:#2196F3;" onclick="location.href='cartera.html'">📈 Cartera</button>
+        <button style="background:#FF9800;" onclick="location.href='rebalanceos.html'">🔄 Histórico</button>
+        <button style="background:#9C27B0;" onclick="location.href='analisis.html'">🔍 Analizador</button>
+        <button style="background:#00BCD4;" onclick="location.href='composicion.html'">📊 Composición</button>
+        <button style="background:#f44336;" onclick="location.href='graficos.html'">📈 Gráficos</button>
+        <button style="background:#607D8B;" onclick="location.href='herramientas.html'">🛠️ Herramientas</button>
+        <button style="background:#009688;" onclick="location.href='calculadora.html'">🧮 Calculadora</button>
+        <button style="background:#FF5722;" onclick="location.href='importar-cartera.html'">📥 Importar</button>
+        <button style="background:#795548;" onclick="location.href='ayuda.html'">❓ Ayuda</button>
+    </div>
+    <div id="barraEstado">Cargando...</div>
+</div>
+
+<!-- Resumen numérico -->
+<div class="resumen-grid">
+    <div class="resumen-card"><h4>Total Cartera</h4><p id="totalCartera">0 €</p></div>
+    <div class="resumen-card"><h4>Fondos</h4><p id="totalFondos">0 €</p></div>
+    <div class="resumen-card">
+        <h4>ETFs / Acc.</h4>
+        <p id="totalETFs">0 €</p>
+        <div id="etfsDesglose" style="display:none;margin-top:6px;font-size:12px;line-height:1.7;">
+            <span style="color:rgba(255,255,255,.75);">Invertido: </span><strong id="etfsInv" style="color:white;">0 €</strong><br>
+            <span style="color:rgba(255,255,255,.75);">Pendiente: </span><strong id="etfsPend" style="color:#ffe082;">0 €</strong>
+        </div>
+    </div>
+    <div class="resumen-card"><h4>Efectivo + Inm.</h4><p id="totalOtros">0 €</p></div>
+</div>
+
+<!-- Estado y variación -->
+<div class="stats-grid">
+    <div class="stat-card"><h4>Variación último mes</h4><p id="varMes">—</p></div>
+    <div class="stat-card"><h4>Variación total</h4><p id="varTotal">—</p></div>
+    <div class="stat-card"><h4>Registros históricos</h4><p id="numRegistros">0</p></div>
+    <div class="stat-card"><h4>Estado rebalanceo</h4><p id="estadoRebalanceo">—</p></div>
+</div>
+
+<!-- Alertas prominentes -->
+<div id="alertasDash"></div>
+
+<!-- Gráficos -->
+<div class="two-cols">
+    <div class="card">
+        <h2>📊 Distribución actual</h2>
+        <div class="grafico-wrap"><canvas id="graficoDona"></canvas></div>
+    </div>
+    <div class="card">
+        <h2>📈 Evolución del total</h2>
+        <div class="grafico-wrap"><canvas id="graficoEvolucion"></canvas></div>
+    </div>
+</div>
+
+<!-- Desviaciones -->
+<div class="card">
+    <h2>🎯 Desviaciones respecto al objetivo</h2>
+    <div id="desviacionesContainer" style="overflow-x:auto;">
+        <table>
+            <thead>
+                <tr><th>Categoría</th><th>% Objetivo</th><th>Importe Actual</th><th>Objetivo (€)</th><th>Desviación</th><th>Estado</th></tr>
+            </thead>
+            <tbody id="tablaDesviaciones"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Últimos movimientos -->
+<div class="card">
+    <h2>🔄 Últimos movimientos</h2>
+    <div style="overflow-x:auto; max-height:350px; overflow-y:auto;">
+        <table>
+            <thead>
+                <tr><th>Fecha</th><th>Hora</th><th>Fondos</th><th>ETFs</th><th>Efectivo</th><th>Total</th><th>Variación</th></tr>
+            </thead>
+            <tbody id="tablaMovimientos"></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="button-group">
+    <button class="btn-primary" onclick="location.href='cartera.html'">📈 Ir a Cartera</button>
+    <button class="btn-secondary" onclick="location.href='rebalanceos.html'">🔄 Ver Histórico Completo</button>
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// ── Utilidades ──────────────────────────────────────────────────
+const fmtE = v => isNaN(v)||v==null ? '0,00 €'
+    : v.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+const g = id => document.getElementById(id);
+
+function cargarDatos() {
+    try {
+        const datos = JSON.parse(localStorage.getItem('carteraActual')) || null;
+        if (!datos) return null;
+        // Reparar etfsValorInicial si falta en la cartera
+        const c = datos.cartera || {};
+        if (!parseFloat(c.etfsValorInicial)) {
+            let val = 0;
+            const hist = datos.historico || [];
+            for (let i = hist.length - 1; i >= 0; i--) {
+                const v = parseFloat(hist[i].etfsValorInicial);
+                if (v > 0) { val = v; break; }
+            }
+            if (!val && c.etfs && c.etfs.length > 0)
+                val = c.etfs.reduce((s,e) => s + (e.cantidad||0)*(e.precioActual||0), 0);
+            if (val > 0) {
+                c.etfsValorInicial = val;
+                datos.cartera = c;
+                localStorage.setItem('carteraActual', JSON.stringify(datos));
+            }
+        }
+        return datos;
+    } catch(e) { return null; }
+}
+function totales(c) {
+    if(!c) return {fondos:0,etfs:0,etfsInvertido:0,etfsPendiente:0,otros:0,total:0};
+    const fondos=(c.monetario||0)+(c.rfCorto||0)+(c.rfMedio||0)+(c.rv||0)+(c.alternativos||0);
+    const etfsInvertido=(c.etfs||[]).reduce((s,e)=>s+(e.cantidad||0)*(e.precioActual||0),0);
+    const etfsPresupuesto=parseFloat(c.etfsValorInicial)||0;
+    const etfsPendiente=Math.max(0, etfsPresupuesto - etfsInvertido);
+    const etfs=etfsInvertido+etfsPendiente;   // total destinado a ETFs
+    const otros=(c.efectivo||0)+(c.inmobiliario||0);
+    return {fondos,etfs,etfsInvertido,etfsPendiente,otros,total:fondos+etfs+otros};
+}
+
+// ── Barra estado ────────────────────────────────────────────────
+function mostrarAlertasDash(datos) {
+    const banner = document.getElementById('alertasDash');
+    if (!banner || !datos) return;
+    const c = datos.cartera || {};
+    const cfg = datos.configuracion || {};
+    const pcts = cfg.porcentajes || { monetario:5, rfCorto:15, rfMedio:25, rv:40, alternativos:15 };
+    const fondos = [c.monetario||0, c.rfCorto||0, c.rfMedio||0, c.rv||0, c.alternativos||0];
+    const pctArr = [pcts.monetario||0, pcts.rfCorto||0, pcts.rfMedio||0, pcts.rv||0, pcts.alternativos||0];
+    const nombres = ['Monetario','RF Corto','RF Medio','Renta Variable','Alternativos'];
+    const totalFondos = fondos.reduce((a,b)=>a+b,0);
+    if (totalFondos === 0) return;
+    const rojos=[], naranjas=[];
+    pctArr.forEach((p,i)=>{
+        const obj = totalFondos * p / 100;
+        if (obj <= 0) return;
+        const desv = Math.abs((fondos[i]-obj)/obj*100);
+        if (desv > 20) rojos.push(`<strong>${nombres[i]}</strong> desviado ${desv.toFixed(1)}%`);
+        else if (desv > 10) naranjas.push(`<strong>${nombres[i]}</strong> ${desv.toFixed(1)}%`);
+    });
+    let html = '';
+    if (rojos.length)    html += `<div class="alerta-dash alerta-roja">🚨 REBALANCEO URGENTE — ${rojos.join(' · ')} <a href="cartera.html" style="color:white;margin-left:10px;font-weight:700;">Ir a Cartera →</a></div>`;
+    if (naranjas.length) html += `<div class="alerta-dash alerta-naranja">⚠️ Desviación notable — ${naranjas.join(' · ')}</div>`;
+    banner.innerHTML = html;
+}
+
+function barraEstado(datos) {
+    const el=g('barraEstado'); if(!el) return;
+    if(!datos){
+        el.innerHTML='📂 Sin datos. <a href="configuracion-inicial.html" style="color:#667eea;font-weight:600">Configura tu cartera</a> o <a href="importar-cartera.html" style="color:#667eea;font-weight:600">importa un archivo</a>.';
+        return;
+    }
+    const hist=datos.historico||[];
+    const ult=hist.length?hist[hist.length-1]:null;
+    el.innerHTML=ult
+        ?`📁 Último guardado: <strong>${ult.fecha} ${ult.hora}</strong> &nbsp;|&nbsp; Total: <strong>${fmtE(ult.total||0)}</strong>`
+        :'📂 Datos en memoria sin guardar aún.';
+}
+
+// ── Resumen ─────────────────────────────────────────────────────
+function mostrarResumen(datos) {
+    const c=datos?.cartera||{};
+    const t=totales(c);
+    g('totalCartera').textContent=fmtE(t.total);
+    g('totalFondos').textContent =fmtE(t.fondos);
+    g('totalETFs').textContent   =fmtE(t.etfs);
+    g('totalOtros').textContent  =fmtE(t.otros);
+    // Desglose ETFs: mostrar invertido/pendiente solo si hay pendiente
+    const desglose=g('etfsDesglose');
+    if(desglose) {
+        if(t.etfsPendiente > 0.005) {
+            desglose.style.display='block';
+            g('etfsInv').textContent  = fmtE(t.etfsInvertido);
+            g('etfsPend').textContent = fmtE(t.etfsPendiente);
+        } else {
+            desglose.style.display='none';
+        }
+    }
+}
+
+// ── Stats ────────────────────────────────────────────────────────
+function mostrarStats(datos) {
+    const hist=datos?.historico||[];
+    g('numRegistros').textContent=hist.length;
+
+    // Variación total (primer vs último)
+    if (hist.length>=2) {
+        const primero=hist[0].total||0, ultimo=hist[hist.length-1].total||0;
+        const varT=primero>0?(ultimo-primero)/primero*100:0;
+        g('varTotal').textContent=(varT>=0?'+':'')+varT.toFixed(1)+'%';
+        g('varTotal').style.color=varT>=0?'#a5d6a7':'#ef9a9a';
+    }
+
+    // Variación último mes (últimos 30 días)
+    if (hist.length>=2) {
+        const ahora=Date.now(), mes=30*24*3600*1000;
+        const recientes=hist.filter(h=>ahora-h.timestamp<=mes);
+        if (recientes.length>=2) {
+            const v0=recientes[0].total||0, v1=recientes[recientes.length-1].total||0;
+            const varM=v0>0?(v1-v0)/v0*100:0;
+            g('varMes').textContent=(varM>=0?'+':'')+varM.toFixed(1)+'%';
+            g('varMes').style.color=varM>=0?'#a5d6a7':'#ef9a9a';
+        } else { g('varMes').textContent='Sin datos'; }
+    }
+
+    // Estado rebalanceo (máxima desviación)
+    const c=datos?.cartera||{};
+    const cfg=datos?.configuracion||{};
+    const pcts=cfg.porcentajes||{monetario:5,rfCorto:15,rfMedio:25,rv:40,alternativos:15};
+    const fondoVals=[c.monetario||0,c.rfCorto||0,c.rfMedio||0,c.rv||0,c.alternativos||0];
+    const pctVals=[pcts.monetario,pcts.rfCorto,pcts.rfMedio,pcts.rv,pcts.alternativos];
+    const totalF=fondoVals.reduce((a,b)=>a+b,0);
+    let maxDesv=0;
+    if(totalF>0) pctVals.forEach((p,i)=>{
+        const obj=totalF*p/100;
+        if(obj>0) maxDesv=Math.max(maxDesv,Math.abs((fondoVals[i]-obj)/obj*100));
+    });
+    const estadoEl=g('estadoRebalanceo');
+    if(maxDesv===0){ estadoEl.textContent='Sin datos'; estadoEl.style.color='#ccc'; }
+    else if(maxDesv<=5){ estadoEl.innerHTML='<span class="estado-badge badge-ok">✅ Equilibrada</span>'; }
+    else if(maxDesv<=15){ estadoEl.innerHTML='<span class="estado-badge badge-warn">⚠️ Atención</span>'; }
+    else { estadoEl.innerHTML='<span class="estado-badge badge-alert">🚨 Rebalancear</span>'; }
+}
+
+// ── Gráfico dona ─────────────────────────────────────────────────
+function graficoDona(datos) {
+    const c=datos?.cartera||{};
+    const t=totales(c);
+    const total=t.total;
+    if(total===0) return;
+
+    const fondos=[c.monetario||0,c.rfCorto||0,c.rfMedio||0,c.rv||0,c.alternativos||0];
+    const labels=['Monetario','RF Corto','RF Medio','Renta Variable','Alternativos','ETFs/Acc.','Efectivo','Inmobiliario'];
+    const values=[...fondos, t.etfs, c.efectivo||0, c.inmobiliario||0];
+    const colors=['#667eea','#764ba2','#f093fb','#f5576c','#4facfe','#43e97b','#fa709a','#fee140'];
+
+    // Filtrar 0s
+    const filtered = labels.map((l,i)=>({l,v:values[i],c:colors[i]})).filter(x=>x.v>0);
+
+    new Chart(g('graficoDona'), {
+        type:'doughnut',
+        data:{
+            labels:filtered.map(x=>x.l),
+            datasets:[{data:filtered.map(x=>x.v), backgroundColor:filtered.map(x=>x.c), borderWidth:2}]
+        },
+        options:{
+            responsive:true, maintainAspectRatio:false,
+            plugins:{
+                legend:{position:'right',labels:{font:{size:12},boxWidth:14}},
+                tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmtE(ctx.raw)} (${(ctx.raw/total*100).toFixed(1)}%)`}}
+            }
+        }
+    });
+}
+
+// ── Gráfico evolución ────────────────────────────────────────────
+function graficoEvolucion(datos) {
+    const hist=(datos?.historico||[]).slice(-20); // últimos 20
+    if(hist.length<2) return;
+
+    new Chart(g('graficoEvolucion'), {
+        type:'line',
+        data:{
+            labels:hist.map(h=>h.fecha),
+            datasets:[
+                { label:'Total', data:hist.map(h=>h.total||0), borderColor:'#667eea', backgroundColor:'rgba(102,126,234,.1)', fill:true, tension:.4, pointRadius:3 },
+                { label:'Fondos', data:hist.map(h=>(h.monetario||0)+(h.rfCorto||0)+(h.rfMedio||0)+(h.rv||0)+(h.alternativos||0)), borderColor:'#4CAF50', backgroundColor:'rgba(76,175,80,.07)', fill:true, tension:.4, pointRadius:2 }
+            ]
+        },
+        options:{
+            responsive:true, maintainAspectRatio:false,
+            scales:{y:{ticks:{callback:v=>fmtE(v)}, grid:{color:'rgba(0,0,0,.05)'}}, x:{grid:{display:false}}},
+            plugins:{legend:{position:'top'}, tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmtE(ctx.raw)}`}}}
+        }
+    });
+}
+
+// ── Tabla desviaciones ───────────────────────────────────────────
+function tablaDesviaciones(datos) {
+    const c=datos?.cartera||{};
+    const cfg=datos?.configuracion||{};
+    const pcts=cfg.porcentajes||{monetario:5,rfCorto:15,rfMedio:25,rv:40,alternativos:15};
+    const cats=[
+        {nombre:'Monetario',    val:c.monetario||0,    pct:pcts.monetario},
+        {nombre:'RF Corto',     val:c.rfCorto||0,      pct:pcts.rfCorto},
+        {nombre:'RF Medio',     val:c.rfMedio||0,      pct:pcts.rfMedio},
+        {nombre:'Renta Variable',val:c.rv||0,          pct:pcts.rv},
+        {nombre:'Alternativos', val:c.alternativos||0, pct:pcts.alternativos}
+    ];
+    const totalF=cats.reduce((s,x)=>s+x.val,0);
+    const tbody=g('tablaDesviaciones');
+    tbody.innerHTML=cats.map(cat=>{
+        const obj=totalF*cat.pct/100;
+        const desv=obj>0?(cat.val-obj)/obj*100:0;
+        const abs=Math.abs(desv);
+        const cls=abs<=5?'desv-ok':abs<=15?'desv-warn':'desv-alert';
+        const badge=abs<=5?'<span class="estado-badge badge-ok">✅ OK</span>'
+            :abs<=15?'<span class="estado-badge badge-warn">⚠️ Atención</span>'
+            :'<span class="estado-badge badge-alert">🚨 Rebalancear</span>';
+        return `<tr>
+            <td><strong>${cat.nombre}</strong></td>
+            <td>${cat.pct}%</td>
+            <td>${fmtE(cat.val)}</td>
+            <td>${fmtE(obj)}</td>
+            <td class="${cls}">${desv>=0?'+':''}${desv.toFixed(1)}%</td>
+            <td>${badge}</td>
+        </tr>`;
+    }).join('');
+}
+
+// ── Tabla movimientos ────────────────────────────────────────────
+function tablaMovimientos(datos) {
+    const hist=([...(datos?.historico||[])]).reverse().slice(0,10);
+    const tbody=g('tablaMovimientos');
+    if(!hist.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:#999;">Sin registros históricos</td></tr>';return;}
+    const original=[...(datos?.historico||[])];
+    tbody.innerHTML=hist.map((h,i_rev)=>{
+        const i_orig=original.length-1-i_rev;
+        const ant=i_orig>0?original[i_orig-1]:null;
+        const varV=ant&&ant.total?(h.total-ant.total):null;
+        const varCls=varV===null?'':varV>=0?'movimiento-positivo':'movimiento-negativo';
+        const varStr=varV===null?'—':((varV>=0?'+':'')+fmtE(varV));
+        const totalFondos=(h.monetario||0)+(h.rfCorto||0)+(h.rfMedio||0)+(h.rv||0)+(h.alternativos||0);
+        const etfsInv=(h.etfs||[]).reduce((s,e)=>s+(e.cantidad||0)*(e.precioActual||0),0);
+        const etfsPres=parseFloat(h.etfsValorInicial)||0;
+        const etfsPend=Math.max(0, etfsPres - etfsInv);
+        const totalETFs=etfsInv+etfsPend;
+        return `<tr>
+            <td>${h.fecha}</td>
+            <td>${h.hora}</td>
+            <td>${fmtE(totalFondos)}</td>
+            <td>${fmtE(totalETFs)}</td>
+            <td>${fmtE(h.efectivo||0)}</td>
+            <td><strong>${fmtE(h.total||0)}</strong></td>
+            <td class="${varCls}">${varStr}</td>
+        </tr>`;
+    }).join('');
+}
+
+// ── CSS desviaciones ─────────────────────────────────────────────
+const s=document.createElement('style');
+s.textContent=`.desv-ok{color:#2e7d32;font-weight:700}.desv-warn{color:#e65100;font-weight:700}.desv-alert{color:#c62828;font-weight:700}`;
+document.head.appendChild(s);
+
+// ── INIT ─────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', ()=>{
+    const datos=cargarDatos();
+    barraEstado(datos);
+    mostrarResumen(datos);
+    mostrarAlertasDash(datos);
+    mostrarStats(datos);
+    graficoDona(datos);
+    graficoEvolucion(datos);
+    tablaDesviaciones(datos);
+    tablaMovimientos(datos);
+});
+</script>
+</body>
+</html>

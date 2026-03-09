@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador Financiero Profesional</title>
+    <link rel="stylesheet" href="css/estilo.css">
+    <style>
+        /* Estilos existentes se mantienen */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #555; }
+        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; }
+        .input-group input[readonly] { background-color: #f5f5f5; color: #333; border-color: #ccc; }
+        .input-group textarea { height: 150px; font-family: monospace; font-size: 13px; }
+        .button-group { display: flex; gap: 10px; flex-wrap: wrap; margin: 15px 0; }
+        .btn-success { background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; }
+        .btn-deepseek { background: #0d1117; color: white; }
+        .btn-gemini { background: #1A73E8; color: white; }
+        .btn-chatgpt { background: #10a37f; color: white; }
+        .ia-panel { background:#f8f9fa; border-radius:12px; padding:16px 18px; margin-top:14px; border:2px solid #e0e0e0; }
+        .ia-panel h4 { font-size:13px; font-weight:700; color:#555; margin-bottom:12px; display:flex; align-items:center; gap:6px; }
+        .ia-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:9px; }
+        .ia-btn {
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
+            padding:11px 8px; border:none; border-radius:10px; cursor:pointer;
+            font-size:12px; font-weight:700; color:white; transition:all .2s; text-decoration:none;
+            box-shadow:0 2px 8px rgba(0,0,0,.15);
+        }
+        .ia-btn:hover { transform:translateY(-2px); box-shadow:0 6px 16px rgba(0,0,0,.22); }
+        .ia-btn .ia-ico { font-size:22px; line-height:1; }
+        .ia-btn .ia-plan { font-size:10px; font-weight:400; opacity:.85; }
+        .ia-nota { font-size:11px; color:#999; margin-top:10px; font-style:italic; }
+        .btn-claude { background: #7C3AED; color: white; }
+        .btn-advanced { background: #6441A5; color: white; }
+        .btn-captura { background: #FF5722; color: white; padding: 15px 25px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin: 10px 0; width: 100%; }
+        .btn-captura-advanced { background: #9C27B0; color: white; padding: 15px 25px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin: 10px 0; width: 100%; }
+        .ia-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin: 15px 0; }
+        .resultado { background: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 20px; max-height: 600px; overflow-y: auto; }
+        .info-box { background: #e3f2fd; border-left: 4px solid #2196F3; padding: 15px; margin: 20px 0; border-radius: 5px; }
+        .info-box.warning { background: #fff3e0; border-left-color: #FF9800; }
+        .info-box.success { background: #e8f5e9; border-left-color: #4CAF50; }
+        .badge-success { background: #d4edda; color: #155724; padding: 3px 8px; border-radius: 3px; }
+        .badge-warning { background: #fff3cd; color: #856404; padding: 3px 8px; border-radius: 3px; }
+        .badge-danger { background: #f8d7da; color: #721c24; padding: 3px 8px; border-radius: 3px; }
+        .advanced-options { background: #f0f0f0; border-radius: 10px; padding: 15px; margin: 20px 0; }
+        .tooltip-info { color: #666; font-size: 12px; margin-top: 5px; display: block; }
+        .seccion-datos { background: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; border: 1px solid #ddd; }
+        .seccion-datos h3 { color: #333; margin-bottom: 15px; border-bottom: 2px solid #667eea; padding-bottom: 5px; }
+        .asistente-pasos { background: #f9f9f9; border-radius: 10px; padding: 20px; margin: 20px 0; border: 1px solid #ddd; }
+        .paso { display: flex; align-items: center; margin-bottom: 15px; padding: 10px; background: white; border-radius: 8px; }
+        .numero-paso { background: #667eea; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px; }
+        .analisis-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+        .tab { padding: 10px 20px; cursor: pointer; border-radius: 5px 5px 0 0; background: #f0f0f0; }
+        .tab.active { background: #667eea; color: white; }
+        .veredicto-box { padding: 20px; border-radius: 10px; margin-top: 20px; font-size: 18px; text-align: center; }
+        .veredicto-comprar { background: #d4edda; color: #155724; border: 2px solid #c3e6cb; }
+        .veredicto-mantener { background: #fff3cd; color: #856404; border: 2px solid #ffeeba; }
+        .veredicto-vender { background: #f8d7da; color: #721c24; border: 2px solid #f5c6cb; }
+        .contexto-box { background: #f0f7ff; border: 1px solid #b8daff; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
+        .contexto-box h4 { color: #004085; margin-bottom: 10px; }
+        #barraEstado { background: #f8f9fa; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="menu">
+            <h1>🔍 ANALIZADOR FINANCIERO PROFESIONAL</h1>
+            <div class="nav">
+        <button style="background:#4CAF50;" onclick="location.href='dashboard.html'">🏠 Dashboard</button>
+                <button style="background:#2196F3;" onclick="location.href='cartera.html'">📈 Cartera</button>
+                <button style="background:#FF9800;" onclick="location.href='rebalanceos.html'">🔄 Histórico</button>
+                <button style="background:#9C27B0;" onclick="location.href='analisis.html'">🔍 Analizador</button>
+                <button style="background:#00BCD4;" onclick="location.href='composicion.html'">📊 Composición</button>
+                <button style="background:#f44336;" onclick="location.href='graficos.html'">📈 Gráficos</button>
+                <button style="background:#607D8B;" onclick="location.href='herramientas.html'">🛠️ Herramientas</button>
+                <button style="background:#FF5722;" onclick="location.href='importar-cartera.html'">📥 Importar</button>
+                <button style="background:#795548;" onclick="location.href='ayuda.html'">❓ Ayuda</button>
+            </div>
+            <div id="barraEstado" style="margin-top:15px;"></div>
+        </div>
+
+        <!-- CONTEXTO ACTUAL -->
+        <div class="contexto-box">
+            <h4>🌍 CONTEXTO GEOPOLÍTICO Y MACRO ACTUAL</h4>
+            <div class="grid-3">
+                <div>
+                    <strong>🔴 Conflictos activos:</strong>
+                    <ul style="margin-left:20px; font-size:13px;">
+                        <li>Ucrania-Rusia (defensa, energía)</li>
+                        <li>Israel-Gaza (petróleo, geopolítica)</li>
+                        <li>Tensión China-Taiwán (tecnología)</li>
+                    </ul>
+                </div>
+                <div>
+                    <strong>💰 Ciclo económico:</strong>
+                    <ul style="margin-left:20px; font-size:13px;">
+                        <li>Tipos de interés altos</li>
+                        <li>Inflación controlada</li>
+                        <li>Posible recesión técnica</li>
+                    </ul>
+                </div>
+                <div>
+                    <strong>📈 Sectores beneficiados:</strong>
+                    <ul style="margin-left:20px; font-size:13px;">
+                        <li>Defensa y armamento</li>
+                        <li>Energético (petróleo, gas)</li>
+                        <li>Tecnología (IA, ciberseguridad)</li>
+                        <li>Materias primas</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ASISTENTE INTERACTIVO -->
+        <div class="card">
+            <h2>🤖 ASISTENTE DE ANÁLISIS INTELIGENTE</h2>
+            
+            <div class="asistente-pasos">
+                <div class="paso">
+                    <div class="numero-paso">1</div>
+                    <div style="flex:1;">
+                        <strong>Introduce el ISIN o Ticker</strong>
+                        <div style="display: flex; gap: 10px; margin-top: 5px;">
+                            <input type="text" id="asistenteIsin" placeholder="Ej: US01609W1027 (Alcoa)" style="flex:2;">
+                            <select id="asistenteTipo" style="flex:1;">
+                                <option value="ACCION">Acción</option>
+                                <option value="FONDO">Fondo</option>
+                                <option value="ETF">ETF</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="paso">
+                    <div class="numero-paso">2</div>
+                    <div style="flex:1;">
+                        <strong>Aporta información adicional (opcional)</strong>
+                        <p style="color:#666; font-size:13px;">Puedes adjuntar capturas, texto, o cualquier documento relevante</p>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn-info" onclick="asistente.adjuntarCaptura()">📸 Adjuntar captura</button>
+                            <button class="btn-info" onclick="asistente.adjuntarTexto()">📋 Adjuntar texto</button>
+                            <button class="btn-info" onclick="asistente.adjuntarDocumento()">📄 Adjuntar documento</button>
+                        </div>
+                        <div id="archivosAdjuntos" style="margin-top:10px; font-size:13px; color:#666;"></div>
+                    </div>
+                </div>
+                
+                <div class="paso">
+                    <div class="numero-paso">3</div>
+                    <div style="flex:1;">
+                        <strong>Generar prompt y obtener JSON</strong>
+                        <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap:wrap;">
+                            <button class="btn-advanced" onclick="asistente.generarPrompt()">🎯 GENERAR PROMPT COMPLETO</button>
+                            <button class="btn-primary" onclick="asistente.ejecutarBusqueda()">🔍 EJECUTAR BÚSQUEDA</button>
+                        </div>
+                        <p style="color:#666; font-size:12px; margin-top:5px;">El prompt incluirá contexto macro, geopolítico y noticias relevantes</p>
+
+                        <!-- Panel de acceso a IAs -->
+                        <div class="ia-panel" id="iasPanel">
+                            <h4>🤖 Abre una IA, pega el prompt y adjunta tu captura o datos:</h4>
+                            <div class="ia-grid">
+                                <a class="ia-btn" style="background:linear-gradient(135deg,#4285F4,#34A853);"
+                                   href="https://gemini.google.com" target="_blank">
+                                    <span class="ia-ico">✨</span>Google Gemini<span class="ia-plan">Gratis</span>
+                                </a>
+                                <a class="ia-btn" style="background:linear-gradient(135deg,#0d1117,#30363d);"
+                                   href="https://chat.deepseek.com" target="_blank">
+                                    <span class="ia-ico">🐋</span>DeepSeek<span class="ia-plan">Gratis</span>
+                                </a>
+                                <a class="ia-btn" style="background:linear-gradient(135deg,#10a37f,#1a7f64);"
+                                   href="https://chatgpt.com" target="_blank">
+                                    <span class="ia-ico">💬</span>ChatGPT<span class="ia-plan">Gratis / Plus</span>
+                                </a>
+                                <a class="ia-btn" style="background:linear-gradient(135deg,#cc785c,#a0522d);"
+                                   href="https://claude.ai" target="_blank">
+                                    <span class="ia-ico">🤖</span>Claude<span class="ia-plan">Gratis</span>
+                                </a>
+                                <a class="ia-btn" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);"
+                                   href="https://mistral.ai/en/mistral-ai-studio-for-individuals" target="_blank">
+                                    <span class="ia-ico">🌪️</span>Mistral<span class="ia-plan">Gratis</span>
+                                </a>
+                                <a class="ia-btn" style="background:linear-gradient(135deg,#e85d04,#dc2f02);"
+                                   href="https://www.perplexity.ai" target="_blank">
+                                    <span class="ia-ico">🔎</span>Perplexity<span class="ia-plan">Gratis · web</span>
+                                </a>
+                                <a class="ia-btn" style="background:linear-gradient(135deg,#0066ff,#0044cc);"
+                                   href="https://copilot.microsoft.com" target="_blank">
+                                    <span class="ia-ico">🪟</span>Copilot<span class="ia-plan">Gratis</span>
+                                </a>
+                                <a class="ia-btn" style="background:linear-gradient(135deg,#059669,#047857);"
+                                   href="https://huggingface.co/chat" target="_blank">
+                                    <span class="ia-ico">🤗</span>HuggingFace<span class="ia-plan">Gratis · open</span>
+                                </a>
+                            </div>
+                            <p class="ia-nota">💡 Genera el prompt, cópialo (Ctrl+C), abre la IA que prefieras y pégalo (Ctrl+V). Adjunta tu captura si usas la opción de imagen.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="paso">
+                    <div class="numero-paso">4</div>
+                    <div style="flex:1;">
+                        <strong>Pega aquí el JSON generado</strong>
+                        <textarea id="asistenteJson" rows="6" style="width:100%; font-family:monospace; padding:10px; margin:10px 0;" placeholder='Pega el JSON que te devuelva la IA...'></textarea>
+                        <button class="btn-success" onclick="asistente.procesarJSON()">📥 PROCESAR JSON Y VEREDICTO</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <!-- Columna izquierda: Datos de entrada detallados -->
+            <div class="card">
+                <h2>📊 DATOS DETALLADOS DEL ACTIVO</h2>
+                
+                <div class="analisis-tabs">
+                    <div class="tab active" onclick="cambiarTipoAnalisis('accion', this)">📈 Acción</div>
+                    <div class="tab" onclick="cambiarTipoAnalisis('fondo', this)">🏦 Fondo</div>
+                    <div class="tab" onclick="cambiarTipoAnalisis('etf', this)">📊 ETF</div>
+                </div>
+                
+                <!-- SECCIÓN ACCIONES -->
+                <div id="seccionAccion" class="seccion-datos">
+                    <h3>📈 Datos de Acción</h3>
+                    
+                    <div class="grid-2">
+                        <div class="input-group"><label>Ticker:</label><input type="text" id="accionTicker" readonly></div>
+                        <div class="input-group"><label>ISIN:</label><input type="text" id="accionIsin" readonly></div>
+                    </div>
+                    
+                    <h4>Precio y Valoración</h4>
+                    <div class="grid-3">
+                        <div class="input-group"><label>Precio (€):</label><input type="number" id="accionPrecio" step="0.01" readonly></div>
+                        <div class="input-group"><label>Capitalización (M€):</label><input type="number" id="accionCap" step="0.01" readonly></div>
+                        <div class="input-group"><label>Volumen medio:</label><input type="number" id="accionVolumen" readonly></div>
+                    </div>
+                    
+                    <h4>Ratios de Valoración</h4>
+                    <div class="grid-4">
+                        <div class="input-group"><label>PER:</label><input type="number" id="accionPer" step="0.01" readonly></div>
+                        <div class="input-group"><label>PEG:</label><input type="number" id="accionPeg" step="0.01" readonly></div>
+                        <div class="input-group"><label>P/VC:</label><input type="number" id="accionPvc" step="0.01" readonly></div>
+                        <div class="input-group"><label>P/Ventas:</label><input type="number" id="accionPVentas" step="0.01" readonly></div>
+                        <div class="input-group"><label>P/FCF:</label><input type="number" id="accionPFcf" step="0.01" readonly></div>
+                        <div class="input-group"><label>EV/EBITDA:</label><input type="number" id="accionEvEbitda" step="0.01" readonly></div>
+                    </div>
+                    
+                    <h4>Rentabilidad y Crecimiento</h4>
+                    <div class="grid-3">
+                        <div class="input-group"><label>BPA (€):</label><input type="number" id="accionBpa" step="0.01" readonly></div>
+                        <div class="input-group"><label>Dividendo (€):</label><input type="number" id="accionDividendo" step="0.01" readonly></div>
+                        <div class="input-group"><label>Rentabilidad div (%):</label><input type="number" id="accionRentDiv" step="0.01" readonly></div>
+                        <div class="input-group"><label>Pay-out ratio (%):</label><input type="number" id="accionPayout" step="0.01" readonly></div>
+                        <div class="input-group"><label>Crecimiento BPA (5y):</label><input type="number" id="accionCrecBpa" step="0.01" readonly></div>
+                    </div>
+                    
+                    <h4>Ratios de Rentabilidad</h4>
+                    <div class="grid-3">
+                        <div class="input-group"><label>ROE (%):</label><input type="number" id="accionRoe" step="0.01" readonly></div>
+                        <div class="input-group"><label>ROCE (%):</label><input type="number" id="accionRoce" step="0.01" readonly></div>
+                        <div class="input-group"><label>Margen neto (%):</label><input type="number" id="accionMargen" step="0.01" readonly></div>
+                    </div>
+                    
+                    <h4>Riesgo y Volatilidad</h4>
+                    <div class="grid-3">
+                        <div class="input-group"><label>Beta:</label><input type="number" id="accionBeta" step="0.01" readonly></div>
+                        <div class="input-group"><label>Volatilidad (%):</label><input type="number" id="accionVolatilidad" step="0.01" readonly></div>
+                        <div class="input-group"><label>Sharpe ratio:</label><input type="number" id="accionSharpe" step="0.01" readonly></div>
+                    </div>
+                    
+                    <h4>Balance</h4>
+                    <div class="grid-3">
+                        <div class="input-group"><label>Valor contable (€):</label><input type="number" id="accionVc" step="0.01" readonly></div>
+                        <div class="input-group"><label>Deuda/EBITDA:</label><input type="number" id="accionDeudaEbitda" step="0.01" readonly></div>
+                        <div class="input-group"><label>Liquidez:</label><input type="number" id="accionLiquidez" step="0.01" readonly></div>
+                    </div>
+                    
+                    <h4>Máximos y Mínimos</h4>
+                    <div class="grid-3">
+                        <div class="input-group"><label>Máx 52 sem:</label><input type="number" id="accionMax52" step="0.01" readonly></div>
+                        <div class="input-group"><label>Mín 52 sem:</label><input type="number" id="accionMin52" step="0.01" readonly></div>
+                        <div class="input-group"><label>Media 50d:</label><input type="number" id="accionMedia50" step="0.01" readonly></div>
+                        <div class="input-group"><label>Media 200d:</label><input type="number" id="accionMedia200" step="0.01" readonly></div>
+                    </div>
+                    
+                    <h4>Accionariado</h4>
+                    <div class="grid-2">
+                        <div class="input-group"><label>% Insiders:</label><input type="number" id="accionInsiders" step="0.01" readonly></div>
+                        <div class="input-group"><label>% Instituciones:</label><input type="number" id="accionInstituciones" step="0.01" readonly></div>
+                    </div>
+                </div>
+                
+                <!-- SECCIÓN FONDOS -->
+                <div id="seccionFondo" class="seccion-datos" style="display: none;">
+                    <h3>🏦 Datos de Fondo</h3>
+                    
+                    <div class="grid-2">
+                        <div class="input-group"><label>ISIN:</label><input type="text" id="fondoIsin" readonly></div>
+                        <div class="input-group"><label>Nombre:</label><input type="text" id="fondoNombre" readonly></div>
+                    </div>
+                    
+                    <h4>Datos Generales</h4>
+                    <div class="grid-3">
+                        <div class="input-group"><label>Patrimonio (M€):</label><input type="number" id="fondoPatrimonio" step="0.01" readonly></div>
+                        <div class="input-group"><label>VL (€):</label><input type="number" id="fondoVl" step="0.01" readonly></div>
+                        <div class="input-group"><label>Nº partícipes:</label><input type="number" id="fondoParticipes" readonly></div>
+                    </div>
+                    
+                    <h4>Comisiones</h4>
+                    <div class="grid-3">
+                        <div class="input-group"><label>TER (%):</label><input type="number" id="fondoTer" step="0.01" readonly></div>
+                        <div class="input-group"><label>Gestión (%):</label><input type="number" id="fondoGestion" step="0.01" readonly></div>
+                        <div class="input-group"><label>Depósito (%):</label><input type="number" id="fondoDeposito" step="0.01" readonly></div>
+                        <div class="input-group"><label>Éxito (%):</label><input type="number" id="fondoExito" step="0.01" readonly></div>
+                    </div>
+                    
+                    <h4>Rentabilidades</h4>
+                    <div class="grid-3">
+                        <div class="input-group"><label>YTD (%):</label><input type="number" id="fondoYtd" step="0.01" readonly></div>
+                        <div class="input-group"><label>1 año (%):</label><input type="number" id="fondo1a" step="0.01" readonly></div>
+                        <div class="input-group"><label>3 años (% anual):</label><input type="number" id="fondo3a" step="0.01" readonly></div>
+                        <div class="input-group"><label>5 años (% anual):</label><input type="number" id="fondo5a" step="0.01" readonly></div>
+                        <div class="input-group"><label>10 años (% anual):</label><input type="number" id="fondo10a" step="0.01" readonly></div>
+                    </div>
+                    
+                    <h4>Riesgo</h4>
+                    <div class="grid-3">
+                        <div class="input-group"><label>Volatilidad (%):</label><input type="number" id="fondoVolatilidad" step="0.01" readonly></div>
+                        <div class="input-group"><label>Sharpe:</label><input type="number" id="fondoSharpe" step="0.01" readonly></div>
+                        <div class="input-group"><label>Alpha:</label><input type="number" id="fondoAlpha" step="0.01" readonly></div>
+                        <div class="input-group"><label>Beta:</label><input type="number" id="fondoBeta" step="0.01" readonly></div>
+                        <div class="input-group"><label>Rating Morningstar:</label><input type="text" id="fondoRating" readonly></div>
+                    </div>
+                    
+                    <h4>Composición</h4>
+                    <div class="grid-2">
+                        <div class="input-group"><label>Categoría:</label><input type="text" id="fondoCategoria" readonly></div>
+                        <div class="input-group"><label>Índice referencia:</label><input type="text" id="fondoBenchmark" readonly></div>
+                    </div>
+                    <div class="input-group"><label>Top 10 posiciones (%):</label><input type="number" id="fondoTop10" step="0.01" readonly></div>
+                    <div class="input-group"><label>Nº posiciones:</label><input type="number" id="fondoNposiciones" readonly></div>
+                </div>
+                
+                <!-- SECCIÓN ETFs -->
+                <div id="seccionEtf" class="seccion-datos" style="display: none;">
+                    <h3>📊 Datos de ETF</h3>
+                    
+                    <div class="grid-2">
+                        <div class="input-group"><label>Ticker:</label><input type="text" id="etfTicker" readonly></div>
+                        <div class="input-group"><label>ISIN:</label><input type="text" id="etfIsin" readonly></div>
+                        <div class="input-group"><label>Nombre:</label><input type="text" id="etfNombre" readonly></div>
+                        <div class="input-group"><label>Emisor:</label><input type="text" id="etfEmisor" readonly></div>
+                    </div>
+                    
+                    <h4>Datos Generales</h4>
+                    <div class="grid-3">
+                        <div class="input-group"><label>Patrimonio (M€):</label><input type="number" id="etfPatrimonio" step="0.01" readonly></div>
+                        <div class="input-group"><label>Precio (€):</label><input type="number" id="etfPrecio" step="0.01" readonly></div>
+                        <div class="input-group"><label>Volumen diario:</label><input type="number" id="etfVolumen" readonly></div>
+                    </div>
+                    
+                    <h4>Comisiones</h4>
+                    <div class="grid-2">
+                        <div class="input-group"><label>TER (%):</label><input type="number" id="etfTer" step="0.01" readonly></div>
+                        <div class="input-group"><label>Tracking difference (%):</label><input type="number" id="etfTrackingDiff" step="0.01" readonly></div>
+                    </div>
+                    
+                    <h4>Rentabilidades</h4>
+                    <div class="grid-3">
+                        <div class="input-group"><label>YTD (%):</label><input type="number" id="etfYtd" step="0.01" readonly></div>
+                        <div class="input-group"><label>1 año (%):</label><input type="number" id="etf1a" step="0.01" readonly></div>
+                        <div class="input-group"><label>3 años (% anual):</label><input type="number" id="etf3a" step="0.01" readonly></div>
+                        <div class="input-group"><label>5 años (% anual):</label><input type="number" id="etf5a" step="0.01" readonly></div>
+                    </div>
+                    
+                    <h4>Riesgo</h4>
+                    <div class="grid-3">
+                        <div class="input-group"><label>Volatilidad (%):</label><input type="number" id="etfVolatilidad" step="0.01" readonly></div>
+                        <div class="input-group"><label>Sharpe:</label><input type="number" id="etfSharpe" step="0.01" readonly></div>
+                        <div class="input-group"><label>Beta:</label><input type="number" id="etfBeta" step="0.01" readonly></div>
+                    </div>
+                    
+                    <h4>Composición</h4>
+                    <div class="grid-2">
+                        <div class="input-group"><label>Índice replicado:</label><input type="text" id="etfIndice" readonly></div>
+                        <div class="input-group"><label>Tipo réplica:</label><input type="text" id="etfReplica" readonly></div>
+                    </div>
+                    <div class="input-group"><label>Nº posiciones:</label><input type="number" id="etfNposiciones" readonly></div>
+                    <div class="input-group"><label>Dividendo (%):</label><input type="number" id="etfDividendo" step="0.01" readonly></div>
+                </div>
+            </div>
+
+            <!-- Columna derecha: Resultados y veredicto -->
+            <div class="card">
+                <h2>📋 RESULTADOS Y VEREDICTO</h2>
+                
+                <div id="veredictoBox" class="veredicto-box" style="display: none;">
+                    <!-- Aquí se mostrará el veredicto -->
+                </div>
+                
+                <div id="resultados" class="resultado">
+                    <p style="text-align: center; color: #666;">Introduce el ISIN y usa el asistente para obtener un análisis completo con contexto geopolítico</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ── Polyfills: FileManager, UI, CarteraLogica ─────────────────
+    const _fmtE = v => isNaN(v)||v==null?'0,00 €':v.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+    function _cargarLS(){ try{return JSON.parse(localStorage.getItem('carteraActual'))||null;}catch(e){return null;} }
+
+    const FileManager = {
+        init: ()=>{},
+        obtenerDatos: ()=>_cargarLS()||{version:'3.0',cartera:{},configuracion:{},historico:[]},
+        setDatos: d=>localStorage.setItem('carteraActual',JSON.stringify(d)),
+        agregarAlHistorico: function(reg){
+            const d=this.obtenerDatos();
+            d.historico=d.historico||[];
+            d.historico.push({fecha:new Date().toLocaleDateString(),hora:new Date().toLocaleTimeString(),timestamp:Date.now(),...reg});
+            this.setDatos(d);
+        }
+    };
+
+    const UI = {
+        mostrarAlerta: function(msg, tipo='info'){
+            const t=document.createElement('div');
+            t.style.cssText='position:fixed;bottom:22px;right:22px;padding:13px 20px;border-radius:10px;'
+                +'box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:9999;cursor:pointer;max-width:340px;'
+                +'font-size:14px;color:white;background:'+(tipo==='warning'?'#e65100':tipo==='error'?'#c62828':'#2196F3')+';';
+            t.innerHTML=msg+' <span style="opacity:.6;margin-left:8px">✖</span>';
+            t.onclick=()=>t.remove();
+            document.body.appendChild(t);
+            setTimeout(()=>{if(t.parentNode)t.remove();},5000);
+        },
+        copiarTexto: function(texto, msgOk){
+            navigator.clipboard.writeText(texto)
+                .then(()=>this.mostrarAlerta(msgOk||'✅ Copiado','info'))
+                .catch(()=>this.mostrarAlerta('No se pudo copiar. Usa Ctrl+C manualmente.','warning'));
+        },
+        actualizarBarraEstado: function(){
+            const el=document.getElementById('barraEstado'); if(!el) return;
+            const datos=_cargarLS();
+            if(!datos){
+                el.innerHTML='📂 Sin datos. <a href="configuracion-inicial.html" style="color:#667eea;font-weight:600">Configura tu cartera</a>';
+                return;
+            }
+            const hist=datos.historico||[],ult=hist.length?hist[hist.length-1]:null;
+            el.innerHTML=ult?`📁 Último guardado: <strong>${ult.fecha} ${ult.hora}</strong> &nbsp;|&nbsp; Total: <strong>${_fmtE(ult.total||0)}</strong>`:'📂 Sin registros guardados aún.';
+        }
+    };
+
+    const CarteraLogica = {
+        calcularTotales: function(c){
+            if(!c) return {total:0};
+            const f=(c.monetario||0)+(c.rfCorto||0)+(c.rfMedio||0)+(c.rv||0)+(c.alternativos||0);
+            const e=(c.etfs||[]).reduce((s,x)=>s+(x.cantidad||0)*(x.precioActual||0),0);
+            return {totalFondos:f,totalETFs:e,total:f+e+(c.efectivo||0)+(c.inmobiliario||0)};
+        }
+    };
+    </script>
+    <script>
+        // Inicializar barra de estado
+        document.addEventListener('DOMContentLoaded', function() {
+            FileManager.init();
+            UI.actualizarBarraEstado();
+        });
+
+        // ==============================================
+        // ASISTENTE INTERACTIVO CON CONTEXTO GEOPOLÍTICO
+        // ==============================================
+        const asistente = {
+            archivos: [],
+            
+            adjuntarCaptura: function() {
+                this.archivos.push({ tipo: 'captura', nombre: `Captura_${this.archivos.length+1}.png` });
+                this.actualizarListaArchivos();
+                UI.mostrarAlerta('📸 Captura añadida a la lista', 'info');
+            },
+            
+            adjuntarTexto: function() {
+                let texto = prompt('Pega el texto copiado:');
+                if (texto) {
+                    this.archivos.push({ tipo: 'texto', contenido: texto, nombre: `Texto_${this.archivos.length+1}.txt` });
+                    this.actualizarListaArchivos();
+                    UI.mostrarAlerta('📋 Texto añadido a la lista', 'info');
+                }
+            },
+            
+            adjuntarDocumento: function() {
+                this.archivos.push({ tipo: 'documento', nombre: `Documento_${this.archivos.length+1}.pdf` });
+                this.actualizarListaArchivos();
+                UI.mostrarAlerta('📄 Documento añadido a la lista', 'info');
+            },
+            
+            actualizarListaArchivos: function() {
+                let div = document.getElementById('archivosAdjuntos');
+                if (this.archivos.length === 0) {
+                    div.innerHTML = '';
+                    return;
+                }
+                let html = '<strong>Archivos adjuntos:</strong><ul>';
+                this.archivos.forEach(a => {
+                    html += `<li>${a.nombre} (${a.tipo})</li>`;
+                });
+                html += '</ul>';
+                div.innerHTML = html;
+            },
+            
+            generarPrompt: function() {
+                let isin = document.getElementById('asistenteIsin').value.trim();
+                let tipo = document.getElementById('asistenteTipo').value;
+                
+                if (!isin) {
+                    UI.mostrarAlerta('Por favor, introduce un ISIN', 'warning');
+                    return;
+                }
+                
+                let fechaActual = new Date().toLocaleDateString('es-ES');
+                
+                let prompt = `🔍 **ANÁLISIS COMPLETO DE ACTIVO FINANCIERO CON CONTEXTO GLOBAL**
+Fecha del análisis: ${fechaActual}
+
+## 📌 DATOS DEL ACTIVO
+- ISIN: ${isin}
+- Tipo: ${tipo}
+
+## 🏛️ 1. CONTEXTO MACROECONÓMICO Y GEOPOLÍTICO ACTUAL
+
+### 1.1 CICLO ECONÓMICO
+- **Fase del ciclo**: ¿Expansión, pico, recesión o recuperación?
+- **Política monetaria**: ¿Tipos altos/bajos? ¿Próximos movimientos de la FED/BCE?
+- **Inflación**: ¿Controlada o repunte? ¿Cómo afecta al sector?
+- **Empleo**: ¿Mercado laboral fuerte o débil?
+- **Confianza del consumidor**: ¿Optimismo o pesimismo?
+
+### 1.2 CONTEXTO GEOPOLÍTICO
+- **Conflictos activos**:
+  - Ucrania-Rusia: impacto en energía, defensa, materias primas
+  - Israel-Gaza: tensión en Oriente Medio, petróleo
+  - China-Taiwán: tensión tecnológica y comercial
+- **Sanciones y guerras comerciales**: ¿Afectan a la cadena de suministro?
+- **Elecciones y cambios políticos**: ¿Posibles cambios regulatorios?
+- **Estabilidad regional**: ¿Riesgo país, corrupción, cambios de gobierno?
+
+### 1.3 SECTORES BENEFICIADOS/PERJUDICADOS EN EL CONTEXTO ACTUAL
+- **Defensa y armamento**: + por conflictos bélicos
+- **Energía tradicional**: + por crisis energética
+- **Energías renovables**: + por transición ecológica
+- **Tecnología**: + por IA, digitalización, ciberseguridad
+- **Farmacéutico**: + por envejecimiento población, pandemias
+- **Inmobiliario**: - por tipos altos
+- **Consumo discrecional**: - por inflación
+- **Materias primas**: + por inflación y conflictos
+
+### 1.4 NOTICIAS RELEVANTES (ÚLTIMOS 6 MESES)
+- **Resultados empresariales**: ¿Sorprendieron al alza/baja? ¿Revisiones de guidance?
+- **Fusiones y adquisiciones**: ¿Rumores o confirmaciones?
+- **Contratos importantes**: ¿Nuevos clientes o mercados?
+- **Lanzamientos de productos**: ¿Innovación disruptiva?
+- **Cambios en la dirección**: ¿Nuevo CEO con nueva estrategia?
+- **Problemas legales**: ¿Demandas, investigaciones, multas?
+- **Dividendos**: ¿Aumento, recorte o suspensión?
+- **Split/contra-split**: ¿Movimientos corporativos?
+- **OPAs**: ¿Posible compra de la compañía?
+
+### 1.5 GRANDES INVERSORES
+- **Instituciones**: BlackRock, Vanguard, State Street ¿aumentan o reducen?
+- **Insiders**: Directivos y consejeros ¿compran o venden?
+- **Inversores activistas**: ¿Han entrado fondos como Elliott, Third Point?
+- **Gurús**: ¿Warren Buffett, Cathie Wood, Ray Dalio tienen posición?
+- **Cambios significativos**: ¿Algún inversor relevante ha entrado/salido?
+
+## 📈 2. ANÁLISIS TÉCNICO Y DE MOMENTUM
+
+- **Tendencia**: ¿Alcista, bajista o lateral en 1d, 1s, 1m, 3m, 1a?
+- **Soportes y resistencias**: Niveles clave
+- **Medias móviles**: ¿Precio > MA50? ¿MA50 > MA200? (Golden/Death cross)
+- **RSI**: ¿Sobrecompra (>70) o sobreventa (<30)?
+- **MACD**: ¿Señal de compra o venta?
+- **Volumen**: ¿Confirma la tendencia? ¿Volumen inusual?
+- **Patrones de velas**: ¿Formaciones relevantes?
+- **Figuras chartistas**: ¿HCH, doble suelo, cuña, bandera?
+
+## 📊 3. ANÁLISIS FUNDAMENTAL COMPLETO
+
+### 3.1 VALORACIÓN
+- **PER**: ¿Alto/bajo vs media histórica y sector?
+- **PEG**: ¿Caro/barato considerando crecimiento?
+- **P/VC**: ¿Sobre o infravalorado?
+- **EV/EBITDA**: ¿Atractivo para adquisiciones?
+- **P/FCF**: ¿Genera caja suficiente?
+
+### 3.2 CRECIMIENTO
+- **BPA**: ¿Crecimiento último año, 3 años, 5 años?
+- **Ventas**: ¿Aceleración o desaceleración?
+- **FCF**: ¿Mejora o empeora?
+
+### 3.3 RENTABILIDAD
+- **ROE, ROCE**: ¿Creando valor?
+- **Márgenes**: ¿Expansión o contracción?
+- **Tendencias**: ¿Mejorando o empeorando?
+
+### 3.4 SALUD FINANCIERA
+- **Deuda/EBITDA**: ¿Nivel saludable?
+- **Liquidez**: ¿Problemas de solvencia?
+- **Cobertura de intereses**: ¿Capacidad de pago?
+
+## 🎯 4. ANÁLISIS DE RIESGOS Y OPORTUNIDADES
+
+### 4.1 RIESGOS ESPECÍFICOS
+- **Dependencia de clientes**: ¿Concentración?
+- **Dependencia de proveedores**: ¿Cadena de suministro frágil?
+- **Regulación**: ¿Sector regulado? ¿Cambios normativos?
+- **Competencia**: ¿Ventajas competitivas (moat)?
+- **Disrupción tecnológica**: ¿Riesgo de quedarse atrás?
+
+### 4.2 RIESGOS MACRO
+- **Sensibilidad a tipos**: ¿Mucha deuda? ¿Sector cíclico?
+- **Sensibilidad a divisas**: ¿Exposición internacional?
+- **Sensibilidad a materias primas**: ¿Costes afectados?
+
+### 4.3 OPORTUNIDADES
+- **Nuevos mercados**: ¿Expansión internacional?
+- **Nuevos productos**: ¿Pipeline de innovación?
+- **Eficiencias**: ¿Mejora de márgenes?
+- **M&A**: ¿Posibles adquisiciones?
+
+## 📅 5. CATALIZADORES PRÓXIMOS (PRÓXIMOS 3-6 MESES)
+
+- **Fecha de resultados**: ¿Expectativas?
+- **Eventos del sector**: ¿Conferencias, ferias?
+- **Decisiones regulatorias**: ¿Aprobaciones pendientes?
+- **Lanzamientos**: ¿Nuevos productos/servicios?
+- **Vencimiento de patentes**: ¿Riesgo de genéricos?
+- **Pago de dividendos**: ¿Fecha y cantidad?
+- **Split**: ¿Posible?
+
+## 🔮 6. ESCENARIOS PROBABLES
+
+### 6.1 ESCENARIO ALCISTA (+20%)
+- **¿Qué tendría que pasar?**
+- **Probabilidad estimada**: Alta/Media/Baja
+- **Precio objetivo alcista**: 
+
+### 6.2 ESCENARIO NEUTRAL (0% a +10%)
+- **¿Qué tendría que pasar?**
+- **Probabilidad estimada**: 
+- **Rango de precio**:
+
+### 6.3 ESCENARIO BAJISTA (-20%)
+- **¿Qué tendría que pasar?**
+- **Probabilidad estimada**: 
+- **Precio objetivo bajista**: 
+- **Stop loss recomendado**:
+
+## ✅ 7. RECOMENDACIÓN FINAL
+
+### 7.1 VEREDICTO
+- **¿COMPRAR, MANTENER o VENDER?**
+- **Horizonte recomendado**: Corto/Medio/Largo plazo
+
+### 7.2 ESTRATEGIA DE ENTRADA
+- **Compra única**: ¿Ahora o esperar?
+- **DCA**: ¿Cuánto y cada cuánto?
+- **Precio de entrada ideal**: 
+
+### 7.3 ESTRATEGIA DE SALIDA
+- **Take profit**: ¿A qué precio?
+- **Stop loss**: ¿Dónde?
+- **Trailing stop**: ¿Recomendado?
+
+### 7.4 FUNDAMENTO DE LA RECOMENDACIÓN
+(Explicación breve pero contundente de por qué)
+
+## 📋 ESTRUCTURA DEL JSON REQUERIDO
+
+### Para ACCIONES:
+{
+  "tipo": "ACCION",
+  "datos_basicos": {
+    "nombre": "",
+    "ticker": "",
+    "isin": "${isin}",
+    "precio": 0,
+    "capitalizacion": 0,
+    "volumen_medio": 0
+  },
+  "ratios_valoracion": {
+    "per": 0,
+    "peg": 0,
+    "pvc": 0,
+    "p_ventas": 0,
+    "p_fcf": 0,
+    "ev_ebitda": 0
+  },
+  "rentabilidad": {
+    "bpa": 0,
+    "dividendo": 0,
+    "rentabilidad_div": 0,
+    "payout": 0,
+    "crecimiento_bpa_5y": 0
+  },
+  "ratios_rentabilidad": {
+    "roe": 0,
+    "roce": 0,
+    "margen_neto": 0
+  },
+  "riesgo": {
+    "beta": 0,
+    "volatilidad": 0,
+    "sharpe": 0
+  },
+  "balance": {
+    "valor_contable": 0,
+    "deuda_ebitda": 0,
+    "liquidez": 0
+  },
+  "mercado": {
+    "max_52_semanas": 0,
+    "min_52_semanas": 0,
+    "media_50": 0,
+    "media_200": 0
+  },
+  "accionariado": {
+    "insiders": 0,
+    "instituciones": 0
+  },
+  "contexto": {
+    "sector_beneficiado": "si/no/neutral",
+    "conflictos_afectan": "si/no/neutral",
+    "inversores_destacados": ""
+  },
+  "recomendacion": {
+    "veredicto": "COMPRAR/MANTENER/VENDER",
+    "precio_objetivo": 0,
+    "stop_loss": 0,
+    "fundamento": ""
+  }
+}
+
+### Para FONDOS y ETFs (estructura similar con sus campos específicos)...
+
+## 📸 INFORMACIÓN ADICIONAL APORTADA POR EL USUARIO:`;
+
+                // Añadir información de archivos adjuntos
+                if (this.archivos.length > 0) {
+                    prompt += `\n\nEl usuario ha adjuntado los siguientes elementos:`;
+                    this.archivos.forEach(a => {
+                        if (a.tipo === 'texto') {
+                            prompt += `\n\n--- TEXTO ADJUNTO: ${a.nombre} ---\n${a.contenido}\n--- FIN TEXTO ---`;
+                        } else {
+                            prompt += `\n- ${a.nombre} (${a.tipo}) - Revisar contenido adjunto`;
+                        }
+                    });
+                } else {
+                    prompt += `\n\nNo se ha adjuntado información adicional.`;
+                }
+                
+                prompt += `\n\n## ⚠️ INSTRUCCIONES FINALES:
+1. Utiliza TODA la información disponible (incluyendo capturas y textos adjuntos)
+2. Complementa con tu conocimiento actualizado del contexto macro y geopolítico
+3. Sé específico en porcentajes, niveles de precios y fechas
+4. El JSON debe ser válido y completo
+5. Devuélveme SOLO el JSON, sin texto adicional antes o después
+6. Si faltan datos esenciales, indícalo con valores null pero mantén la estructura`;
+                
+                UI.copiarTexto(prompt, '✅ Prompt completo con contexto global copiado');
+                // Resaltar panel de IAs para guiar al usuario
+                const panel = document.getElementById('iasPanel');
+                if (panel) {
+                    panel.style.borderColor = '#667eea';
+                    panel.style.background  = '#f0f4ff';
+                    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    setTimeout(() => { panel.style.borderColor='#e0e0e0'; panel.style.background='#f8f9fa'; }, 3500);
+                }
+                UI.mostrarAlerta('✅ Prompt copiado. Ahora abre la IA que prefieras y pégalo.', 'info');
+            },
+            
+            ejecutarBusqueda: function() {
+                this.generarPrompt();
+            },
+            
+            procesarJSON: function() {
+                let texto = document.getElementById('asistenteJson').value.trim();
+                if (!texto) {
+                    UI.mostrarAlerta('No hay JSON para procesar', 'warning');
+                    return;
+                }
+                
+                try {
+                    let datos = JSON.parse(texto);
+                    
+                    // Mostrar veredicto
+                    this.mostrarVeredicto(datos);
+                    
+                    // Rellenar campos según tipo
+                    if (datos.tipo === 'ACCION') {
+                        this.rellenarAccion(datos);
+                        cambiarTipoAnalisis('accion', null);
+                    } else if (datos.tipo === 'FONDO') {
+                        this.rellenarFondo(datos);
+                        cambiarTipoAnalisis('fondo', null);
+                    } else if (datos.tipo === 'ETF') {
+                        this.rellenarEtf(datos);
+                        cambiarTipoAnalisis('etf', null);
+                    }
+                    
+                    UI.mostrarAlerta('✅ JSON procesado correctamente', 'info');
+                    
+                } catch (e) {
+                    UI.mostrarAlerta('Error al parsear JSON: ' + e.message, 'warning');
+                    console.error(e);
+                }
+            },
+            
+            mostrarVeredicto: function(datos) {
+                let box = document.getElementById('veredictoBox');
+                let veredicto = '';
+                let clase = '';
+                let precioObjetivo = '';
+                let stopLoss = '';
+                let fundamento = '';
+                
+                if (datos.recomendacion) {
+                    veredicto = datos.recomendacion.veredicto || 'N/A';
+                    if (veredicto.includes('COMPRAR')) clase = 'veredicto-comprar';
+                    else if (veredicto.includes('VENDER')) clase = 'veredicto-vender';
+                    else clase = 'veredicto-mantener';
+                    
+                    precioObjetivo = datos.recomendacion.precio_objetivo ? 
+                        `<p><strong>Precio objetivo:</strong> ${datos.recomendacion.precio_objetivo.toFixed(2)} €</p>` : '';
+                    stopLoss = datos.recomendacion.stop_loss ? 
+                        `<p><strong>Stop loss:</strong> ${datos.recomendacion.stop_loss.toFixed(2)} €</p>` : '';
+                    fundamento = datos.recomendacion.fundamento || '';
+                }
+                
+                box.innerHTML = `
+                    <h3>🎯 VEREDICTO: ${veredicto}</h3>
+                    ${precioObjetivo}
+                    ${stopLoss}
+                    <p style="margin-top:10px;">${fundamento}</p>
+                `;
+                box.className = `veredicto-box ${clase}`;
+                box.style.display = 'block';
+            },
+            
+            rellenarAccion: function(d) {
+                if (d.datos_basicos) {
+                    document.getElementById('accionTicker').value = d.datos_basicos.ticker || '';
+                    document.getElementById('accionIsin').value = d.datos_basicos.isin || '';
+                    document.getElementById('accionPrecio').value = d.datos_basicos.precio || 0;
+                    document.getElementById('accionCap').value = d.datos_basicos.capitalizacion || 0;
+                    document.getElementById('accionVolumen').value = d.datos_basicos.volumen_medio || 0;
+                }
+                
+                if (d.ratios_valoracion) {
+                    document.getElementById('accionPer').value = d.ratios_valoracion.per || 0;
+                    document.getElementById('accionPeg').value = d.ratios_valoracion.peg || 0;
+                    document.getElementById('accionPvc').value = d.ratios_valoracion.pvc || 0;
+                    document.getElementById('accionPVentas').value = d.ratios_valoracion.p_ventas || 0;
+                    document.getElementById('accionPFcf').value = d.ratios_valoracion.p_fcf || 0;
+                    document.getElementById('accionEvEbitda').value = d.ratios_valoracion.ev_ebitda || 0;
+                }
+                
+                if (d.rentabilidad) {
+                    document.getElementById('accionBpa').value = d.rentabilidad.bpa || 0;
+                    document.getElementById('accionDividendo').value = d.rentabilidad.dividendo || 0;
+                    document.getElementById('accionRentDiv').value = d.rentabilidad.rentabilidad_div || 0;
+                    document.getElementById('accionPayout').value = d.rentabilidad.payout || 0;
+                    document.getElementById('accionCrecBpa').value = d.rentabilidad.crecimiento_bpa_5y || 0;
+                }
+                
+                if (d.ratios_rentabilidad) {
+                    document.getElementById('accionRoe').value = d.ratios_rentabilidad.roe || 0;
+                    document.getElementById('accionRoce').value = d.ratios_rentabilidad.roce || 0;
+                    document.getElementById('accionMargen').value = d.ratios_rentabilidad.margen_neto || 0;
+                }
+                
+                if (d.riesgo) {
+                    document.getElementById('accionBeta').value = d.riesgo.beta || 0;
+                    document.getElementById('accionVolatilidad').value = d.riesgo.volatilidad || 0;
+                    document.getElementById('accionSharpe').value = d.riesgo.sharpe || 0;
+                }
+                
+                if (d.balance) {
+                    document.getElementById('accionVc').value = d.balance.valor_contable || 0;
+                    document.getElementById('accionDeudaEbitda').value = d.balance.deuda_ebitda || 0;
+                    document.getElementById('accionLiquidez').value = d.balance.liquidez || 0;
+                }
+                
+                if (d.mercado) {
+                    document.getElementById('accionMax52').value = d.mercado.max_52_semanas || 0;
+                    document.getElementById('accionMin52').value = d.mercado.min_52_semanas || 0;
+                    document.getElementById('accionMedia50').value = d.mercado.media_50 || 0;
+                    document.getElementById('accionMedia200').value = d.mercado.media_200 || 0;
+                }
+                
+                if (d.accionariado) {
+                    document.getElementById('accionInsiders').value = d.accionariado.insiders || 0;
+                    document.getElementById('accionInstituciones').value = d.accionariado.instituciones || 0;
+                }
+            },
+            
+            rellenarFondo: function(d) {
+                if (d.datos_basicos) {
+                    document.getElementById('fondoIsin').value = d.datos_basicos.isin || '';
+                    document.getElementById('fondoNombre').value = d.datos_basicos.nombre || '';
+                    document.getElementById('fondoPatrimonio').value = d.datos_basicos.patrimonio || 0;
+                    document.getElementById('fondoVl').value = d.datos_basicos.vl || 0;
+                    document.getElementById('fondoParticipes').value = d.datos_basicos.participes || 0;
+                }
+                
+                if (d.comisiones) {
+                    document.getElementById('fondoTer').value = d.comisiones.ter || 0;
+                    document.getElementById('fondoGestion').value = d.comisiones.gestion || 0;
+                    document.getElementById('fondoDeposito').value = d.comisiones.deposito || 0;
+                    document.getElementById('fondoExito').value = d.comisiones.exito || 0;
+                }
+                
+                if (d.rentabilidades) {
+                    document.getElementById('fondoYtd').value = d.rentabilidades.ytd || 0;
+                    document.getElementById('fondo1a').value = d.rentabilidades.uno_a || 0;
+                    document.getElementById('fondo3a').value = d.rentabilidades.tres_a || 0;
+                    document.getElementById('fondo5a').value = d.rentabilidades.cinco_a || 0;
+                    document.getElementById('fondo10a').value = d.rentabilidades.diez_a || 0;
+                }
+                
+                if (d.riesgo) {
+                    document.getElementById('fondoVolatilidad').value = d.riesgo.volatilidad || 0;
+                    document.getElementById('fondoSharpe').value = d.riesgo.sharpe || 0;
+                    document.getElementById('fondoAlpha').value = d.riesgo.alpha || 0;
+                    document.getElementById('fondoBeta').value = d.riesgo.beta || 0;
+                    document.getElementById('fondoRating').value = d.riesgo.rating || '';
+                }
+                
+                if (d.composicion) {
+                    document.getElementById('fondoCategoria').value = d.composicion.categoria || '';
+                    document.getElementById('fondoBenchmark').value = d.composicion.benchmark || '';
+                    document.getElementById('fondoTop10').value = d.composicion.top10 || 0;
+                    document.getElementById('fondoNposiciones').value = d.composicion.n_posiciones || 0;
+                }
+            },
+            
+            rellenarEtf: function(d) {
+                if (d.datos_basicos) {
+                    document.getElementById('etfTicker').value = d.datos_basicos.ticker || '';
+                    document.getElementById('etfIsin').value = d.datos_basicos.isin || '';
+                    document.getElementById('etfNombre').value = d.datos_basicos.nombre || '';
+                    document.getElementById('etfEmisor').value = d.datos_basicos.emisor || '';
+                    document.getElementById('etfPatrimonio').value = d.datos_basicos.patrimonio || 0;
+                    document.getElementById('etfPrecio').value = d.datos_basicos.precio || 0;
+                    document.getElementById('etfVolumen').value = d.datos_basicos.volumen || 0;
+                }
+                
+                if (d.comisiones) {
+                    document.getElementById('etfTer').value = d.comisiones.ter || 0;
+                    document.getElementById('etfTrackingDiff').value = d.comisiones.tracking_diff || 0;
+                }
+                
+                if (d.rentabilidades) {
+                    document.getElementById('etfYtd').value = d.rentabilidades.ytd || 0;
+                    document.getElementById('etf1a').value = d.rentabilidades.uno_a || 0;
+                    document.getElementById('etf3a').value = d.rentabilidades.tres_a || 0;
+                    document.getElementById('etf5a').value = d.rentabilidades.cinco_a || 0;
+                }
+                
+                if (d.riesgo) {
+                    document.getElementById('etfVolatilidad').value = d.riesgo.volatilidad || 0;
+                    document.getElementById('etfSharpe').value = d.riesgo.sharpe || 0;
+                    document.getElementById('etfBeta').value = d.riesgo.beta || 0;
+                }
+                
+                if (d.composicion) {
+                    document.getElementById('etfIndice').value = d.composicion.indice || '';
+                    document.getElementById('etfReplica').value = d.composicion.replica || '';
+                    document.getElementById('etfNposiciones').value = d.composicion.n_posiciones || 0;
+                    document.getElementById('etfDividendo').value = d.composicion.dividendo || 0;
+                }
+            }
+        };
+
+        // ==============================================
+        // FUNCIONES DE INTERFAZ
+        // ==============================================
+        function cambiarTipoAnalisis(tipo, el) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            if (el) el.classList.add('active');
+            
+            document.getElementById('seccionAccion').style.display = 'none';
+            document.getElementById('seccionFondo').style.display = 'none';
+            document.getElementById('seccionEtf').style.display = 'none';
+            
+            if (tipo === 'accion') document.getElementById('seccionAccion').style.display = 'block';
+            else if (tipo === 'fondo') document.getElementById('seccionFondo').style.display = 'block';
+            else if (tipo === 'etf') document.getElementById('seccionEtf').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

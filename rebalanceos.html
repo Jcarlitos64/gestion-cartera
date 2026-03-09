@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Rebalanceos</title>
+    <link rel="stylesheet" href="css/estilo.css">
+    <style>
+        .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:15px; margin-bottom:25px; }
+        .stat-card  { background:linear-gradient(135deg,#667eea,#764ba2); color:white; padding:20px; border-radius:12px; text-align:center; }
+        .stat-card h4 { font-size:13px; opacity:.85; margin-bottom:8px; }
+        .stat-card p  { font-size:22px; font-weight:700; }
+        #barraEstado  { background:#f8f9fa; padding:10px 15px; border-radius:8px; margin-top:15px; font-size:13px; border-left:4px solid #667eea; }
+        .tabla-scroll { overflow-x:auto; max-height:500px; overflow-y:auto; }
+        .var-pos { color:#2e7d32; font-weight:600; }
+        .var-neg { color:#c62828; font-weight:600; }
+        .var-neu { color:#888; }
+        .filtros  { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:15px; }
+        .filtros input, .filtros select { padding:8px 12px; border:1px solid #ccc; border-radius:6px; font-size:14px; }
+        @media(max-width:768px){ .stats-grid{grid-template-columns:1fr 1fr;} }
+    </style>
+</head>
+<body>
+<div class="container">
+
+<div class="menu">
+    <h1>🔄 HISTÓRICO DE REBALANCEOS</h1>
+    <div class="nav">
+        <button style="background:#4CAF50;" onclick="location.href='dashboard.html'">🏠 Dashboard</button>
+        <button style="background:#2196F3;" onclick="location.href='cartera.html'">📈 Cartera</button>
+        <button style="background:#FF9800;" onclick="location.href='rebalanceos.html'">🔄 Histórico</button>
+        <button style="background:#9C27B0;" onclick="location.href='analisis.html'">🔍 Analizador</button>
+        <button style="background:#00BCD4;" onclick="location.href='composicion.html'">📊 Composición</button>
+        <button style="background:#f44336;" onclick="location.href='graficos.html'">📈 Gráficos</button>
+        <button style="background:#607D8B;" onclick="location.href='herramientas.html'">🛠️ Herramientas</button>
+        <button style="background:#FF5722;" onclick="location.href='importar-cartera.html'">📥 Importar</button>
+        <button style="background:#795548;" onclick="location.href='ayuda.html'">❓ Ayuda</button>
+    </div>
+    <div id="barraEstado">Cargando...</div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card"><h4>Total registros</h4><p id="statRegistros">0</p></div>
+    <div class="stat-card"><h4>Mayor ganancia</h4><p id="statMejor">—</p></div>
+    <div class="stat-card"><h4>Mayor pérdida</h4><p id="statPeor">—</p></div>
+    <div class="stat-card"><h4>Variación total</h4><p id="statTotal">—</p></div>
+</div>
+
+<!-- Tabla histórico -->
+<div class="card">
+    <h2>📋 REGISTRO HISTÓRICO</h2>
+
+    <div class="filtros">
+        <input type="text" id="filtroBusqueda" placeholder="🔍 Buscar por fecha..." oninput="renderTabla()" style="min-width:200px;">
+        <select id="filtroOrden" onchange="renderTabla()">
+            <option value="desc">Más reciente primero</option>
+            <option value="asc">Más antiguo primero</option>
+        </select>
+        <button class="btn-primary" onclick="exportarCSV()">📥 Exportar CSV</button>
+        <button class="btn-warning" onclick="limpiarHistorico()">🗑️ Limpiar histórico</button>
+    </div>
+
+    <div class="tabla-scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th><th>Fecha</th><th>Hora</th>
+                    <th>Monetario</th><th>RF Corto</th><th>RF Medio</th><th>RV</th><th>Alternativos</th>
+                    <th>ETFs</th><th>Efectivo</th><th>Inmob.</th>
+                    <th>Total</th><th>Variación</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTabla"></tbody>
+        </table>
+    </div>
+    <p id="sinDatos" style="text-align:center;color:#999;padding:30px;display:none;">Sin registros históricos todavía.</p>
+</div>
+
+<div class="button-group">
+    <button class="btn-secondary" onclick="location.href='cartera.html'">← Volver a Cartera</button>
+</div>
+
+</div>
+
+<script>
+const fmtE = v => isNaN(v)||v==null?'0,00 €':v.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+const g    = id => document.getElementById(id);
+
+function cargarDatos() {
+    try { return JSON.parse(localStorage.getItem('carteraActual'))||null; } catch(e){return null;}
+}
+
+let historico = [];
+
+function barraEstado(datos) {
+    const el=g('barraEstado'); if(!el) return;
+    if(!datos){ el.textContent='Sin datos.'; return; }
+    const hist=datos.historico||[];
+    const ult=hist.length?hist[hist.length-1]:null;
+    el.innerHTML=ult
+        ?`📁 Último guardado: <strong>${ult.fecha} ${ult.hora}</strong> &nbsp;|&nbsp; Total: <strong>${fmtE(ult.total||0)}</strong>`
+        :'📂 Sin registros guardados aún.';
+}
+
+function mostrarStats() {
+    g('statRegistros').textContent=historico.length;
+    if(historico.length<2){ return; }
+
+    let mejorGanancia=-Infinity, peorPerdida=Infinity;
+    for(let i=1;i<historico.length;i++){
+        const dif=(historico[i].total||0)-(historico[i-1].total||0);
+        if(dif>mejorGanancia) mejorGanancia=dif;
+        if(dif<peorPerdida)   peorPerdida=dif;
+    }
+    g('statMejor').textContent=mejorGanancia===0?'—':(mejorGanancia>0?'+':'')+fmtE(mejorGanancia);
+    g('statMejor').style.color=mejorGanancia>=0?'#a5d6a7':'#ef9a9a';
+    g('statPeor').textContent=peorPerdida===0?'—':(peorPerdida>0?'+':'')+fmtE(peorPerdida);
+    g('statPeor').style.color=peorPerdida>=0?'#a5d6a7':'#ef9a9a';
+
+    const v0=historico[0].total||0, v1=historico[historico.length-1].total||0;
+    const varT=v0>0?(v1-v0)/v0*100:0;
+    const varStr=(varT>=0?'+':'')+varT.toFixed(1)+'%';
+    g('statTotal').textContent=varStr;
+    g('statTotal').style.color=varT>=0?'#a5d6a7':'#ef9a9a';
+}
+
+function renderTabla() {
+    const busq=(g('filtroBusqueda').value||'').toLowerCase();
+    const orden=g('filtroOrden').value;
+    let lista=[...historico];
+    if(busq) lista=lista.filter(h=>(h.fecha||'').toLowerCase().includes(busq));
+    if(orden==='desc') lista.reverse();
+
+    const tbody=g('cuerpoTabla');
+    const sinDatos=g('sinDatos');
+
+    if(!lista.length){ tbody.innerHTML=''; sinDatos.style.display='block'; return; }
+    sinDatos.style.display='none';
+
+    tbody.innerHTML=lista.map((h,i_vis)=>{
+        // índice original para calcular variación
+        const i_orig=historico.indexOf(h);
+        const ant=i_orig>0?historico[i_orig-1]:null;
+        const varV=ant&&(ant.total!=null)?(h.total||0)-(ant.total||0):null;
+        const varCls=varV===null?'var-neu':varV>0?'var-pos':'var-neg';
+        const varStr=varV===null?'—':((varV>=0?'+':'')+fmtE(varV));
+        const etfsInv=(h.etfs||[]).reduce((s,e)=>s+(e.cantidad||0)*(e.precioActual||0),0);
+        const etfsPres=parseFloat(h.etfsValorInicial)||0;
+        const etfsTotal=etfsInv+Math.max(0,etfsPres-etfsInv);
+        const num=orden==='asc'?i_orig+1:historico.length-i_orig;
+        return `<tr>
+            <td style="color:#999;font-size:12px;">${num}</td>
+            <td>${h.fecha||'—'}</td><td>${h.hora||'—'}</td>
+            <td>${fmtE(h.monetario)}</td><td>${fmtE(h.rfCorto)}</td>
+            <td>${fmtE(h.rfMedio)}</td><td>${fmtE(h.rv)}</td>
+            <td>${fmtE(h.alternativos)}</td>
+            <td>${fmtE(etfsTotal)}</td>
+            <td>${fmtE(h.efectivo)}</td><td>${fmtE(h.inmobiliario)}</td>
+            <td><strong>${fmtE(h.total)}</strong></td>
+            <td class="${varCls}">${varStr}</td>
+        </tr>`;
+    }).join('');
+}
+
+function exportarCSV() {
+    if(!historico.length){ alert('No hay datos para exportar.'); return; }
+    let csv='\uFEFF'; // BOM para Excel
+    csv+='#,Fecha,Hora,Monetario,RF Corto,RF Medio,RV,Alternativos,ETFs,Efectivo,Inmobiliario,Total,Variación\n';
+    historico.forEach((h,i)=>{
+        const ant=i>0?historico[i-1]:null;
+        const varV=ant?(h.total||0)-(ant.total||0):0;
+        const etfsInv2=(h.etfs||[]).reduce((s,e)=>s+(e.cantidad||0)*(e.precioActual||0),0);
+        const etfsPres2=parseFloat(h.etfsValorInicial)||0;
+        const etfs=etfsInv2+Math.max(0,etfsPres2-etfsInv2);
+        csv+=`${i+1},"${h.fecha}","${h.hora}",`
+            +`${(h.monetario||0).toFixed(2)},${(h.rfCorto||0).toFixed(2)},${(h.rfMedio||0).toFixed(2)},`
+            +`${(h.rv||0).toFixed(2)},${(h.alternativos||0).toFixed(2)},${etfs.toFixed(2)},`
+            +`${(h.efectivo||0).toFixed(2)},${(h.inmobiliario||0).toFixed(2)},`
+            +`${(h.total||0).toFixed(2)},${varV.toFixed(2)}\n`;
+    });
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=`historico_cartera_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click(); URL.revokeObjectURL(a.href);
+}
+
+function limpiarHistorico() {
+    if(!confirm('¿Eliminar todo el histórico? Esta acción no se puede deshacer.')) return;
+    try {
+        const datos=cargarDatos();
+        if(datos){ datos.historico=[]; localStorage.setItem('carteraActual',JSON.stringify(datos)); }
+        historico=[];
+        mostrarStats();
+        renderTabla();
+        alert('Histórico eliminado. Recuerda guardar el archivo JSON para que el cambio sea permanente.');
+    } catch(e){ alert('Error al limpiar el histórico.'); }
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+    const datos=cargarDatos();
+    barraEstado(datos);
+    historico=datos?.historico||[];
+    mostrarStats();
+    renderTabla();
+});
+</script>
+</body>
+</html>

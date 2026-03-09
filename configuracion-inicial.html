@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración Inicial - Cartera de Inversión</title>
+    <link rel="stylesheet" href="css/estilo.css">
+    <style>
+        .btn-volver {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: white;
+            text-decoration: none;
+            font-size: 1.1em;
+        }
+        .btn-volver:hover { text-decoration: underline; }
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .preview-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        .preview-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .preview-value {
+            display: block;
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #667eea;
+        }
+        .validacion-box {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+        .validacion-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .validacion-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .perfiles-predet {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .btn-perfil {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+            transition: all 0.3s;
+            flex: 1 1 auto;
+            min-width: 120px;
+        }
+        .btn-perfil:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        #barraEstado {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="menu">
+            <h1>⚙️ CONFIGURACIÓN INICIAL</h1>
+            <div class="nav">
+        <button style="background:#4CAF50;" onclick="location.href='dashboard.html'">🏠 Dashboard</button>
+                <button style="background:#2196F3;" onclick="location.href='cartera.html'">📈 Cartera</button>
+                <button style="background:#FF9800;" onclick="location.href='rebalanceos.html'">🔄 Histórico</button>
+                <button style="background:#9C27B0;" onclick="location.href='analisis.html'">🔍 Analizador</button>
+                <button style="background:#00BCD4;" onclick="location.href='composicion.html'">📊 Composición</button>
+                <button style="background:#f44336;" onclick="location.href='graficos.html'">📈 Gráficos</button>
+                <button style="background:#607D8B;" onclick="location.href='herramientas.html'">🛠️ Herramientas</button>
+                <button style="background:#FF5722;" onclick="location.href='importar-cartera.html'">📥 Importar</button>
+                <button style="background:#795548;" onclick="location.href='ayuda.html'">❓ Ayuda</button>
+            </div>
+            <div id="barraEstado"></div>
+        </div>
+
+        <div class="info-box" style="background: white;">
+            <h4>📌 ¿Cómo funciona?</h4>
+            <p>Introduce tu capital total y cómo lo distribuyes. Los fondos se dividirán según los porcentajes que elijas.</p>
+        </div>
+        
+        <!-- Capital Total -->
+        <div class="card">
+            <h2>💰 Capital Total</h2>
+            <label for="capitalTotal">Capital Total (€):</label>
+            <input type="number" id="capitalTotal" value="100000" min="0" step="1000" style="width: 100%; padding: 12px; font-size: 16px;">
+        </div>
+
+        <!-- Perfiles predefinidos -->
+        <div class="card">
+            <h2>🎯 PERFILES PREDEFINIDOS</h2>
+            <div class="perfiles-predet">
+                <button class="btn-perfil" style="background: #1a237e;" onclick="aplicarPerfilConfiguracion('ultraconservador')">🛡️ UltraConservador</button>
+                <button class="btn-perfil" style="background: #283593;" onclick="aplicarPerfilConfiguracion('conservador')">🛡️ Conservador</button>
+                <button class="btn-perfil" style="background: #ff8f00;" onclick="aplicarPerfilConfiguracion('equilibrado')">⚖️ Equilibrado</button>
+                <button class="btn-perfil" style="background: #e65100;" onclick="aplicarPerfilConfiguracion('crecimiento')">📈 Crecimiento</button>
+                <button class="btn-perfil" style="background: #b71c1c;" onclick="aplicarPerfilConfiguracion('arriesgado')">🚀 Arriesgado</button>
+            </div>
+        </div>
+
+        <!-- Distribución de activos -->
+        <div class="card">
+            <h2>📊 Distribuye tu capital</h2>
+            
+            <div class="input-group">
+                <label for="efectivo">💶 Efectivo:</label>
+                <input type="number" id="efectivo" value="50000" min="0" step="100">
+                <span class="moneda">€</span>
+            </div>
+
+            <div class="input-group">
+                <label for="fondos">🏦 Fondos:</label>
+                <input type="number" id="fondos" value="30000" min="0" step="100">
+                <span class="moneda">€</span>
+            </div>
+
+            <div class="input-group">
+                <label for="etfs">📈 ETFs / Acciones:</label>
+                <input type="number" id="etfs" value="20000" min="0" step="100">
+                <span class="moneda">€</span>
+            </div>
+
+            <div class="input-group">
+                <label for="inmobiliario">🏠 Inmobiliario:</label>
+                <input type="number" id="inmobiliario" value="0" min="0" step="100">
+                <span class="moneda">€</span>
+            </div>
+        </div>
+
+        <!-- Porcentajes objetivo -->
+        <div class="card">
+            <h2>📊 PORCENTAJES OBJETIVO (para los fondos)</h2>
+            <div class="porcentajes-grid">
+                <div class="porcentaje-item"><label>Monetario</label><input type="number" id="pctMonetario" step="0.1" value="5"></div>
+                <div class="porcentaje-item"><label>RF Corto</label><input type="number" id="pctRFCorto" step="0.1" value="15"></div>
+                <div class="porcentaje-item"><label>RF Medio</label><input type="number" id="pctRFMedio" step="0.1" value="25"></div>
+                <div class="porcentaje-item"><label>Renta Variable</label><input type="number" id="pctRV" step="0.1" value="40"></div>
+                <div class="porcentaje-item"><label>Alternativos</label><input type="number" id="pctAlternativos" step="0.1" value="15"></div>
+                <div class="porcentaje-item"><label>TOTAL</label><input type="text" id="totalPorcentajes" readonly value="100%" style="background:#e9ecef;"></div>
+            </div>
+        </div>
+
+        <!-- Resumen y validación -->
+        <div class="card">
+            <h3>📋 Resumen</h3>
+            <div class="resumen-item" style="display: flex; justify-content: space-between; padding: 10px 0;">
+                <span>Capital Total:</span>
+                <span id="resumenCapital">100,000.00 €</span>
+            </div>
+            <div class="resumen-item" style="display: flex; justify-content: space-between; padding: 10px 0;">
+                <span>Total Asignado:</span>
+                <span id="totalAsignado">0.00 €</span>
+            </div>
+            <div class="resumen-item" style="display: flex; justify-content: space-between; padding: 10px 0;">
+                <span>Diferencia:</span>
+                <span id="diferencia">100,000.00 €</span>
+            </div>
+            <div id="mensajeValidacion" class="validacion-box validacion-warning">
+                ⚠️ Te faltan 100,000.00 € por asignar
+            </div>
+        </div>
+
+        <!-- Vista previa -->
+        <div class="card">
+            <h3>👀 Vista previa</h3>
+            <div class="preview-grid">
+                <div class="preview-item">
+                    <span class="preview-label">Fondos</span>
+                    <span class="preview-value" id="previewFondos">0.00 €</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">ETFs/Acc.</span>
+                    <span class="preview-value" id="previewEtfs">0.00 €</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">Efectivo + Inm.</span>
+                    <span class="preview-value" id="previewEfectivoInm">0.00 €</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nombre del archivo -->
+        <div class="card">
+            <h3>💾 Nombre del archivo</h3>
+            <p style="color:#666; font-size:14px; margin-bottom:10px;">El archivo se descargará en tu carpeta de Descargas. Puedes cambiarlo antes de guardar.</p>
+            <input type="text" id="nombreArchivo" value="mi-cartera.json"
+                   style="width:100%; padding:10px; font-size:15px; border:2px solid #4CAF50; border-radius:8px;">
+        </div>
+
+        <!-- Botón principal -->
+        <button id="iniciarCartera" disabled class="btn-primary" style="width:100%; padding: 18px; font-size: 18px;">🔒 INICIAR CARTERA</button>
+    </div>
+
+    <script>
+    // ── Funciones standalone (no dependen de cartera.js) ─────────
+    function calcularTotales(c) {
+        if(!c) return { totalFondos:0, total:0 };
+        const totalFondos = (c.monetario||0)+(c.rfCorto||0)+(c.rfMedio||0)+(c.rv||0)+(c.alternativos||0);
+        const totalETFs   = (c.etfs||[]).reduce((s,e)=>s+(e.cantidad||0)*(e.precioActual||0),0);
+        return { totalFondos, total: totalFondos + totalETFs + (c.efectivo||0) + (c.inmobiliario||0) };
+    }
+
+    function guardarEnArchivo(datos, nombre) {
+        const blob = new Blob([JSON.stringify(datos, null, 2)], { type:'application/json' });
+        const a    = document.createElement('a');
+        a.href     = URL.createObjectURL(blob);
+        a.download = nombre;
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a); URL.revokeObjectURL(a.href);
+    }
+
+    function mostrarModalGuardado(callback) {
+        const prev = document.getElementById('_mGuardado'); if(prev) prev.remove();
+        const ov   = document.createElement('div');
+        ov.id      = '_mGuardado';
+        ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;justify-content:center;align-items:center;z-index:99999;';
+        ov.innerHTML = `<div style="background:white;border-radius:16px;padding:40px;max-width:420px;width:90%;text-align:center;box-shadow:0 25px 60px rgba(0,0,0,.3);">
+            <div style="font-size:52px;margin-bottom:16px;">💾</div>
+            <h3 style="color:#333;margin-bottom:12px;">Archivo guardado</h3>
+            <p style="color:#555;line-height:1.7;margin-bottom:28px;">
+                El archivo se ha descargado en <strong>Descargas</strong>.<br>Muévelo a donde quieras conservarlo.
+            </p>
+            <button id="_btnOk" style="background:#4CAF50;color:white;border:none;padding:13px 45px;border-radius:9px;font-size:16px;font-weight:700;cursor:pointer;">Aceptar</button>
+        </div>`;
+        document.body.appendChild(ov);
+        const cerrar = () => { ov.remove(); if(callback) callback(); };
+        document.getElementById('_btnOk').addEventListener('click', cerrar);
+        ov.addEventListener('click', e => { if(e.target === ov) cerrar(); });
+    }
+    </script>
+    <script>
+        // Función específica para perfiles en configuración
+        function aplicarPerfilConfiguracion(clave) {
+            const perfiles = {
+                ultraconservador: { monetario: 30, rfCorto: 30, rfMedio: 25, rv: 10,  alternativos: 5  },
+                conservador:      { monetario: 20, rfCorto: 25, rfMedio: 25, rv: 20,  alternativos: 10 },
+                equilibrado:      { monetario: 5,  rfCorto: 15, rfMedio: 25, rv: 40,  alternativos: 15 },
+                crecimiento:      { monetario: 2,  rfCorto: 10, rfMedio: 20, rv: 55,  alternativos: 13 },
+                arriesgado:       { monetario: 0,  rfCorto: 5,  rfMedio: 15, rv: 70,  alternativos: 10 }
+            };
+            const perfil = perfiles[clave];
+            if (!perfil) return;
+            document.getElementById('pctMonetario').value    = perfil.monetario;
+            document.getElementById('pctRFCorto').value      = perfil.rfCorto;
+            document.getElementById('pctRFMedio').value      = perfil.rfMedio;
+            document.getElementById('pctRV').value           = perfil.rv;
+            document.getElementById('pctAlternativos').value = perfil.alternativos;
+            actualizarTotalPorcentajes();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const capitalTotal      = document.getElementById('capitalTotal');
+            const efectivo          = document.getElementById('efectivo');
+            const fondos            = document.getElementById('fondos');
+            const etfsInput         = document.getElementById('etfs');
+            const inmobiliario      = document.getElementById('inmobiliario');
+            const totalAsignadoSpan = document.getElementById('totalAsignado');
+            const diferenciaSpan    = document.getElementById('diferencia');
+            const mensajeValidacion = document.getElementById('mensajeValidacion');
+            const iniciarBtn        = document.getElementById('iniciarCartera');
+            const resumenCapital    = document.getElementById('resumenCapital');
+            const previewFondos     = document.getElementById('previewFondos');
+            const previewEtfs       = document.getElementById('previewEtfs');
+            const previewEfectivoInm = document.getElementById('previewEfectivoInm');
+
+            function fmt(v) {
+                return v.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+            }
+
+            function calcularTotalAsignado() {
+                return (parseFloat(efectivo?.value)     || 0) +
+                       (parseFloat(fondos?.value)       || 0) +
+                       (parseFloat(etfsInput?.value)    || 0) +
+                       (parseFloat(inmobiliario?.value) || 0);
+            }
+
+            function actualizarVistaPrevia() {
+                const fondosVal       = parseFloat(fondos?.value)       || 0;
+                const etfsVal         = parseFloat(etfsInput?.value)    || 0;
+                const efectivoVal     = parseFloat(efectivo?.value)     || 0;
+                const inmobiliarioVal = parseFloat(inmobiliario?.value) || 0;
+                if (previewFondos)       previewFondos.textContent       = fmt(fondosVal);
+                if (previewEtfs)         previewEtfs.textContent         = fmt(etfsVal);
+                if (previewEfectivoInm)  previewEfectivoInm.textContent  = fmt(efectivoVal + inmobiliarioVal);
+            }
+
+            function actualizarResumen() {
+                const capital    = parseFloat(capitalTotal?.value) || 0;
+                const total      = calcularTotalAsignado();
+                const diferencia = capital - total;
+
+                if (resumenCapital)    resumenCapital.textContent    = fmt(capital);
+                if (totalAsignadoSpan) totalAsignadoSpan.textContent = fmt(total);
+                if (diferenciaSpan)    diferenciaSpan.textContent    = fmt(Math.abs(diferencia));
+
+                if (mensajeValidacion) {
+                    if (Math.abs(diferencia) < 0.01) {
+                        mensajeValidacion.innerHTML = '✅ Todo correcto';
+                        mensajeValidacion.className = 'validacion-box validacion-success';
+                    } else {
+                        mensajeValidacion.innerHTML = `⚠️ Te faltan ${fmt(diferencia)} por asignar`;
+                        mensajeValidacion.className = 'validacion-box validacion-warning';
+                    }
+                }
+
+                if (iniciarBtn) {
+                    iniciarBtn.disabled    = Math.abs(diferencia) >= 0.01;
+                    iniciarBtn.textContent = iniciarBtn.disabled ? '🔒 INICIAR CARTERA' : '🚀 INICIAR CARTERA';
+                }
+                actualizarVistaPrevia();
+            }
+
+            window.actualizarTotalPorcentajes = function() {
+                const total = ['pctMonetario','pctRFCorto','pctRFMedio','pctRV','pctAlternativos']
+                    .reduce((sum, id) => sum + (parseFloat(document.getElementById(id)?.value) || 0), 0);
+                document.getElementById('totalPorcentajes').value = total.toFixed(1) + '%';
+            };
+
+            // Event listeners de los inputs
+            [capitalTotal, efectivo, fondos, etfsInput, inmobiliario].forEach(el => {
+                if (el) el.addEventListener('input', actualizarResumen);
+            });
+            ['pctMonetario','pctRFCorto','pctRFMedio','pctRV','pctAlternativos'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', actualizarTotalPorcentajes);
+            });
+
+            // Listener ÚNICO en el botón — sin prompt(), sin ventanas extra
+            if (iniciarBtn) {
+                iniciarBtn.addEventListener('click', function() {
+                    // Deshabilitar inmediatamente para evitar doble clic
+                    this.disabled    = true;
+                    this.textContent = '⏳ Guardando...';
+
+                    const capital         = parseFloat(capitalTotal?.value)  || 0;
+                    const efectivoVal     = parseFloat(efectivo?.value)      || 0;
+                    const fondosVal       = parseFloat(fondos?.value)        || 0;
+                    const etfsVal         = parseFloat(etfsInput?.value)     || 0;
+                    const inmobiliarioVal = parseFloat(inmobiliario?.value)  || 0;
+
+                    const pcts = {
+                        monetario:    parseFloat(document.getElementById('pctMonetario')?.value)    || 5,
+                        rfCorto:      parseFloat(document.getElementById('pctRFCorto')?.value)      || 15,
+                        rfMedio:      parseFloat(document.getElementById('pctRFMedio')?.value)      || 25,
+                        rv:           parseFloat(document.getElementById('pctRV')?.value)           || 40,
+                        alternativos: parseFloat(document.getElementById('pctAlternativos')?.value) || 15
+                    };
+
+                    const nuevaCartera = {
+                        version: "3.0",
+                        fecha: new Date().toISOString(),
+                        cartera: {
+                            capitalTotal: capital,
+                            efectivo:     efectivoVal,
+                            inmobiliario: inmobiliarioVal,
+                            monetario:    fondosVal * pcts.monetario    / 100,
+                            rfCorto:      fondosVal * pcts.rfCorto      / 100,
+                            rfMedio:      fondosVal * pcts.rfMedio      / 100,
+                            rv:           fondosVal * pcts.rv           / 100,
+                            alternativos: fondosVal * pcts.alternativos / 100,
+                            etfs:         [],
+                            etfsValorInicial: etfsVal
+                        },
+                        configuracion: {
+                            porcentajes: pcts,
+                            perfilesPersonalizados: [],
+                            tema: "claro"
+                        },
+                        historico: []
+                    };
+
+                    // Primer registro histórico
+                    const totales = calcularTotales(nuevaCartera.cartera);
+                    nuevaCartera.historico.push({
+                        fecha:     new Date().toLocaleDateString(),
+                        hora:      new Date().toLocaleTimeString(),
+                        timestamp: Date.now(),
+                        ...nuevaCartera.cartera,
+                        total: totales.total
+                    });
+
+                    window.carteraActual = nuevaCartera;
+
+                    // Guardar en localStorage para que cartera.html lo lea al abrirse
+                    localStorage.setItem('carteraActual', JSON.stringify(nuevaCartera));
+
+                    // Nombre del archivo desde el campo de texto (sin prompt())
+                    let nombre = (document.getElementById('nombreArchivo')?.value || '').trim();
+                    if (!nombre) nombre = 'mi-cartera.json';
+                    if (!nombre.endsWith('.json')) nombre += '.json';
+
+                    // Una sola descarga — sin diálogos extra del navegador
+                    guardarEnArchivo(nuevaCartera, nombre);
+
+                    // Redirigir SOLO cuando el usuario cierre el modal
+                    mostrarModalGuardado(function() {
+                        window.location.href = 'cartera.html';
+                    });
+                });
+            }
+
+            // Inicializar
+            actualizarTotalPorcentajes();
+            actualizarResumen();
+        });
+    </script>
+</body>
+</html>

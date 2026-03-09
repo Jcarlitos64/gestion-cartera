@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Cartera - Rebalanceo</title>
+    <link rel="stylesheet" href="css/estilo.css">
+    <style>
+        /* ── Tabla fondos ── */
+        .tabla-contenedor { overflow-x:auto; margin:15px 0; border-radius:8px; background:white; box-shadow:0 2px 8px rgba(0,0,0,.1); }
+        .importe-actual   { width:120px; padding:7px 10px; text-align:right; border:2px solid #ffc107; border-radius:6px; font-size:15px; font-weight:600; }
+        .importe-actual:focus { outline:none; border-color:#ff9800; box-shadow:0 0 0 3px rgba(255,152,0,.2); }
+        tr.fondo-row:hover td { background:#fafaff; }
+
+        /* ── Desviaciones coloreadas ── */
+        .desv-ok    { color:#2e7d32; font-weight:700; }
+        .desv-warn  { color:#e65100; font-weight:700; }
+        .desv-alert { color:#c62828; font-weight:700; background:#fde8e8; border-radius:4px; padding:2px 6px; }
+
+        /* ── Totales porcentajes ── */
+        #totalPorcentajes { font-weight:700; font-size:16px; text-align:center; }
+
+        /* ── Perfiles ── */
+        .btn-perfil { padding:12px 18px; border:none; border-radius:8px; cursor:pointer; font-weight:700; color:white; transition:all .25s; flex:1 1 auto; min-width:120px; font-size:14px; }
+        .btn-perfil:hover { transform:translateY(-3px); box-shadow:0 6px 18px rgba(0,0,0,.25); }
+        .btn-perfil.activo { outline:3px solid #fff; box-shadow:0 0 0 5px rgba(0,0,0,.3); }
+        .badge-perfil { display:inline-block; background:#667eea; color:white; padding:3px 12px; border-radius:12px; font-size:12px; margin-left:10px; vertical-align:middle; }
+        .perfil-select { padding:9px 12px; border-radius:6px; border:1px solid #ccc; min-width:200px; font-size:14px; }
+        .grid-5 { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }
+
+        /* ── ETFs ── */
+        td input[type="text"]   { width:100px; padding:6px; border:1px solid #ccc; border-radius:4px; font-size:13px; }
+        td input[type="number"] { width:90px;  padding:6px; border:1px solid #ccc; border-radius:4px; font-size:13px; }
+        td select { padding:5px 8px; border-radius:4px; border:1px solid #ccc; font-size:13px; }
+        #sinETFs { text-align:center; padding:25px; color:#999; background:#fafafa; border-radius:8px; border:2px dashed #ddd; }
+
+        /* ── Efectivo ── */
+        .efectivo-input { padding:10px 14px; font-size:15px; border:2px solid #4CAF50; border-radius:8px; width:200px; }
+        .efectivo-input:focus { outline:none; border-color:#388e3c; }
+
+        /* ── Barra estado ── */
+        #barraEstado { background:#f8f9fa; padding:10px 15px; border-radius:8px; margin-top:15px; font-size:13px; color:#555; border-left:4px solid #667eea; }
+
+        /* ── DCA ── */
+        .dca-panel { background:#f8f9fa; padding:20px; border-radius:10px; }
+        .dca-grid  { display:grid; grid-template-columns:repeat(3,1fr); gap:15px; margin-bottom:15px; }
+        .dca-grid label { display:block; font-weight:600; margin-bottom:5px; color:#555; }
+        .dca-grid input, .dca-grid select { width:100%; padding:9px; border:1px solid #ccc; border-radius:6px; font-size:14px; }
+
+        /* ── Rebalanceo ── */
+        .rebalanceo-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+        .rebalanceo-panel { background:#f8f9fa; padding:16px; border-radius:10px; font-size:14px; min-height:120px; }
+        .rebalanceo-panel ul { margin-left:18px; line-height:2; }
+
+        /* ── Botón guardar ── */
+        .btn-guardar  { background:#4CAF50; color:white; padding:14px 35px; border:none; border-radius:8px; cursor:pointer; font-weight:700; font-size:16px; transition:all .2s; }
+        .btn-guardar:hover   { background:#388e3c; transform:translateY(-2px); box-shadow:0 5px 15px rgba(76,175,80,.4); }
+        .btn-guardar:disabled{ background:#aaa; cursor:not-allowed; transform:none; box-shadow:none; }
+        .btn-guardarcomo { background:#607D8B; color:white; padding:14px 25px; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:15px; transition:all .2s; }
+        .btn-guardarcomo:hover { background:#455A64; transform:translateY(-2px); }
+
+        /* ── Info ── */
+        .info-box { background:#e3f2fd; border-left:4px solid #2196F3; padding:15px 20px; margin:20px 0; border-radius:5px; font-size:14px; line-height:1.8; }
+
+        /* ── Modal ── */
+        #modalTotal { font-weight:700; font-size:15px; margin:8px 0 15px; }
+
+        @media(max-width:768px){
+            .rebalanceo-grid { grid-template-columns:1fr; }
+            .dca-grid { grid-template-columns:1fr; }
+            .grid-5 { grid-template-columns:1fr 1fr; }
+        }
+        /* Tooltips glosario */
+        .glos { cursor:help; border-bottom:2px dotted #667eea; position:relative; display:inline-block; }
+        .glos::after {
+            content: attr(data-tip);
+            position:absolute; bottom:130%; left:50%; transform:translateX(-50%);
+            background:#1e1e2e; color:#cdd6f4; padding:8px 12px; border-radius:8px;
+            font-size:12px; font-weight:400; white-space:normal; min-width:220px; max-width:300px;
+            line-height:1.5; opacity:0; pointer-events:none; transition:opacity .2s; z-index:999;
+            box-shadow:0 4px 12px rgba(0,0,0,.3);
+        }
+        .glos:hover::after { opacity:1; }
+        /* Alerta de desviación */
+        .alerta-banner {
+            background:linear-gradient(135deg,#ff6b6b,#ee5a24); color:white;
+            border-radius:10px; padding:14px 18px; margin-bottom:14px;
+            display:flex; align-items:center; gap:10px; font-size:13px; font-weight:600;
+            animation: pulso 2s infinite;
+        }
+        @keyframes pulso { 0%,100%{opacity:1} 50%{opacity:.85} }
+    </style>
+</head>
+<body>
+<div class="container">
+
+<!-- ═══ MENÚ ═══ -->
+<div class="menu">
+    <h1>📈 GESTIÓN DE CARTERA — REBALANCEO</h1>
+    <div class="nav">
+        <button style="background:#4CAF50;" onclick="location.href='dashboard.html'">🏠 Dashboard</button>
+                <button style="background:#2196F3;" onclick="location.href='cartera.html'">📈 Cartera</button>
+                <button style="background:#FF9800;" onclick="location.href='rebalanceos.html'">🔄 Histórico</button>
+                <button style="background:#9C27B0;" onclick="location.href='analisis.html'">🔍 Analizador</button>
+                <button style="background:#00BCD4;" onclick="location.href='composicion.html'">📊 Composición</button>
+                <button style="background:#f44336;" onclick="location.href='graficos.html'">📈 Gráficos</button>
+                <button style="background:#607D8B;" onclick="location.href='herramientas.html'">🛠️ Herramientas</button>
+        <button style="background:#009688;" onclick="location.href='calculadora.html'">🧮 Calculadora</button>
+                <button style="background:#FF5722;" onclick="location.href='importar-cartera.html'">📥 Importar</button>
+                <button style="background:#795548;" onclick="location.href='ayuda.html'">❓ Ayuda</button>
+            </div>
+    <div id="barraEstado">Cargando datos...</div>
+</div>
+
+<!-- ═══ RESUMEN ═══ -->
+<div class="resumen-grid">
+    <div class="resumen-card"><h4>Total Cartera</h4><p id="totalCartera">0 €</p></div>
+    <div class="resumen-card">
+        <h4>Fondos</h4>
+        <p id="totalFondos">0 €</p>
+    </div>
+    <div class="resumen-card">
+        <h4>ETFs / Acc.</h4>
+        <p id="totalETFs">0 €</p>
+        <div id="etfsPendienteWrap" style="display:none;margin-top:6px;font-size:12px;line-height:1.6;">
+            <span id="etfsInvertidoLabel" style="color:rgba(255,255,255,.75);">Invertido: </span><strong id="etfsInvertido" style="color:white;">0 €</strong><br>
+            <span id="etfsPendienteLabel" style="color:rgba(255,255,255,.75);">Pendiente: </span><strong id="etfsPendiente" style="color:#ffe082;">0 €</strong>
+        </div>
+    </div>
+    <div class="resumen-card">
+        <h4>Efectivo + Inm.</h4>
+        <p id="totalOtros">0 €</p>
+        <div id="otrosDesglose" style="display:none;margin-top:6px;font-size:12px;line-height:1.6;">
+            <span style="color:rgba(255,255,255,.75);">Efectivo: </span><strong id="labelEfectivo" style="color:white;">0 €</strong><br>
+            <span style="color:rgba(255,255,255,.75);">Inmob.: </span><strong id="labelInmob" style="color:white;">0 €</strong>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ PERFILES PREDEFINIDOS ═══ -->
+<div class="card">
+    <h2>🎯 PERFILES PREDEFINIDOS</h2>
+    <div class="perfiles-predet">
+        <button class="btn-perfil" id="btnP_ultraconservador" style="background:#1a237e;" onclick="aplicarPerfil('ultraconservador')">🛡️ UltraConservador</button>
+        <button class="btn-perfil" id="btnP_conservador"      style="background:#283593;" onclick="aplicarPerfil('conservador')">🛡️ Conservador</button>
+        <button class="btn-perfil" id="btnP_equilibrado"      style="background:#ff8f00;" onclick="aplicarPerfil('equilibrado')">⚖️ Equilibrado</button>
+        <button class="btn-perfil" id="btnP_crecimiento"      style="background:#e65100;" onclick="aplicarPerfil('crecimiento')">📈 Crecimiento</button>
+        <button class="btn-perfil" id="btnP_arriesgado"       style="background:#b71c1c;" onclick="aplicarPerfil('arriesgado')">🚀 Arriesgado</button>
+    </div>
+
+    <!-- Comparativa visual de perfiles -->
+    <details style="margin-top:16px;">
+        <summary style="cursor:pointer;font-weight:700;color:#667eea;font-size:13px;padding:8px 0;">📊 Ver comparativa de todos los perfiles</summary>
+        <div style="overflow-x:auto;margin-top:12px;">
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                <thead>
+                    <tr style="background:#f8f9fa;">
+                        <th style="padding:8px 10px;text-align:left;border-bottom:2px solid #e0e0e0;">Categoría</th>
+                        <th style="padding:8px 10px;text-align:center;border-bottom:2px solid #e0e0e0;color:#1a237e;">🛡️ Ultra Cons.</th>
+                        <th style="padding:8px 10px;text-align:center;border-bottom:2px solid #e0e0e0;color:#283593;">🛡️ Conservador</th>
+                        <th style="padding:8px 10px;text-align:center;border-bottom:2px solid #e0e0e0;color:#ff8f00;">⚖️ Equilibrado</th>
+                        <th style="padding:8px 10px;text-align:center;border-bottom:2px solid #e0e0e0;color:#e65100;">📈 Crecimiento</th>
+                        <th style="padding:8px 10px;text-align:center;border-bottom:2px solid #e0e0e0;color:#b71c1c;">🚀 Arriesgado</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaComparativa"></tbody>
+            </table>
+            <div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;" id="tarjetasPerfiles"></div>
+        </div>
+    </details>
+</div>
+
+<!-- ═══ PERFILES PERSONALIZADOS ═══ -->
+<div class="card">
+    <h2>📋 PERFILES PERSONALIZADOS</h2>
+    <div class="perfiles-personalizados">
+        <select id="selectorPerfil" class="perfil-select"><option value="">-- Selecciona un perfil --</option></select>
+        <button class="btn-personalizado btn-add"    onclick="abrirModalNuevoPerfil()">➕ Nuevo</button>
+        <button class="btn-personalizado btn-edit"   onclick="abrirModalEditarPerfil()">✏️ Editar</button>
+        <button class="btn-personalizado btn-delete" onclick="borrarPerfilSeleccionado()">🗑️ Borrar</button>
+        <button class="btn-personalizado btn-load"   onclick="cargarPerfilSeleccionado()">📥 Cargar</button>
+    </div>
+</div>
+
+<!-- ═══ PORCENTAJES OBJETIVO ═══ -->
+<div class="card">
+    <h2>📊 PORCENTAJES OBJETIVO <span id="badgePerfil" class="badge-perfil" style="display:none"></span></h2>
+    <div class="porcentajes-grid">
+        <div class="porcentaje-item"><label><span class="glos" data-tip="Fondos monetarios. Muy seguros, baja rentabilidad (~3-4%). Dinero 'aparcado' pero rentable. Ej: Fondo Ahorro Naranja, Amundi Monetario.">Monetario</span></label>    <input type="number" id="pctMonetario"    step="0.1" value="5"  min="0" max="100" oninput="actualizarUI()"></div>
+        <div class="porcentaje-item"><label><span class="glos" data-tip="Renta Fija Corto plazo. Bonos que vencen en menos de 3 años. Más seguros que la bolsa, rentabilidad ~2-3%. Ej: fondos de bonos cortos.">RF Corto</span></label>     <input type="number" id="pctRFCorto"      step="0.1" value="15" min="0" max="100" oninput="actualizarUI()"></div>
+        <div class="porcentaje-item"><label><span class="glos" data-tip="Renta Fija Medio plazo. Bonos a 3-10 años. Más rentabilidad que el corto plazo pero más sensibles a subidas de tipos de interés.">RF Medio</span></label>     <input type="number" id="pctRFMedio"      step="0.1" value="25" min="0" max="100" oninput="actualizarUI()"></div>
+        <div class="porcentaje-item"><label><span class="glos" data-tip="Bolsa. Acciones de empresas. Alta volatilidad (puede caer 30-50%) pero históricamente la mayor rentabilidad a largo plazo (~7-10% anual). Ej: fondo índice S&P500 o MSCI World.">Renta Variable</span></label><input type="number" id="pctRV"          step="0.1" value="40" min="0" max="100" oninput="actualizarUI()"></div>
+        <div class="porcentaje-item"><label><span class="glos" data-tip="Activos alternativos: oro, materias primas, inmobiliario cotizado (REITs), infraestructuras. Reducen el riesgo al descorrelacionarse de la bolsa.">Alternativos</span></label>  <input type="number" id="pctAlternativos" step="0.1" value="15" min="0" max="100" oninput="actualizarUI()"></div>
+        <div class="porcentaje-item"><label>TOTAL</label>         <input type="text"   id="totalPorcentajes" readonly value="100%" style="background:#e9ecef; border-color:#ccc;"></div>
+    </div>
+    <p style="color:#666;font-size:13px;margin-top:5px;">Los porcentajes se aplican sobre el total de fondos (no sobre el total global).</p>
+</div>
+
+<!-- ═══ ALERTAS PROMINENTES ═══ -->
+<div id="alertasBanner"></div>
+
+<!-- ═══ FONDOS POR CATEGORÍA ═══ -->
+<div class="card">
+    <h2>📈 FONDOS POR CATEGORÍA</h2>
+    <div class="tabla-contenedor">
+        <table>
+            <thead>
+                <tr>
+                    <th>Categoría</th>
+                    <th>% Objetivo</th>
+                    <th>Importe Anterior</th>
+                    <th>Importe Actual</th>
+                    <th>Objetivo (€)</th>
+                    <th>Desviación</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="fondo-row">
+                    <td><strong>Monetario</strong></td>
+                    <td id="dispPctMon">5%</td>
+                    <td id="antMon" style="color:#999;">— €</td>
+                    <td><input type="number" id="impMon" class="importe-actual" step="0.01" min="0" value="0" data-anterior="0" onchange="ajustarFondo(this)"></td>
+                    <td id="objMon">0,00 €</td>
+                    <td id="desvMon">—</td>
+                </tr>
+                <tr class="fondo-row">
+                    <td><strong>RF Corto</strong></td>
+                    <td id="dispPctRFC">15%</td>
+                    <td id="antRFC" style="color:#999;">— €</td>
+                    <td><input type="number" id="impRFC" class="importe-actual" step="0.01" min="0" value="0" data-anterior="0" onchange="ajustarFondo(this)"></td>
+                    <td id="objRFC">0,00 €</td>
+                    <td id="desvRFC">—</td>
+                </tr>
+                <tr class="fondo-row">
+                    <td><strong>RF Medio</strong></td>
+                    <td id="dispPctRFM">25%</td>
+                    <td id="antRFM" style="color:#999;">— €</td>
+                    <td><input type="number" id="impRFM" class="importe-actual" step="0.01" min="0" value="0" data-anterior="0" onchange="ajustarFondo(this)"></td>
+                    <td id="objRFM">0,00 €</td>
+                    <td id="desvRFM">—</td>
+                </tr>
+                <tr class="fondo-row">
+                    <td><strong>Renta Variable</strong></td>
+                    <td id="dispPctRV">40%</td>
+                    <td id="antRV" style="color:#999;">— €</td>
+                    <td><input type="number" id="impRV" class="importe-actual" step="0.01" min="0" value="0" data-anterior="0" onchange="ajustarFondo(this)"></td>
+                    <td id="objRV">0,00 €</td>
+                    <td id="desvRV">—</td>
+                </tr>
+                <tr class="fondo-row">
+                    <td><strong>Alternativos</strong></td>
+                    <td id="dispPctAlt">15%</td>
+                    <td id="antAlt" style="color:#999;">— €</td>
+                    <td><input type="number" id="impAlt" class="importe-actual" step="0.01" min="0" value="0" data-anterior="0" onchange="ajustarFondo(this)"></td>
+                    <td id="objAlt">0,00 €</td>
+                    <td id="desvAlt">—</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <p style="color:#888;font-size:12px;margin-top:8px;">
+        💡 Editar un importe ajusta el efectivo automáticamente. Desviación:
+        <span class="desv-ok">■ ≤5% bien</span> &nbsp;
+        <span class="desv-warn">■ ≤15% atención</span> &nbsp;
+        <span class="desv-alert">■ &gt;15% rebalancear</span>
+    </p>
+</div>
+
+<!-- ═══ ETFs Y ACCIONES ═══ -->
+<div class="card">
+    <h2>📊 ETFs Y ACCIONES INDIVIDUALES</h2>
+
+    <!-- Importe destinado -->
+    <div style="background:#f0f4ff;border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:200px;">
+            <label style="display:block;font-weight:700;font-size:13px;color:#555;margin-bottom:5px;">
+                💼 Importe total destinado a ETFs / Acciones
+            </label>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <input type="number" id="etfsPresupuesto" step="100" min="0" value="0"
+                    style="padding:9px 12px;border:2px solid #667eea;border-radius:8px;font-size:15px;font-weight:700;width:160px;"
+                    oninput="actualizarPresupuestoETFs()"
+                    title="Total que quieres tener en ETFs/acciones (invertido + pendiente)">
+                <span style="color:#667eea;font-weight:700;font-size:15px;">€</span>
+            </div>
+        </div>
+        <div id="etfsResumenDetalle" style="display:flex;gap:24px;flex-wrap:wrap;font-size:13px;">
+            <div style="text-align:center;">
+                <div style="color:#888;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Invertido</div>
+                <div id="etfsResInvertido" style="font-size:18px;font-weight:800;color:#2e7d32;">0,00 €</div>
+            </div>
+            <div style="text-align:center;">
+                <div style="color:#888;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Pendiente</div>
+                <div id="etfsResPendiente" style="font-size:18px;font-weight:800;color:#e65100;">0,00 €</div>
+            </div>
+            <div style="text-align:center;">
+                <div style="color:#888;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">G / P</div>
+                <div id="etfsResGP" style="font-size:18px;font-weight:800;color:#888;">—</div>
+            </div>
+        </div>
+    </div>
+
+    <button class="btn-add" onclick="agregarETF()" style="margin-bottom:12px;">+ Añadir ETF / Acción</button>
+    <div id="sinETFs">No hay ETFs o acciones registradas. Haz clic en «+ Añadir» para comenzar.</div>
+    <div class="tabla-contenedor" id="tablaETFsContainer" style="display:none;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Tipo</th><th>ISIN / Ticker</th><th>Nombre</th>
+                    <th>Cantidad</th><th>P. Compra</th><th>P. Actual</th>
+                    <th>Valor Actual</th><th>% Cartera</th><th>G/P %</th><th>Eliminar</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoETFs"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ═══ EFECTIVO Y OTROS ═══ -->
+<div class="card">
+    <h2>💰 EFECTIVO Y OTROS ACTIVOS</h2>
+    <div style="display:flex;gap:30px;flex-wrap:wrap;align-items:flex-end;">
+        <div>
+            <label style="display:block;font-weight:600;margin-bottom:6px;">Efectivo (€):</label>
+            <input type="number" id="efectivo" class="efectivo-input" step="0.01" min="0" value="0" oninput="actualizarUI()">
+        </div>
+        <div>
+            <label style="display:block;font-weight:600;margin-bottom:6px;">Inmobiliario (€):</label>
+            <input type="number" id="inmobiliario" class="efectivo-input" step="0.01" min="0" value="0" oninput="actualizarUI()">
+        </div>
+        <div id="efectivoAviso" style="display:none;background:#fff3e0;border-left:3px solid #ff9800;padding:8px 14px;border-radius:5px;font-size:13px;color:#e65100;"></div>
+    </div>
+</div>
+
+<!-- ═══ PLAN DCA ═══ -->
+<div class="card">
+    <h2>📅 PLAN DCA — Aportaciones Periódicas</h2>
+    <div class="dca-panel">
+        <div class="dca-grid">
+            <div>
+                <label>Aporte periódico (€):</label>
+                <input type="number" id="aporteMensual" step="0.01" min="0" value="1000" oninput="calcularDCA()">
+            </div>
+            <div>
+                <label>Periodicidad:</label>
+                <select id="periocidad" onchange="calcularProximaFecha();calcularDCA();">
+                    <option value="semanal">Semanal</option>
+                    <option value="mensual" selected>Mensual</option>
+                    <option value="trimestral">Trimestral</option>
+                    <option value="semestral">Semestral</option>
+                    <option value="anual">Anual</option>
+                </select>
+            </div>
+            <div>
+                <label>Próxima fecha:</label>
+                <input type="date" id="fechaAporte">
+            </div>
+        </div>
+        <h3>Distribución de la aportación:</h3>
+        <div class="tabla-contenedor">
+            <table>
+                <thead><tr><th>Categoría</th><th>% Objetivo</th><th>Importe (€)</th></tr></thead>
+                <tbody id="tablaDCA"></tbody>
+            </table>
+        </div>
+        <h3 style="margin-top:18px;">Recomendación:</h3>
+        <div id="recomendacionDCA" style="background:#e9ecef;padding:15px;border-radius:8px;min-height:50px;font-size:14px;"></div>
+    </div>
+</div>
+
+<!-- ═══ REBALANCEO ═══ -->
+<div class="card">
+    <h2>🔄 OPCIONES DE REBALANCEO</h2>
+    <div class="rebalanceo-grid">
+        <div>
+            <h3>Rebalanceo Directo</h3>
+            <p style="color:#666;font-size:13px;margin-bottom:10px;">Redistribuye excedentes entre categorías con déficit, usando efectivo si es necesario.</p>
+            <div id="accionesDirectas" class="rebalanceo-panel">Pulsa «Calcular» para ver el plan.</div>
+            <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+                <button class="btn-secondary" onclick="calcularRebalanceo()">🔍 Calcular</button>
+                <button class="btn-primary"   onclick="aplicarRebalanceoDirecto()">✅ Aplicar</button>
+            </div>
+        </div>
+        <div>
+            <h3>Rebalanceo vía DCA</h3>
+            <p style="color:#666;font-size:13px;margin-bottom:10px;">Concentra las aportaciones en las categorías con mayor déficit relativo.</p>
+            <div id="accionesDCA" class="rebalanceo-panel">Pulsa «Calcular» para ver el plan.</div>
+            <button class="btn-warning" onclick="calcularRebalanceoDCA()" style="margin-top:12px;">🔍 Calcular Plan DCA</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ BOTONES GUARDAR ═══ -->
+<div class="button-group">
+    <button class="btn-guardar" id="btnGuardar" onclick="guardarArchivo(this)">💾 GUARDAR EN ARCHIVO</button>
+    <button class="btn-guardarcomo" onclick="guardarComo()">📁 Guardar como...</button>
+</div>
+
+<!-- ═══ CONSEJOS ═══ -->
+<div class="info-box">
+    <strong>📌 Consejos rápidos</strong><br>
+    • Los porcentajes objetivo se aplican sobre el <strong>total de fondos</strong>, no sobre el total global.<br>
+    • Al editar un importe de fondo, el <strong>efectivo se ajusta automáticamente</strong>.<br>
+    • El rebalanceo directo redistribuye excedentes <em>antes</em> de usar efectivo disponible.<br>
+    • El plan DCA prioriza las categorías con mayor déficit relativo al peso objetivo.
+</div>
+
+</div><!-- /container -->
+
+<!-- ═══ MODAL PERFILES ═══ -->
+<div id="modalPerfil" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h3 id="modalTitulo">Nuevo perfil</h3>
+        <input type="text" id="modalNombre" placeholder="Nombre del perfil">
+        <div class="grid-5" style="margin:15px 0;">
+            <div><label style="font-size:12px;font-weight:600;">Mon %</label> <input type="number" id="modalMon" step="0.1" min="0" max="100" value="0" oninput="actualizarModalTotal()"></div>
+            <div><label style="font-size:12px;font-weight:600;">RFC %</label> <input type="number" id="modalRFC" step="0.1" min="0" max="100" value="0" oninput="actualizarModalTotal()"></div>
+            <div><label style="font-size:12px;font-weight:600;">RFM %</label> <input type="number" id="modalRFM" step="0.1" min="0" max="100" value="0" oninput="actualizarModalTotal()"></div>
+            <div><label style="font-size:12px;font-weight:600;">RV %</label>  <input type="number" id="modalRV"  step="0.1" min="0" max="100" value="0" oninput="actualizarModalTotal()"></div>
+            <div><label style="font-size:12px;font-weight:600;">Alt %</label> <input type="number" id="modalAlt" step="0.1" min="0" max="100" value="0" oninput="actualizarModalTotal()"></div>
+        </div>
+        <p id="modalTotal">Total: 0%</p>
+        <div class="button-group">
+            <button class="btn-primary" onclick="guardarPerfilModal()">💾 Guardar</button>
+            <button class="btn-warning" onclick="cerrarModalPerfil()">✖ Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ================================================================
+//  CONSTANTES
+// ================================================================
+const PERFILES = {
+    ultraconservador:{ nombre:'UltraConservador', monetario:30, rfCorto:30, rfMedio:25, rv:10,  alternativos:5  },
+    conservador:     { nombre:'Conservador',      monetario:20, rfCorto:25, rfMedio:25, rv:20,  alternativos:10 },
+    equilibrado:     { nombre:'Equilibrado',      monetario:5,  rfCorto:15, rfMedio:25, rv:40,  alternativos:15 },
+    crecimiento:     { nombre:'Crecimiento',      monetario:2,  rfCorto:10, rfMedio:20, rv:55,  alternativos:13 },
+    arriesgado:      { nombre:'Arriesgado',       monetario:0,  rfCorto:5,  rfMedio:15, rv:70,  alternativos:10 }
+};
+
+const FONDO_IDS = ['impMon','impRFC','impRFM','impRV','impAlt'];
+const PCT_IDS   = ['pctMonetario','pctRFCorto','pctRFMedio','pctRV','pctAlternativos'];
+const DISP_IDS  = ['dispPctMon','dispPctRFC','dispPctRFM','dispPctRV','dispPctAlt'];
+const OBJ_IDS   = ['objMon','objRFC','objRFM','objRV','objAlt'];
+const DESV_IDS  = ['desvMon','desvRFC','desvRFM','desvRV','desvAlt'];
+const ANT_IDS   = ['antMon','antRFC','antRFM','antRV','antAlt'];
+const CATS      = ['Monetario','RF Corto','RF Medio','Renta Variable','Alternativos'];
+
+// ================================================================
+//  ESTADO
+// ================================================================
+let etfsLista              = [];
+let etfsValorInicial       = 0;   // importe total destinado a ETFs/acciones al crear la cartera
+let perfilesPersonalizados = [];
+let perfilActivo           = null;     // clave del perfil seleccionado
+let nombreArchivo          = 'mi-cartera.json';
+let editandoIndex          = -1;
+
+// ================================================================
+//  UTILIDADES
+// ================================================================
+const g   = id => document.getElementById(id);
+const fmtE = v => isNaN(v) ? '—' :
+    new Intl.NumberFormat('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v) + ' €';
+
+function mostrarToast(msg, tipo='info') {
+    const t = document.createElement('div');
+    t.style.cssText = 'position:fixed;bottom:24px;right:24px;padding:14px 20px;border-radius:10px;'
+        + 'box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:9999;cursor:pointer;max-width:340px;font-size:14px;'
+        + 'color:white;background:' + (tipo==='warning'?'#e65100':tipo==='error'?'#c62828':'#2196F3') + ';';
+    t.innerHTML = msg + ' <span style="margin-left:8px;opacity:.7;">✖</span>';
+    t.onclick = () => t.remove();
+    document.body.appendChild(t);
+    setTimeout(() => { if(t.parentNode) t.remove(); }, 5000);
+}
+
+function mostrarModalGuardado(callback) {
+    const prev = g('_mGuardado'); if(prev) prev.remove();
+    const ov = document.createElement('div');
+    ov.id = '_mGuardado';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;'
+        + 'justify-content:center;align-items:center;z-index:99999;';
+    ov.innerHTML = `<div style="background:white;border-radius:16px;padding:40px;max-width:420px;
+        width:90%;text-align:center;box-shadow:0 25px 60px rgba(0,0,0,.3);">
+        <div style="font-size:52px;margin-bottom:16px;">💾</div>
+        <h3 style="color:#333;margin-bottom:12px;font-size:21px;">Archivo guardado</h3>
+        <p style="color:#555;line-height:1.7;margin-bottom:28px;">
+            El archivo se ha descargado en la carpeta <strong>Descargas</strong> del navegador.<br><br>
+            Muévelo a la carpeta donde quieras conservarlo.
+        </p>
+        <button id="_btnOk" style="background:#4CAF50;color:white;border:none;padding:13px 45px;
+            border-radius:9px;font-size:16px;font-weight:700;cursor:pointer;">Aceptar</button>
+    </div>`;
+    document.body.appendChild(ov);
+    const cerrar = () => { ov.remove(); if(callback) callback(); };
+    g('_btnOk').addEventListener('click', cerrar);
+    ov.addEventListener('click', e => { if(e.target===ov) cerrar(); });
+}
+
+// ================================================================
+//  CARGA INICIAL DESDE localStorage
+// ================================================================
+function cargarDatos() {
+    try {
+        const raw = localStorage.getItem('carteraActual');
+        if (!raw) { actualizarBarraEstado(null); return; }
+        const datos  = JSON.parse(raw);
+        const c      = datos.cartera || datos;
+        const cfg    = datos.configuracion || {};
+        const hist   = datos.historico || [];
+
+        // Fondos e importes
+        g('impMon').value       = c.monetario    || 0;
+        g('impRFC').value       = c.rfCorto      || 0;
+        g('impRFM').value       = c.rfMedio      || 0;
+        g('impRV').value        = c.rv           || 0;
+        g('impAlt').value       = c.alternativos || 0;
+        g('efectivo').value     = c.efectivo     || 0;
+        g('inmobiliario').value = c.inmobiliario || 0;
+
+        // Guardar valores anteriores para ajuste de efectivo
+        FONDO_IDS.forEach(id => g(id).setAttribute('data-anterior', g(id).value));
+
+        // ETFs
+        etfsLista = c.etfs || [];
+        etfsValorInicial = parseFloat(c.etfsValorInicial) || 0;
+
+        // Si etfsValorInicial es 0 pero hay ETFs en lista o hay registro histórico con etfsValorInicial,
+        // intentar recuperarlo para no perder el importe destinado
+        if (etfsValorInicial === 0) {
+            // 1. Buscar en el histórico el último registro que tenga etfsValorInicial > 0
+            const hist = datos.historico || [];
+            for (let i = hist.length - 1; i >= 0; i--) {
+                const v = parseFloat(hist[i].etfsValorInicial);
+                if (v > 0) { etfsValorInicial = v; break; }
+            }
+            // 2. Si sigue siendo 0 pero hay ETFs comprados, usar su valor actual como mínimo
+            if (etfsValorInicial === 0 && etfsLista.length > 0) {
+                etfsValorInicial = etfsLista.reduce((s,e) => s + (e.cantidad||0)*(e.precioActual||0), 0);
+            }
+            // 3. Guardar el valor recuperado en la cartera para futuras sesiones
+            if (etfsValorInicial > 0) {
+                c.etfsValorInicial = etfsValorInicial;
+                datos.cartera = c;
+                localStorage.setItem('carteraActual', JSON.stringify(datos));
+            }
+        }
+
+        // Rellenar campo editable de presupuesto ETFs
+        if (g('etfsPresupuesto')) g('etfsPresupuesto').value = etfsValorInicial;
+
+        // Porcentajes
+        const pcts = cfg.porcentajes || {};
+        if (pcts.monetario    != null) g('pctMonetario').value    = pcts.monetario;
+        if (pcts.rfCorto      != null) g('pctRFCorto').value      = pcts.rfCorto;
+        if (pcts.rfMedio      != null) g('pctRFMedio').value      = pcts.rfMedio;
+        if (pcts.rv           != null) g('pctRV').value           = pcts.rv;
+        if (pcts.alternativos != null) g('pctAlternativos').value = pcts.alternativos;
+
+        // Perfiles personalizados
+        perfilesPersonalizados = cfg.perfilesPersonalizados || [];
+        actualizarSelectorPerfiles();
+
+        // Importe anterior (penúltimo registro histórico)
+        // En inicialización solo hay 1 registro → anterior = 0
+        const antVals = hist.length > 1
+            ? [hist[hist.length-2].monetario, hist[hist.length-2].rfCorto,
+               hist[hist.length-2].rfMedio,   hist[hist.length-2].rv,
+               hist[hist.length-2].alternativos]
+            : [0, 0, 0, 0, 0];
+        ANT_IDS.forEach((id,i) => g(id).textContent = fmtE(antVals[i]||0));
+
+        actualizarBarraEstado(datos);
+
+    } catch(e) { console.error('Error cargando datos:', e); }
+}
+
+// ================================================================
+//  ACTUALIZAR UI PRINCIPAL
+// ================================================================
+function actualizarUI() {
+    const fondos = FONDO_IDS.map(id => parseFloat(g(id).value)||0);
+    const pcts   = PCT_IDS.map(id   => parseFloat(g(id).value)||0);
+    const totalFondos = fondos.reduce((a,b)=>a+b,0);
+    const efectivo    = parseFloat(g('efectivo').value)    ||0;
+    const inm         = parseFloat(g('inmobiliario').value)||0;
+
+    // ── Resumen ──────────────────────────────────────────────────
+    // ETFs: valor actualmente invertido (precio actual × cantidad)
+    const etfsInvertido  = etfsLista.reduce((s,e)=>s+(e.cantidad||0)*(e.precioActual||0),0);
+    // Pendiente = lo destinado a ETFs que aún no está invertido en ningún ticker
+    const etfsPendienteV = Math.max(0, etfsValorInicial - etfsInvertido);
+    // El total ETFs que cuenta para la cartera es invertido + pendiente
+    const totalETFs      = etfsInvertido + etfsPendienteV;
+    const total          = totalFondos + totalETFs + efectivo + inm;
+
+    // Tarjeta Total
+    g('totalCartera').textContent = fmtE(total);
+
+    // Tarjeta Fondos
+    g('totalFondos').textContent  = fmtE(totalFondos);
+
+    // Tarjeta ETFs: muestra el total destinado; si hay pendiente, despliega desglose
+    g('totalETFs').textContent = fmtE(totalETFs);
+    const hasPendiente = etfsPendienteV > 0.005;
+    const wrap = g('etfsPendienteWrap');
+    wrap.style.display = hasPendiente ? 'block' : 'none';
+    if (hasPendiente) {
+        g('etfsInvertido').textContent = fmtE(etfsInvertido);
+        g('etfsPendiente').textContent = fmtE(etfsPendienteV);
+    }
+
+    // Mini-resumen dentro de la sección ETFs
+    if (g('etfsResInvertido')) {
+        const costeTotalETFs = etfsLista.reduce((s,e)=>s+(e.cantidad||0)*(e.precioCompra||0),0);
+        const gpAbsoluto     = etfsInvertido - costeTotalETFs;
+        const gpPct          = costeTotalETFs > 0 ? gpAbsoluto/costeTotalETFs*100 : null;
+        g('etfsResInvertido').textContent = fmtE(etfsInvertido);
+        g('etfsResPendiente').textContent = fmtE(etfsPendienteV);
+        g('etfsResPendiente').style.color = etfsPendienteV > 0 ? '#e65100' : '#2e7d32';
+        if (gpPct !== null) {
+            g('etfsResGP').textContent  = (gpAbsoluto>=0?'+':'') + fmtE(gpAbsoluto) + ' (' + (gpAbsoluto>=0?'+':'') + gpPct.toFixed(1) + '%)';
+            g('etfsResGP').style.color  = gpAbsoluto >= 0 ? '#2e7d32' : '#c62828';
+        } else {
+            g('etfsResGP').textContent = '—';
+            g('etfsResGP').style.color = '#888';
+        }
+    }
+
+    // Tarjeta Efectivo+Inm: siempre muestra el total; desglose si hay inmobiliario
+    g('totalOtros').textContent = fmtE(efectivo + inm);
+    const desglose = g('otrosDesglose');
+    desglose.style.display = inm > 0 ? 'block' : 'none';
+    if (inm > 0) {
+        g('labelEfectivo').textContent = fmtE(efectivo);
+        g('labelInmob').textContent    = fmtE(inm);
+    }
+
+    // Validación porcentajes
+    const sumPct = pcts.reduce((a,b)=>a+b,0);
+    const pctOk  = Math.abs(sumPct-100) < 0.01;
+    g('totalPorcentajes').value           = sumPct.toFixed(1) + '%';
+    g('totalPorcentajes').style.background= pctOk ? '#d4edda' : '#f8d7da';
+    g('totalPorcentajes').style.color     = pctOk ? '#155724' : '#721c24';
+
+    // Tabla fondos
+    pcts.forEach((p,i) => {
+        g(DISP_IDS[i]).textContent = p + '%';
+        const obj  = totalFondos * p / 100;
+        g(OBJ_IDS[i]).textContent  = fmtE(obj);
+        const el   = g(DESV_IDS[i]);
+        if (obj > 0) {
+            const desv = (fondos[i] - obj) / obj * 100;
+            el.textContent = (desv >= 0 ? '+' : '') + desv.toFixed(1) + '%';
+            const abs = Math.abs(desv);
+            el.className = abs <= 5 ? 'desv-ok' : abs <= 15 ? 'desv-warn' : 'desv-alert';
+        } else {
+            el.textContent = '—'; el.className = '';
+        }
+    });
+
+    // Aviso efectivo negativo
+    const aviso = g('efectivoAviso');
+    if (efectivo < 0) {
+        aviso.style.display = 'block';
+        aviso.textContent   = '⚠️ Efectivo negativo: revisa los importes de fondos.';
+    } else {
+        aviso.style.display = 'none';
+    }
+
+    // Alertas prominentes de desviación
+    mostrarAlertasDesviacion(fondos, pcts, totalFondos);
+
+    renderizarETFs(total);
+    calcularDCA();
+    persistirEstado();
+}
+
+// ================================================================
+//  PRESUPUESTO ETFs — actualiza desde el campo editable
+// ================================================================
+// ================================================================
+//  ALERTAS PROMINENTES DE DESVIACIÓN
+// ================================================================
+const NOMBRES_CAT = ['Monetario','RF Corto','RF Medio','Renta Variable','Alternativos'];
+function mostrarAlertasDesviacion(fondos, pcts, totalFondos) {
+    const banner = g('alertasBanner');
+    if (!banner) return;
+    const alertas = [];
+    pcts.forEach((p, i) => {
+        const obj = totalFondos * p / 100;
+        if (obj <= 0) return;
+        const desv = Math.abs((fondos[i] - obj) / obj * 100);
+        if (desv > 20) alertas.push({ cat: NOMBRES_CAT[i], desv: desv.toFixed(1), tipo: 'rojo' });
+        else if (desv > 10) alertas.push({ cat: NOMBRES_CAT[i], desv: desv.toFixed(1), tipo: 'naranja' });
+    });
+    if (!alertas.length) { banner.innerHTML = ''; return; }
+    const rojos   = alertas.filter(a => a.tipo === 'rojo');
+    const naranjas = alertas.filter(a => a.tipo === 'naranja');
+    let html = '';
+    if (rojos.length)
+        html += `<div class="alerta-banner">🚨 REBALANCEO URGENTE — ${rojos.map(a=>`<strong>${a.cat}</strong> desviado ${a.desv}%`).join(' · ')} · <a href="#" onclick="calcularRebalanceo();return false;" style="color:white;margin-left:8px;">Calcular ahora →</a></div>`;
+    if (naranjas.length)
+        html += `<div class="alerta-banner" style="background:linear-gradient(135deg,#f39c12,#e67e22);">⚠️ Desviación notable — ${naranjas.map(a=>`<strong>${a.cat}</strong> ${a.desv}%`).join(' · ')}</div>`;
+    banner.innerHTML = html;
+}
+
+function actualizarPresupuestoETFs() {
+    const val = parseFloat(g('etfsPresupuesto').value) || 0;
+    etfsValorInicial = val;
+
+    // Persistir en localStorage inmediatamente
+    try {
+        const raw  = localStorage.getItem('carteraActual');
+        const datos = raw ? JSON.parse(raw) : {};
+        if (datos.cartera) datos.cartera.etfsValorInicial = val;
+        localStorage.setItem('carteraActual', JSON.stringify(datos));
+    } catch(e) {}
+
+    actualizarUI();
+}
+
+// ================================================================
+//  AJUSTE FONDO ↔ EFECTIVO
+// ================================================================
+function ajustarFondo(input) {
+    const nuevo    = parseFloat(input.value)                        || 0;
+    const anterior = parseFloat(input.getAttribute('data-anterior'))|| 0;
+    const ef       = g('efectivo');
+    ef.value = ((parseFloat(ef.value)||0) - (nuevo - anterior)).toFixed(2);
+    input.setAttribute('data-anterior', nuevo);
+    actualizarUI();
+}
+
+// ================================================================
+//  ETFs
+// ================================================================
+function agregarETF() {
+    etfsLista.push({ tipo:'ETF', isin:'', nombre:'', cantidad:0, precioCompra:0, precioActual:0 });
+    renderizarETFs();
+}
+function eliminarETF(i) { etfsLista.splice(i,1); actualizarUI(); }
+function actualizarETF(i, campo, valor) {
+    etfsLista[i][campo] = ['cantidad','precioCompra','precioActual'].includes(campo)
+        ? (parseFloat(valor)||0) : valor;
+    actualizarUI();
+}
+function renderizarETFs(totalCartera) {
+    const cuerpo = g('cuerpoETFs');
+    if (!cuerpo) return;
+    const total = totalCartera || 0;
+    const sinEl = g('sinETFs'), tblEl = g('tablaETFsContainer');
+    if (etfsLista.length === 0) {
+        sinEl.style.display = 'block'; tblEl.style.display = 'none'; return;
+    }
+    sinEl.style.display = 'none'; tblEl.style.display = 'block';
+
+    cuerpo.innerHTML = etfsLista.map((e,i) => {
+        const val   = (e.cantidad||0)*(e.precioActual||0);
+        const costo = (e.cantidad||0)*(e.precioCompra||0);
+        const gp    = costo > 0 ? ((val-costo)/costo*100) : 0;
+        const pct   = total > 0 ? (val/total*100) : 0;
+        const gpCls = gp >= 0 ? 'positivo' : 'negativo';
+        return `<tr>
+            <td><select onchange="actualizarETF(${i},'tipo',this.value)">
+                <option ${e.tipo==='ETF'?'selected':''}>ETF</option>
+                <option value="ACCION" ${e.tipo==='ACCION'?'selected':''}>Acción</option>
+            </select></td>
+            <td><input type="text" value="${e.isin||''}" placeholder="ISIN" onchange="actualizarETF(${i},'isin',this.value)"></td>
+            <td><input type="text" value="${e.nombre||''}" placeholder="Nombre" style="width:130px" onchange="actualizarETF(${i},'nombre',this.value)"></td>
+            <td><input type="number" value="${e.cantidad||0}" step="0.001" min="0" onchange="actualizarETF(${i},'cantidad',this.value)"></td>
+            <td><input type="number" value="${e.precioCompra||0}" step="0.0001" min="0" onchange="actualizarETF(${i},'precioCompra',this.value)"></td>
+            <td><input type="number" value="${e.precioActual||0}" step="0.0001" min="0" onchange="actualizarETF(${i},'precioActual',this.value)"></td>
+            <td><strong>${fmtE(val)}</strong></td>
+            <td>${pct.toFixed(2)}%</td>
+            <td class="${gpCls}">${gp>=0?'+':''}${gp.toFixed(2)}%</td>
+            <td><button class="btn-remove" onclick="eliminarETF(${i})">🗑️</button></td>
+        </tr>`;
+    }).join('');
+}
+
+// ================================================================
+//  DCA
+// ================================================================
+function calcularDCA() {
+    const aporte     = parseFloat(g('aporteMensual').value)||0;
+    const fondos     = FONDO_IDS.map(id=>parseFloat(g(id).value)||0);
+    const pcts       = PCT_IDS.map(id=>parseFloat(g(id).value)||0);
+    const totalF     = fondos.reduce((a,b)=>a+b,0);
+    const objetivos  = pcts.map(p=>totalF*p/100);
+
+    // Tabla distribución
+    g('tablaDCA').innerHTML = CATS.map((c,i) => pcts[i]>0
+        ? `<tr><td>${c}</td><td>${pcts[i]}%</td><td>${(aporte*pcts[i]/100).toFixed(2)} €</td></tr>`
+        : ''
+    ).join('');
+
+    // Recomendación
+    const nec = [];
+    for (let i=0; i<5; i++) {
+        if (fondos[i] < objetivos[i]) {
+            const ap = aporte*pcts[i]/100;
+            const p  = ap>0 ? Math.ceil((objetivos[i]-fondos[i])/ap) : '∞';
+            nec.push(`✅ <strong>${CATS[i]}</strong>: faltan ${fmtE(objetivos[i]-fondos[i])} → ${p} periodo(s)`);
+        }
+    }
+    g('recomendacionDCA').innerHTML = nec.length ? nec.join('<br>') : '✅ Cartera equilibrada en fondos.';
+}
+
+function calcularProximaFecha() {
+    const p = g('periocidad').value;
+    const f = new Date(); f.setHours(0,0,0,0);
+    switch(p) {
+        case 'semanal':    f.setDate(f.getDate()+7);       break;
+        case 'mensual':    f.setMonth(f.getMonth()+1);     break;
+        case 'trimestral': f.setMonth(f.getMonth()+3);     break;
+        case 'semestral':  f.setMonth(f.getMonth()+6);     break;
+        case 'anual':      f.setFullYear(f.getFullYear()+1); break;
+    }
+    g('fechaAporte').value = f.toISOString().slice(0,10);
+}
+
+// ================================================================
+//  REBALANCEO DIRECTO
+// ================================================================
+function calcularRebalanceo() {
+    const fondos    = FONDO_IDS.map(id=>parseFloat(g(id).value)||0);
+    const pcts      = PCT_IDS.map(id=>parseFloat(g(id).value)||0);
+    const totalF    = fondos.reduce((a,b)=>a+b,0);
+    const objs      = pcts.map(p=>totalF*p/100);
+    let   efDisp    = parseFloat(g('efectivo').value)||0;
+
+    let deficit=[], superavit=[], totDef=0, totSup=0;
+    for (let i=0;i<5;i++) {
+        const d = objs[i]-fondos[i];
+        if      (d > 0.01)  { deficit.push({nombre:CATS[i],falta:d});      totDef+=d; }
+        else if (d < -0.01) { superavit.push({nombre:CATS[i],sobra:-d});   totSup+=-d; }
+    }
+
+    if (!deficit.length && !superavit.length) {
+        g('accionesDirectas').innerHTML='<p style="color:#2e7d32;font-weight:600;">✅ Cartera perfectamente equilibrada. No necesita rebalanceo.</p>';
+        return;
+    }
+
+    let html='';
+
+    // Superávit
+    if (superavit.length) {
+        html += '<p style="color:#e65100;font-weight:600;margin-bottom:4px;">📤 Excedentes a redistribuir:</p><ul>';
+        superavit.forEach(s=>{ html+=`<li>🔸 ${s.nombre}: <strong>+${fmtE(s.sobra)}</strong></li>`; });
+        html+='</ul>';
+    }
+
+    // Redistribución superávit → déficit
+    let defRest = deficit.map(d=>({...d}));
+    if (superavit.length && deficit.length) {
+        html+='<p style="color:#1b5e20;font-weight:600;margin:10px 0 4px;">🔄 Redistribución entre categorías:</p><ul>';
+        deficit.forEach(d=>{
+            const prop  = d.falta/totDef;
+            const asign = Math.min(totSup*prop, d.falta);
+            if (asign>0.01) {
+                html+=`<li>➡️ ${d.nombre}: recibe <strong>${fmtE(asign)}</strong></li>`;
+                const idx = defRest.findIndex(x=>x.nombre===d.nombre);
+                if (idx!==-1) { defRest[idx].falta-=asign; }
+            }
+        });
+        defRest = defRest.filter(d=>d.falta>0.01);
+        html+='</ul>';
+    }
+
+    // Uso de efectivo
+    if (defRest.length) {
+        html+='<p style="color:#0d47a1;font-weight:600;margin:10px 0 4px;">💰 Uso de efectivo disponible:</p><ul>';
+        defRest.forEach(d=>{
+            const usar = Math.min(d.falta, efDisp);
+            if (usar>0.01) {
+                html+=`<li>💶 ${d.nombre}: <strong>${fmtE(usar)}</strong> de efectivo</li>`;
+                efDisp-=usar;
+            } else {
+                html+=`<li style="color:#c62828;">⚠️ ${d.nombre}: necesita ${fmtE(d.falta)} (sin efectivo suficiente)</li>`;
+            }
+        });
+        html+='</ul>';
+    }
+
+    if (efDisp>0.01) html+=`<p style="color:#795548;margin-top:8px;">💵 Efectivo restante tras rebalanceo: <strong>${fmtE(efDisp)}</strong></p>`;
+
+    g('accionesDirectas').innerHTML = html;
+}
+
+function aplicarRebalanceoDirecto() {
+    const pcts  = PCT_IDS.map(id=>parseFloat(g(id).value)||0);
+    const totalF= FONDO_IDS.reduce((s,id)=>s+(parseFloat(g(id).value)||0),0);
+    FONDO_IDS.forEach((id,i)=>{
+        const v = (totalF*pcts[i]/100).toFixed(2);
+        g(id).value=v; g(id).setAttribute('data-anterior',v);
+    });
+    actualizarUI();
+    mostrarToast('✅ Rebalanceo aplicado', 'info');
+}
+
+// ================================================================
+//  REBALANCEO DCA
+// ================================================================
+function calcularRebalanceoDCA() {
+    const fondos  = FONDO_IDS.map(id=>parseFloat(g(id).value)||0);
+    const pcts    = PCT_IDS.map(id=>parseFloat(g(id).value)||0);
+    const totalF  = fondos.reduce((a,b)=>a+b,0);
+    const objs    = pcts.map(p=>totalF*p/100);
+    const aporte  = parseFloat(g('aporteMensual').value)||0;
+
+    let deficit=[], totDef=0;
+    for (let i=0;i<5;i++) {
+        const d=objs[i]-fondos[i];
+        if (d>0.01) { deficit.push({nombre:CATS[i],falta:d,urgencia:d/(pcts[i]||1)}); totDef+=d; }
+    }
+    if (!deficit.length) {
+        g('accionesDCA').innerHTML='<p style="color:#2e7d32;font-weight:600;">✅ Cartera equilibrada. No necesita rebalanceo DCA.</p>';
+        return;
+    }
+    deficit.sort((a,b)=>b.urgencia-a.urgencia);
+
+    let html='<p style="color:#0d47a1;font-weight:600;margin-bottom:6px;">📊 Distribución óptima del aporte:</p><ul>';
+    let resto=aporte;
+    deficit.forEach(d=>{
+        const asign=Math.min(d.falta,resto);
+        if (asign>0.01) {
+            html+=`<li>✅ <strong>${d.nombre}</strong>: +${fmtE(asign)} (déficit: ${fmtE(d.falta)})</li>`;
+            resto-=asign;
+        }
+    });
+    if (resto>0.01) html+=`<li style="color:#795548;">💵 Sobrante → efectivo: ${fmtE(resto)}</li>`;
+    html+='</ul>';
+
+    if (totDef>0 && aporte>0) {
+        const periodos=Math.ceil(totDef/aporte);
+        html+=`<p style="background:#e3f2fd;padding:10px;border-radius:6px;margin-top:10px;">
+            📅 <strong>${periodos} periodo(s)</strong> para equilibrar la cartera completa (${fmtE(aporte)}/periodo).
+        </p>`;
+    }
+    g('accionesDCA').innerHTML=html;
+}
+
+// ================================================================
+//  PERFILES
+// ================================================================
+function aplicarPerfil(clave) {
+    const p = PERFILES[clave]; if(!p) return;
+    g('pctMonetario').value    = p.monetario;
+    g('pctRFCorto').value      = p.rfCorto;
+    g('pctRFMedio').value      = p.rfMedio;
+    g('pctRV').value           = p.rv;
+    g('pctAlternativos').value = p.alternativos;
+
+    // Resaltar botón activo
+    document.querySelectorAll('.btn-perfil').forEach(b=>b.classList.remove('activo'));
+    const btn = g('btnP_'+clave); if(btn) btn.classList.add('activo');
+
+    const badge=g('badgePerfil');
+    badge.textContent=p.nombre; badge.style.display='inline-block';
+    perfilActivo=clave;
+    actualizarUI();
+    mostrarToast('✅ Perfil «'+p.nombre+'» aplicado','info');
+}
+
+function actualizarSelectorPerfiles() {
+    const sel=g('selectorPerfil');
+    sel.innerHTML='<option value="">-- Selecciona un perfil --</option>';
+    perfilesPersonalizados.forEach((p,i)=>{
+        const o=document.createElement('option');
+        o.value=i; o.text=p.nombre; sel.appendChild(o);
+    });
+}
+
+function abrirModalNuevoPerfil() {
+    editandoIndex=-1;
+    g('modalTitulo').textContent='Nuevo perfil';
+    g('modalNombre').value='';
+    ['modalMon','modalRFC','modalRFM','modalRV','modalAlt'].forEach(id=>g(id).value=0);
+    actualizarModalTotal();
+    g('modalPerfil').style.display='flex';
+}
+
+function abrirModalEditarPerfil() {
+    const idx=g('selectorPerfil').value;
+    if(idx===''){mostrarToast('Selecciona un perfil primero','warning');return;}
+    const p=perfilesPersonalizados[parseInt(idx)];
+    editandoIndex=parseInt(idx);
+    g('modalTitulo').textContent='Editar perfil';
+    g('modalNombre').value=p.nombre;
+    g('modalMon').value=p.monetario; g('modalRFC').value=p.rfCorto;
+    g('modalRFM').value=p.rfMedio;   g('modalRV').value=p.rv;
+    g('modalAlt').value=p.alternativos;
+    actualizarModalTotal();
+    g('modalPerfil').style.display='flex';
+}
+
+function borrarPerfilSeleccionado() {
+    const idx=g('selectorPerfil').value;
+    if(idx===''){mostrarToast('Selecciona un perfil primero','warning');return;}
+    if(!confirm('¿Borrar este perfil?')) return;
+    perfilesPersonalizados.splice(parseInt(idx),1);
+    actualizarSelectorPerfiles();
+    mostrarToast('🗑️ Perfil eliminado','info');
+}
+
+function cargarPerfilSeleccionado() {
+    const idx=g('selectorPerfil').value;
+    if(idx===''){mostrarToast('Selecciona un perfil primero','warning');return;}
+    const p=perfilesPersonalizados[parseInt(idx)];
+    g('pctMonetario').value=p.monetario; g('pctRFCorto').value=p.rfCorto;
+    g('pctRFMedio').value=p.rfMedio;     g('pctRV').value=p.rv;
+    g('pctAlternativos').value=p.alternativos;
+    const badge=g('badgePerfil');
+    badge.textContent=p.nombre; badge.style.display='inline-block';
+    document.querySelectorAll('.btn-perfil').forEach(b=>b.classList.remove('activo'));
+    actualizarUI();
+    mostrarToast('✅ Perfil «'+p.nombre+'» cargado','info');
+}
+
+function actualizarModalTotal() {
+    const t=['modalMon','modalRFC','modalRFM','modalRV','modalAlt']
+        .reduce((s,id)=>s+(parseFloat(g(id).value)||0),0);
+    const ok=Math.abs(t-100)<0.01;
+    g('modalTotal').textContent='Total: '+t.toFixed(1)+'%';
+    g('modalTotal').style.color=ok?'#2e7d32':'#c62828';
+}
+
+function guardarPerfilModal() {
+    const nombre=g('modalNombre').value.trim();
+    if(!nombre){mostrarToast('El nombre es obligatorio','warning');return;}
+    const m=parseFloat(g('modalMon').value)||0, rfc=parseFloat(g('modalRFC').value)||0,
+          rfm=parseFloat(g('modalRFM').value)||0, rv=parseFloat(g('modalRV').value)||0,
+          alt=parseFloat(g('modalAlt').value)||0;
+    if(Math.abs(m+rfc+rfm+rv+alt-100)>0.01){mostrarToast('Los porcentajes deben sumar 100%','warning');return;}
+    const perf={nombre,monetario:m,rfCorto:rfc,rfMedio:rfm,rv,alternativos:alt};
+    if(editandoIndex===-1) perfilesPersonalizados.push(perf);
+    else perfilesPersonalizados[editandoIndex]=perf;
+    actualizarSelectorPerfiles();
+    cerrarModalPerfil();
+    mostrarToast('✅ Perfil guardado','info');
+}
+
+function cerrarModalPerfil(){g('modalPerfil').style.display='none';}
+
+// ================================================================
+//  PERSISTENCIA EN MEMORIA (localStorage)
+// ================================================================
+function persistirEstado() {
+    try {
+        const raw  = localStorage.getItem('carteraActual');
+        const datos= raw ? JSON.parse(raw) : {version:'3.0',historico:[]};
+        datos.cartera = {
+            monetario:    parseFloat(g('impMon').value)||0,
+            rfCorto:      parseFloat(g('impRFC').value)||0,
+            rfMedio:      parseFloat(g('impRFM').value)||0,
+            rv:           parseFloat(g('impRV').value) ||0,
+            alternativos: parseFloat(g('impAlt').value)||0,
+            efectivo:     parseFloat(g('efectivo').value)    ||0,
+            inmobiliario: parseFloat(g('inmobiliario').value)||0,
+            etfs: etfsLista
+        };
+        datos.configuracion = datos.configuracion||{};
+        datos.configuracion.porcentajes = {
+            monetario:    parseFloat(g('pctMonetario').value)   ||0,
+            rfCorto:      parseFloat(g('pctRFCorto').value)     ||0,
+            rfMedio:      parseFloat(g('pctRFMedio').value)     ||0,
+            rv:           parseFloat(g('pctRV').value)          ||0,
+            alternativos: parseFloat(g('pctAlternativos').value)||0
+        };
+        datos.configuracion.perfilesPersonalizados = perfilesPersonalizados;
+        localStorage.setItem('carteraActual', JSON.stringify(datos));
+    } catch(e){}
+}
+
+// ================================================================
+//  GUARDAR ARCHIVO JSON
+// ================================================================
+function construirSnapshot() {
+    const raw  = localStorage.getItem('carteraActual');
+    const datos= raw ? JSON.parse(raw) : {version:'3.0',historico:[]};
+    const c    = datos.cartera || {};
+
+    const totalF    = (c.monetario||0)+(c.rfCorto||0)+(c.rfMedio||0)+(c.rv||0)+(c.alternativos||0);
+    const etfsInv   = etfsLista.reduce((s,e)=>s+(e.cantidad||0)*(e.precioActual||0),0);
+    const etfsPend  = Math.max(0, etfsValorInicial - etfsInv);
+    const totalE    = etfsInv + etfsPend;   // invertido + pendiente
+    const total     = totalF + totalE + (c.efectivo||0) + (c.inmobiliario||0);
+
+    // Preservar etfsValorInicial en la cartera
+    c.etfsValorInicial = etfsValorInicial;
+    datos.cartera = c;
+
+    // Añadir registro al histórico
+    const hist = datos.historico||[];
+    hist.push({
+        fecha:new Date().toLocaleDateString(),
+        hora:new Date().toLocaleTimeString(),
+        timestamp:Date.now(),
+        monetario:c.monetario||0, rfCorto:c.rfCorto||0, rfMedio:c.rfMedio||0,
+        rv:c.rv||0, alternativos:c.alternativos||0,
+        efectivo:c.efectivo||0, inmobiliario:c.inmobiliario||0,
+        etfs:[...etfsLista], etfsValorInicial, etfsInvertido:etfsInv, etfsPendiente:etfsPend,
+        total
+    });
+    datos.historico = hist;
+    datos.fecha = new Date().toISOString();
+    localStorage.setItem('carteraActual', JSON.stringify(datos));
+    return datos;
+}
+
+function descargarJSON(datos, nombre) {
+    const blob=new Blob([JSON.stringify(datos,null,2)],{type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=nombre;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(a.href);
+}
+
+function guardarArchivo(btn) {
+    if(btn){btn.disabled=true;btn.textContent='⏳ Guardando...';}
+    descargarJSON(construirSnapshot(), nombreArchivo);
+    mostrarModalGuardado(()=>{
+        if(btn){btn.disabled=false;btn.textContent='💾 GUARDAR EN ARCHIVO';}
+        actualizarBarraEstado(JSON.parse(localStorage.getItem('carteraActual')));
+    });
+}
+
+function guardarComo() {
+    let nombre=(prompt('Nombre del archivo:',nombreArchivo)||'').trim();
+    if(!nombre) return;
+    if(!nombre.endsWith('.json')) nombre+='.json';
+    nombreArchivo=nombre;
+    descargarJSON(construirSnapshot(), nombre);
+    mostrarModalGuardado(()=>{
+        actualizarBarraEstado(JSON.parse(localStorage.getItem('carteraActual')));
+    });
+}
+
+// ================================================================
+//  BARRA DE ESTADO
+// ================================================================
+function actualizarBarraEstado(datos) {
+    const el=g('barraEstado'); if(!el) return;
+    if (!datos) {
+        el.innerHTML='📂 Sin datos. <a href="configuracion-inicial.html" style="color:#667eea;font-weight:600;">Configura tu cartera</a> o '
+            +'<a href="importar-cartera.html" style="color:#667eea;font-weight:600;">importa desde un archivo</a>.';
+        return;
+    }
+    const hist=datos.historico||[];
+    const ult =hist.length?hist[hist.length-1]:null;
+    el.innerHTML= ult
+        ? `📁 <strong>${nombreArchivo}</strong> &nbsp;|&nbsp; Guardado: ${ult.fecha} ${ult.hora} &nbsp;|&nbsp; Total: <strong>${fmtE(ult.total)}</strong>`
+        : `📁 <strong>${nombreArchivo}</strong> &nbsp;|&nbsp; Sin registros históricos aún`;
+}
+
+// ================================================================
+//  INIT
+// ================================================================
+document.addEventListener('DOMContentLoaded', ()=>{
+    cargarDatos();
+    calcularProximaFecha();
+    actualizarUI();
+    renderComparativaPerfiles();
+});
+
+// ── Comparativa visual de perfiles ────────────────────────────
+function renderComparativaPerfiles() {
+    const PERFS = {
+        ultraconservador: { mon:30, rfc:30, rfm:25, rv:10, alt:5,  color:'#1a237e', rent:'~3-4%', riesgo:'Muy bajo' },
+        conservador:      { mon:20, rfc:25, rfm:25, rv:20, alt:10, color:'#283593', rent:'~4-5%', riesgo:'Bajo' },
+        equilibrado:      { mon:5,  rfc:15, rfm:25, rv:40, alt:15, color:'#ff8f00', rent:'~5-7%', riesgo:'Moderado' },
+        crecimiento:      { mon:2,  rfc:10, rfm:20, rv:55, alt:13, color:'#e65100', rent:'~7-9%', riesgo:'Alto' },
+        arriesgado:       { mon:0,  rfc:5,  rfm:15, rv:70, alt:10, color:'#b71c1c', rent:'~8-10%',riesgo:'Muy alto' }
+    };
+    const cats = [['Monetario','mon'],['RF Corto','rfc'],['RF Medio','rfm'],['Renta Variable','rv'],['Alternativos','alt']];
+    const ids  = Object.keys(PERFS);
+
+    // Tabla
+    const tb = document.getElementById('tablaComparativa');
+    if (!tb) return;
+    tb.innerHTML = cats.map(([nom, key]) =>
+        `<tr style="border-bottom:1px solid #f0f0f0;">
+            <td style="padding:7px 10px;font-weight:600;">${nom}</td>
+            ${ids.map(id => {
+                const v = PERFS[id][key];
+                const w = Math.max(4, v);
+                return `<td style="padding:7px 10px;text-align:center;">
+                    <div style="background:${PERFS[id].color};height:6px;border-radius:3px;width:${w}%;min-width:4px;margin:0 auto 3px;"></div>
+                    <strong>${v}%</strong>
+                </td>`;
+            }).join('')}
+        </tr>`
+    ).join('') +
+    `<tr style="background:#f8f9fa;font-weight:700;">
+        <td style="padding:7px 10px;">Rent. esperada</td>
+        ${ids.map(id=>`<td style="padding:7px 10px;text-align:center;color:${PERFS[id].color};">${PERFS[id].rent}</td>`).join('')}
+    </tr>
+    <tr style="background:#f8f9fa;font-weight:700;">
+        <td style="padding:7px 10px;">Nivel de riesgo</td>
+        ${ids.map(id=>`<td style="padding:7px 10px;text-align:center;color:${PERFS[id].color};">${PERFS[id].riesgo}</td>`).join('')}
+    </tr>`;
+}
+</script>
+</body>
+</html>

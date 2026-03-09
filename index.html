@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Cartera</title>
+    <style>
+        *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 30px 16px 50px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 36px 32px;
+            box-shadow: 0 25px 60px rgba(0,0,0,.3);
+            width: 100%;
+            max-width: 560px;
+        }
+
+        /* ── Header ── */
+        .header { text-align:center; margin-bottom:28px; }
+        .header .icon { font-size:52px; margin-bottom:10px; }
+        .header h1   { font-size:1.65em; color:#333; margin-bottom:4px; }
+        .header p    { color:#999; font-size:13px; }
+
+        /* ── Modos ── */
+        .modo { display:none; }
+        .modo.activo { display:block; }
+
+        /* ── Panel carga de archivo ── */
+        #dropZone {
+            border:3px dashed #ccc; border-radius:14px; padding:36px 20px;
+            text-align:center; cursor:pointer; transition:all .2s; color:#888;
+            margin-bottom:18px;
+        }
+        #dropZone:hover, #dropZone.drag-over {
+            border-color:#667eea; background:#f3f0ff; color:#667eea;
+        }
+        #dropZone .dz-icon { font-size:40px; margin-bottom:10px; }
+        #dropZone p  { font-size:14px; }
+        #dropZone small { font-size:12px; color:#aaa; margin-top:6px; display:block; }
+
+        #infoArchivo {
+            display:none; background:#e8f5e9; border-left:4px solid #4CAF50;
+            border-radius:8px; padding:12px 16px; font-size:13px; margin-bottom:16px;
+        }
+
+        .divider { display:flex; align-items:center; color:#ccc; font-size:12px; margin:16px 0; }
+        .divider::before, .divider::after { content:''; flex:1; border-top:1px solid #e0e0e0; }
+        .divider span { padding:0 10px; }
+
+        /* ── Formulario nueva cartera ── */
+        .form-section { margin-bottom:20px; }
+        .form-section h3 { font-size:15px; font-weight:700; color:#555; margin-bottom:12px; display:flex; align-items:center; gap:6px; }
+
+        .perfiles-row { display:flex; gap:7px; flex-wrap:wrap; margin-bottom:4px; }
+        .btn-perfil {
+            flex:1 1 auto; min-width:90px; padding:9px 6px;
+            border:none; border-radius:8px; cursor:pointer; font-weight:700;
+            font-size:12px; color:white; transition:all .2s;
+        }
+        .btn-perfil:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.2); }
+        .btn-perfil.sel   { outline:3px solid white; box-shadow:0 0 0 5px rgba(102,126,234,.4); }
+
+        .inputs-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+        .input-group { display:flex; flex-direction:column; gap:4px; }
+        .input-group label { font-size:12px; font-weight:600; color:#666; }
+        .input-group input {
+            padding:9px 12px; border:2px solid #e0e0e0; border-radius:8px;
+            font-size:15px; transition:border-color .2s; width:100%;
+        }
+        .input-group input:focus { outline:none; border-color:#667eea; }
+        .input-group .sufijo { display:flex; align-items:center; gap:6px; }
+        .input-group .sufijo span { color:#999; font-size:14px; }
+
+        .pct-grid { display:grid; grid-template-columns:repeat(5,1fr) auto; gap:8px; align-items:end; }
+        .pct-item { display:flex; flex-direction:column; gap:3px; }
+        .pct-item label { font-size:11px; font-weight:600; color:#666; text-align:center; }
+        .pct-item input {
+            padding:8px 6px; border:2px solid #e0e0e0; border-radius:7px;
+            font-size:14px; text-align:center; width:100%; transition:border-color .2s;
+        }
+        .pct-item input:focus { outline:none; border-color:#667eea; }
+        .pct-total {
+            display:flex; flex-direction:column; gap:3px;
+        }
+        .pct-total label { font-size:11px; font-weight:600; color:#666; text-align:center; }
+        .pct-total-val {
+            padding:8px 8px; border-radius:7px; font-size:14px; text-align:center;
+            font-weight:700; border:2px solid transparent;
+        }
+        .pct-ok   { background:#e8f5e9; color:#2e7d32; border-color:#a5d6a7; }
+        .pct-warn { background:#fff3e0; color:#e65100; border-color:#ffcc80; }
+
+        /* Resumen dinámico */
+        .resumen-bar {
+            display:flex; justify-content:space-between; align-items:center;
+            background:#f8f8ff; border-radius:10px; padding:12px 16px;
+            font-size:13px; margin:14px 0; flex-wrap:wrap; gap:8px;
+        }
+        .resumen-bar .total-val { font-size:20px; font-weight:800; color:#667eea; }
+        .resumen-bar .validacion { font-size:12px; font-weight:600; }
+        .v-ok   { color:#2e7d32; }
+        .v-warn { color:#e65100; }
+
+        /* Nombre archivo */
+        .nombre-archivo { margin-bottom:18px; }
+        .nombre-archivo label { font-size:13px; font-weight:600; color:#555; display:block; margin-bottom:6px; }
+        .nombre-archivo input {
+            width:100%; padding:10px 14px; border:2px solid #4CAF50;
+            border-radius:8px; font-size:14px;
+        }
+        .nombre-archivo input:focus { outline:none; border-color:#388e3c; }
+
+        /* Botones principales */
+        .btn-main {
+            width:100%; padding:15px; border:none; border-radius:12px;
+            font-size:16px; font-weight:700; cursor:pointer; color:white;
+            transition:all .2s; margin-bottom:10px;
+        }
+        .btn-main:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,.2); }
+        .btn-main:disabled { opacity:.45; cursor:not-allowed; transform:none !important; }
+        .btn-purple { background:linear-gradient(135deg,#667eea,#764ba2); }
+        .btn-green  { background:linear-gradient(135deg,#43e97b,#38f9d7); color:#1a5c30; }
+        .btn-blue   { background:linear-gradient(135deg,#48c6ef,#6f86d6); }
+        .btn-text   { background:none; border:none; color:#667eea; font-size:13px; cursor:pointer; padding:6px 0; font-weight:600; }
+        .btn-text:hover { text-decoration:underline; }
+
+        /* Toast */
+        #toast {
+            position:fixed; bottom:22px; right:22px; padding:13px 20px;
+            border-radius:10px; box-shadow:0 6px 20px rgba(0,0,0,.25);
+            z-index:9999; cursor:pointer; max-width:320px; font-size:14px;
+            color:white; display:none; transition:opacity .3s;
+        }
+
+        @media(max-width:500px){
+            .pct-grid { grid-template-columns:repeat(3,1fr); }
+            .inputs-grid { grid-template-columns:1fr; }
+            .card { padding:24px 18px; }
+        }
+        /* Wizard */
+        .wOpcion {
+            padding:13px 14px; border:2px solid #e0e0e0; border-radius:10px; background:white;
+            cursor:pointer; font-size:13px; font-weight:600; color:#444; transition:all .2s; text-align:left;
+        }
+        .wOpcion:hover { border-color:#667eea; background:#f5f3ff; }
+        .wOpcion.sel   { border-color:#667eea; background:#f0f4ff; color:#667eea; }
+        .wOpcionFull   { width:100%; }
+        .wPct { background:#667eea; color:white; padding:3px 9px; border-radius:12px; font-size:11px; font-weight:700; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="header">
+        <div class="icon">💰</div>
+        <h1>Gestión de Cartera</h1>
+        <p>Sistema de inversión personal · 100% local</p>
+    </div>
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- MODO W: Wizard onboarding (primera vez)        -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div id="modoWizard" class="modo">
+        <!-- Barra de progreso -->
+        <div style="display:flex;gap:6px;margin-bottom:24px;align-items:center;">
+            <div id="wp1" style="flex:1;height:5px;border-radius:3px;background:#667eea;transition:background .3s;"></div>
+            <div id="wp2" style="flex:1;height:5px;border-radius:3px;background:#e0e0e0;transition:background .3s;"></div>
+            <div id="wp3" style="flex:1;height:5px;border-radius:3px;background:#e0e0e0;transition:background .3s;"></div>
+            <span id="wStep" style="font-size:12px;color:#999;margin-left:6px;">1/3</span>
+        </div>
+
+        <!-- PASO 1: ¿Cuánto quieres invertir? -->
+        <div id="wPaso1">
+            <div style="text-align:center;margin-bottom:20px;">
+                <div style="font-size:44px;margin-bottom:8px;">💶</div>
+                <h2 style="color:#333;font-size:1.3em;margin-bottom:6px;">¿Cuánto dinero quieres invertir?</h2>
+                <p style="color:#888;font-size:13px;">No te preocupes, puedes cambiarlo después en cualquier momento</p>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+                <button class="wOpcion" onclick="selWOpcion(this,'capital','5000')">💼 Menos de 10.000 €</button>
+                <button class="wOpcion" onclick="selWOpcion(this,'capital','25000')">📦 10.000 – 50.000 €</button>
+                <button class="wOpcion" onclick="selWOpcion(this,'capital','75000')">🏦 50.000 – 100.000 €</button>
+                <button class="wOpcion" onclick="selWOpcion(this,'capital','150000')">🏛️ Más de 100.000 €</button>
+            </div>
+            <p style="font-size:12px;color:#aaa;text-align:center;margin-bottom:14px;">O introduce el importe exacto:</p>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:18px;">
+                <input type="number" id="wCapital" placeholder="Ej: 30000" min="0" step="1000"
+                    style="flex:1;padding:11px 14px;border:2px solid #e0e0e0;border-radius:10px;font-size:16px;font-weight:700;"
+                    oninput="g('wCapital').style.borderColor='#667eea'">
+                <span style="font-size:18px;color:#667eea;font-weight:700;">€</span>
+            </div>
+            <button class="btn-main btn-purple" onclick="wSiguiente(2)">Siguiente →</button>
+        </div>
+
+        <!-- PASO 2: ¿Cuánto riesgo toleras? -->
+        <div id="wPaso2" style="display:none;">
+            <div style="text-align:center;margin-bottom:20px;">
+                <div style="font-size:44px;margin-bottom:8px;">🎯</div>
+                <h2 style="color:#333;font-size:1.3em;margin-bottom:6px;">¿Cómo reaccionarías si tu inversión baja un 20%?</h2>
+                <p style="color:#888;font-size:13px;">Esto nos ayuda a recomendarte el perfil de riesgo adecuado</p>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px;">
+                <button class="wOpcion wOpcionFull" onclick="selWOpcion(this,'riesgo','ultraconservador')">
+                    😰 Me asustaría mucho y vendería todo — <strong>Prefiero no perder nada aunque gane poco</strong>
+                </button>
+                <button class="wOpcion wOpcionFull" onclick="selWOpcion(this,'riesgo','conservador')">
+                    😟 Me preocuparía pero esperaría — <strong>Acepto pequeñas bajadas a cambio de algo más de rentabilidad</strong>
+                </button>
+                <button class="wOpcion wOpcionFull" onclick="selWOpcion(this,'riesgo','equilibrado')">
+                    😐 Lo vería como algo normal — <strong>Quiero un equilibrio entre seguridad y rentabilidad</strong>
+                </button>
+                <button class="wOpcion wOpcionFull" onclick="selWOpcion(this,'riesgo','crecimiento')">
+                    🙂 Aprovecharía para comprar más — <strong>Priorizo la rentabilidad a largo plazo</strong>
+                </button>
+                <button class="wOpcion wOpcionFull" onclick="selWOpcion(this,'riesgo','arriesgado')">
+                    😎 Me parece una oportunidad — <strong>Máxima rentabilidad, asumo volatilidad alta</strong>
+                </button>
+            </div>
+            <div style="display:flex;gap:10px;">
+                <button class="btn-main btn-blue" style="flex:0 0 auto;width:auto;padding:13px 22px;" onclick="wSiguiente(1)">← Atrás</button>
+                <button class="btn-main btn-purple" onclick="wSiguiente(3)">Siguiente →</button>
+            </div>
+        </div>
+
+        <!-- PASO 3: ¿A cuántos años? -->
+        <div id="wPaso3" style="display:none;">
+            <div style="text-align:center;margin-bottom:20px;">
+                <div style="font-size:44px;margin-bottom:8px;">⏳</div>
+                <h2 style="color:#333;font-size:1.3em;margin-bottom:6px;">¿Cuándo necesitarías el dinero?</h2>
+                <p style="color:#888;font-size:13px;">El horizonte temporal es clave para elegir bien los activos</p>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;">
+                <button class="wOpcion" onclick="selWOpcion(this,'plazo','corto')">⚡ Menos de 3 años<br><small>Necesito liquidez</small></button>
+                <button class="wOpcion" onclick="selWOpcion(this,'plazo','medio')">📅 3 – 7 años<br><small>Plazo medio</small></button>
+                <button class="wOpcion" onclick="selWOpcion(this,'plazo','largo')">🌱 7 – 15 años<br><small>Largo plazo</small></button>
+                <button class="wOpcion" onclick="selWOpcion(this,'plazo','muylargo')">🏔️ Más de 15 años<br><small>Jubilación / legado</small></button>
+            </div>
+            <!-- Resultado recomendación -->
+            <div id="wRecomendacion" style="display:none;border-radius:12px;padding:16px;margin-bottom:16px;text-align:center;">
+                <div style="font-size:28px;margin-bottom:6px;" id="wRecIcon">🎯</div>
+                <h3 id="wRecTitulo" style="margin-bottom:6px;"></h3>
+                <p id="wRecDesc" style="font-size:13px;color:#555;margin-bottom:10px;"></p>
+                <div id="wRecPcts" style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;font-size:11px;"></div>
+            </div>
+            <div style="display:flex;gap:10px;">
+                <button class="btn-main btn-blue" style="flex:0 0 auto;width:auto;padding:13px 22px;" onclick="wSiguiente(2)">← Atrás</button>
+                <button class="btn-main btn-green" id="wBtnCrear" disabled onclick="wCrearCartera()">✅ Crear mi cartera</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- MODO A: Cargar cartera existente               -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div id="modoCargar" class="modo">
+
+        <div id="dropZone"
+             onclick="document.getElementById('inputJSON').click()"
+             ondragover="event.preventDefault();this.classList.add('drag-over')"
+             ondragleave="this.classList.remove('drag-over')"
+             ondrop="onDrop(event)">
+            <div class="dz-icon">📂</div>
+            <p><strong>Haz clic o arrastra</strong> tu archivo <code>.json</code></p>
+            <small>Archivo guardado previamente con esta aplicación</small>
+        </div>
+        <input type="file" id="inputJSON" accept=".json" style="display:none" onchange="cargarJSON(this)">
+
+        <div id="infoArchivo"></div>
+
+        <button class="btn-main btn-purple" id="btnAbrir" disabled onclick="abrirDashboard()">
+            🚀 Abrir Dashboard
+        </button>
+
+        <div class="divider"><span>¿Primera vez?</span></div>
+
+        <button class="btn-main btn-blue" onclick="mostrarModo('nueva')">
+            ✨ Crear nueva cartera
+        </button>
+    </div>
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- MODO B: Crear nueva cartera                    -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div id="modoNueva" class="modo">
+
+        <!-- Perfiles predefinidos -->
+        <div class="form-section">
+            <h3>🎯 Perfil de inversión</h3>
+            <div class="perfiles-row">
+                <button class="btn-perfil" style="background:#1a237e" onclick="aplicarPerfil('ultraconservador',this)">🛡️ Ultra&shy;conservador</button>
+                <button class="btn-perfil" style="background:#283593" onclick="aplicarPerfil('conservador',this)">🛡️ Conservador</button>
+                <button class="btn-perfil" style="background:#ff8f00" onclick="aplicarPerfil('equilibrado',this)">⚖️ Equilibrado</button>
+                <button class="btn-perfil" style="background:#e65100" onclick="aplicarPerfil('crecimiento',this)">📈 Crecimiento</button>
+                <button class="btn-perfil" style="background:#b71c1c" onclick="aplicarPerfil('arriesgado',this)">🚀 Arriesgado</button>
+            </div>
+        </div>
+
+        <!-- Distribución capital -->
+        <div class="form-section">
+            <h3>💶 Distribuye tu capital</h3>
+            <div class="inputs-grid">
+                <div class="input-group">
+                    <label>💵 Efectivo (€)</label>
+                    <input type="number" id="nEfectivo" value="50000" min="0" step="100" oninput="actualizar()">
+                </div>
+                <div class="input-group">
+                    <label>🏦 Fondos (€)</label>
+                    <input type="number" id="nFondos" value="30000" min="0" step="100" oninput="actualizar()">
+                </div>
+                <div class="input-group">
+                    <label>📈 ETFs / Acciones (€)</label>
+                    <input type="number" id="nEtfs" value="20000" min="0" step="100" oninput="actualizar()">
+                </div>
+                <div class="input-group">
+                    <label>🏠 Inmobiliario (€)</label>
+                    <input type="number" id="nInmob" value="0" min="0" step="100" oninput="actualizar()">
+                </div>
+            </div>
+        </div>
+
+        <!-- Porcentajes fondos -->
+        <div class="form-section">
+            <h3>📊 Porcentajes objetivo de fondos</h3>
+            <div class="pct-grid">
+                <div class="pct-item"><label>Monetario</label>    <input type="number" id="nMon" value="5"  step="0.1" min="0" max="100" oninput="actualizar()"></div>
+                <div class="pct-item"><label>RF Corto</label>     <input type="number" id="nRFC" value="15" step="0.1" min="0" max="100" oninput="actualizar()"></div>
+                <div class="pct-item"><label>RF Medio</label>     <input type="number" id="nRFM" value="25" step="0.1" min="0" max="100" oninput="actualizar()"></div>
+                <div class="pct-item"><label>R.Variable</label>   <input type="number" id="nRV"  value="40" step="0.1" min="0" max="100" oninput="actualizar()"></div>
+                <div class="pct-item"><label>Alternativos</label> <input type="number" id="nAlt" value="15" step="0.1" min="0" max="100" oninput="actualizar()"></div>
+                <div class="pct-total"><label>TOTAL</label>       <div  id="nTotal" class="pct-total-val pct-ok">100%</div></div>
+            </div>
+        </div>
+
+        <!-- Resumen -->
+        <div class="resumen-bar">
+            <div>
+                <div style="font-size:12px;color:#999;margin-bottom:2px;">Capital total asignado</div>
+                <div class="total-val" id="nCapitalTotal">100.000 €</div>
+            </div>
+            <div id="nValidacion" class="validacion v-ok">✅ Listo para guardar</div>
+        </div>
+
+        <!-- Nombre archivo -->
+        <div class="nombre-archivo">
+            <label>💾 Nombre del archivo</label>
+            <input type="text" id="nNombre" value="mi-cartera.json" placeholder="mi-cartera.json">
+        </div>
+
+        <!-- Botón guardar -->
+        <button class="btn-main btn-green" id="btnGuardar" onclick="guardarNuevaCartera()">
+            💾 Generar archivo y entrar
+        </button>
+
+        <div class="divider"><span>¿Ya tienes un archivo?</span></div>
+
+        <button class="btn-main btn-blue" onclick="mostrarModo('cargar')">
+            📂 Cargar cartera existente
+        </button>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── Utilidades ──────────────────────────────────────────────────
+const fmtE = v => isNaN(v)||v==null ? '0,00 €'
+    : v.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' €';
+const g = id => document.getElementById(id);
+
+function toast(msg, tipo='info', ms=4000) {
+    const t = g('toast');
+    t.textContent = msg;
+    t.style.background = tipo==='ok' ? '#388e3c' : tipo==='error' ? '#c62828' : '#1565c0';
+    t.style.display = 'block';
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.style.display='none', ms);
+}
+
+function cargarLS()  { try { return JSON.parse(localStorage.getItem('carteraActual')) || null; } catch(e) { return null; } }
+function guardarLS(d){ localStorage.setItem('carteraActual', JSON.stringify(d)); }
+
+// ── Modo de pantalla ────────────────────────────────────────────
+function mostrarModo(modo) {
+    document.querySelectorAll('.modo').forEach(m => m.classList.remove('activo'));
+    const ids = { cargar:'modoCargar', nueva:'modoNueva', wizard:'modoWizard' };
+    const el = g(ids[modo]);
+    if(el) el.classList.add('activo');
+}
+
+// ── Perfiles ────────────────────────────────────────────────────
+const PERFILES = {
+    ultraconservador: { mon:30, rfc:30, rfm:25, rv:10, alt:5  },
+    conservador:      { mon:20, rfc:25, rfm:25, rv:20, alt:10 },
+    equilibrado:      { mon:5,  rfc:15, rfm:25, rv:40, alt:15 },
+    crecimiento:      { mon:2,  rfc:10, rfm:20, rv:55, alt:13 },
+    arriesgado:       { mon:0,  rfc:5,  rfm:15, rv:70, alt:10 }
+};
+
+function aplicarPerfil(clave, btn) {
+    const p = PERFILES[clave]; if(!p) return;
+    g('nMon').value = p.mon; g('nRFC').value = p.rfc; g('nRFM').value = p.rfm;
+    g('nRV').value  = p.rv;  g('nAlt').value = p.alt;
+    // Marcar botón activo
+    document.querySelectorAll('.btn-perfil').forEach(b => b.classList.remove('sel'));
+    if(btn) btn.classList.add('sel');
+    actualizar();
+}
+
+// ── Cálculo y validación en tiempo real ─────────────────────────
+function actualizar() {
+    const efectivo = parseFloat(g('nEfectivo').value) || 0;
+    const fondos   = parseFloat(g('nFondos').value)   || 0;
+    const etfs     = parseFloat(g('nEtfs').value)     || 0;
+    const inmob    = parseFloat(g('nInmob').value)    || 0;
+    const total    = efectivo + fondos + etfs + inmob;
+
+    g('nCapitalTotal').textContent = fmtE(total);
+
+    // Porcentajes
+    const pcts = ['nMon','nRFC','nRFM','nRV','nAlt'].map(id => parseFloat(g(id).value) || 0);
+    const sumPct = pcts.reduce((a,b) => a+b, 0);
+    const pctOk  = Math.abs(sumPct - 100) < 0.01;
+
+    const totalEl = g('nTotal');
+    totalEl.textContent = sumPct.toFixed(1) + '%';
+    totalEl.className = 'pct-total-val ' + (pctOk ? 'pct-ok' : 'pct-warn');
+
+    // Validación global
+    const vEl = g('nValidacion');
+    if(total <= 0) {
+        vEl.textContent = '⚠️ Introduce importes'; vEl.className = 'validacion v-warn';
+        g('btnGuardar').disabled = true;
+    } else if(!pctOk) {
+        vEl.textContent = '⚠️ Los porcentajes deben sumar 100%'; vEl.className = 'validacion v-warn';
+        g('btnGuardar').disabled = true;
+    } else {
+        vEl.textContent = '✅ Listo para guardar'; vEl.className = 'validacion v-ok';
+        g('btnGuardar').disabled = false;
+    }
+}
+
+// ── Guardar nueva cartera ────────────────────────────────────────
+function guardarNuevaCartera() {
+    const efectivo = parseFloat(g('nEfectivo').value) || 0;
+    const fondos   = parseFloat(g('nFondos').value)   || 0;
+    const etfs     = parseFloat(g('nEtfs').value)     || 0;
+    const inmob    = parseFloat(g('nInmob').value)    || 0;
+
+    const pcts = {
+        monetario:    parseFloat(g('nMon').value) || 5,
+        rfCorto:      parseFloat(g('nRFC').value) || 15,
+        rfMedio:      parseFloat(g('nRFM').value) || 25,
+        rv:           parseFloat(g('nRV').value)  || 40,
+        alternativos: parseFloat(g('nAlt').value) || 15
+    };
+
+    const cartera = {
+        efectivo,
+        inmobiliario: inmob,
+        monetario:    fondos * pcts.monetario    / 100,
+        rfCorto:      fondos * pcts.rfCorto      / 100,
+        rfMedio:      fondos * pcts.rfMedio      / 100,
+        rv:           fondos * pcts.rv           / 100,
+        alternativos: fondos * pcts.alternativos / 100,
+        etfs: [],
+        etfsValorInicial: etfs
+    };
+
+    const totalFondos = cartera.monetario + cartera.rfCorto + cartera.rfMedio + cartera.rv + cartera.alternativos;
+    const totalETFs   = etfs;
+    const total       = totalFondos + totalETFs + efectivo + inmob;
+
+    const datos = {
+        version: '3.0',
+        fecha:   new Date().toISOString(),
+        cartera,
+        configuracion: {
+            porcentajes: pcts,
+            perfilesPersonalizados: [],
+            tema: 'claro'
+        },
+        historico: [{
+            fecha:     new Date().toLocaleDateString(),
+            hora:      new Date().toLocaleTimeString(),
+            timestamp: Date.now(),
+            ...cartera,
+            total
+        }]
+    };
+
+    // Guardar en localStorage
+    guardarLS(datos);
+
+    // Descargar archivo
+    let nombre = (g('nNombre').value || '').trim() || 'mi-cartera.json';
+    if(!nombre.endsWith('.json')) nombre += '.json';
+
+    const blob = new Blob([JSON.stringify(datos, null, 2)], { type:'application/json' });
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = nombre;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(a.href);
+
+    toast('✅ Archivo generado. Abriendo cartera…', 'ok');
+    setTimeout(() => location.href = 'cartera.html', 1400);
+}
+
+// ── Cargar JSON existente ────────────────────────────────────────
+let datosTemporales = null;
+
+function onDrop(e) {
+    e.preventDefault();
+    g('dropZone').classList.remove('drag-over');
+    const file = e.dataTransfer?.files?.[0];
+    if(file) procesarArchivo(file);
+}
+
+function cargarJSON(input) {
+    const file = input?.files?.[0]; if(!file) return;
+    procesarArchivo(file);
+}
+
+function procesarArchivo(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+        try {
+            const datos = JSON.parse(e.target.result);
+            if(!datos.cartera && !datos.version) throw new Error('Formato no reconocido');
+
+            datosTemporales = datos;
+            guardarLS(datos); // cargarlo en memoria ya
+
+            const hist  = datos.historico || [];
+            const ult   = hist.length ? hist[hist.length-1] : null;
+            const total = ult ? ult.total : 0;
+            const regs  = hist.length;
+
+            g('infoArchivo').style.display = 'block';
+            g('infoArchivo').innerHTML =
+                `✅ <strong>${file.name}</strong> cargado correctamente<br>` +
+                `💰 Total: <strong>${fmtE(total)}</strong> · ${regs} registro(s) en el histórico`;
+
+            g('btnAbrir').disabled = false;
+            toast('✅ Archivo listo. Pulsa «Abrir Dashboard»', 'ok');
+        } catch(err) {
+            g('infoArchivo').style.display = 'block';
+            g('infoArchivo').style.background = '#fce4ec';
+            g('infoArchivo').style.borderLeftColor = '#e53935';
+            g('infoArchivo').textContent = '❌ Error: ' + err.message;
+            g('btnAbrir').disabled = true;
+            toast('❌ ' + err.message, 'error');
+        }
+    };
+    reader.readAsText(file);
+}
+
+function abrirDashboard() {
+    location.href = 'cartera.html';
+}
+
+// ── Init ─────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    // Detectar si hay datos en localStorage
+    const datos = cargarLS();
+    if(datos && datos.cartera) {
+        // ── Reparar etfsValorInicial si falta ──────────────────
+        const c = datos.cartera;
+        if (!parseFloat(c.etfsValorInicial)) {
+            let val = 0;
+            const histRep = datos.historico || [];
+            for (let i = histRep.length - 1; i >= 0; i--) {
+                const v = parseFloat(histRep[i].etfsValorInicial);
+                if (v > 0) { val = v; break; }
+            }
+            if (!val && c.etfs && c.etfs.length > 0)
+                val = c.etfs.reduce((s,e) => s + (e.cantidad||0)*(e.precioActual||0), 0);
+            if (val > 0) { c.etfsValorInicial = val; datos.cartera = c; guardarLS(datos); }
+        }
+
+        // Hay cartera en memoria: mostrar modo cargar pero con info
+        mostrarModo('cargar');
+
+        const hist  = datos.historico || [];
+        const ult   = hist.length ? hist[hist.length-1] : null;
+        const total = ult?.total || 0;
+
+        if(total > 0) {
+            g('infoArchivo').style.display = 'block';
+            g('infoArchivo').innerHTML =
+                `📂 Datos en memoria: <strong>${fmtE(total)}</strong> · ${hist.length} registro(s)<br>` +
+                `<small style="color:#666">Carga tu archivo .json para actualizar, o abre directamente</small>`;
+            g('btnAbrir').disabled = false;
+        }
+    } else {
+        // Sin datos: mostrar wizard para nuevos usuarios
+        mostrarModo('wizard');
+    }
+    actualizar();
+});
+
+// ══════════════════════════════════════════════════════
+//  WIZARD ONBOARDING
+// ══════════════════════════════════════════════════════
+const wData = { capital: 0, riesgo: '', plazo: '' };
+
+const PERFILES_W = {
+    ultraconservador: { icon:'🛡️', color:'#1a237e', titulo:'Perfil UltraConservador',
+        desc:'Prioridad absoluta a la seguridad. Rentabilidad baja pero muy estable. Ideal para horizontes cortos o personas que no toleran pérdidas.',
+        pcts:{ monetario:30, rfCorto:30, rfMedio:25, rv:10, alternativos:5 } },
+    conservador:      { icon:'🛡️', color:'#283593', titulo:'Perfil Conservador',
+        desc:'Mayoría en renta fija con algo de bolsa. Pérdidas posibles pero limitadas. Buen equilibrio para principiantes cautos.',
+        pcts:{ monetario:20, rfCorto:25, rfMedio:25, rv:20, alternativos:10 } },
+    equilibrado:      { icon:'⚖️', color:'#ff8f00', titulo:'Perfil Equilibrado',
+        desc:'Mix 50/50 entre seguridad y crecimiento. El más popular. Buena rentabilidad a largo plazo con volatilidad moderada.',
+        pcts:{ monetario:5, rfCorto:15, rfMedio:25, rv:40, alternativos:15 } },
+    crecimiento:      { icon:'📈', color:'#e65100', titulo:'Perfil Crecimiento',
+        desc:'Orientado a bolsa con algo de colchón. Para inversores con horizonte largo que buscan rentabilidad por encima de la media.',
+        pcts:{ monetario:2, rfCorto:10, rfMedio:20, rv:55, alternativos:13 } },
+    arriesgado:       { icon:'🚀', color:'#b71c1c', titulo:'Perfil Arriesgado',
+        desc:'Casi todo en bolsa. Máxima rentabilidad potencial pero puede caer un 40-50% temporalmente. Solo para largo plazo.',
+        pcts:{ monetario:0, rfCorto:5, rfMedio:15, rv:70, alternativos:10 } }
+};
+
+// Ajuste por plazo: si el plazo es corto, el perfil no puede ser muy arriesgado
+function ajustarPerfilPorPlazo(riesgo, plazo) {
+    const orden = ['ultraconservador','conservador','equilibrado','crecimiento','arriesgado'];
+    let idx = orden.indexOf(riesgo);
+    if (plazo === 'corto')   idx = Math.min(idx, 1); // máximo conservador
+    if (plazo === 'medio')   idx = Math.min(idx, 2); // máximo equilibrado
+    return orden[idx];
+}
+
+function selWOpcion(btn, campo, valor) {
+    // Desmarcar hermanos
+    btn.closest('div').querySelectorAll('.wOpcion').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    wData[campo] = valor;
+    // Si se elige capital en input, sincronizar
+    if (campo === 'capital') g('wCapital').value = valor;
+    // Si estamos en paso 3, recalcular recomendación
+    if (campo === 'plazo') wMostrarRecomendacion();
+}
+
+function wSiguiente(paso) {
+    // Validaciones
+    if (paso === 2) {
+        const cap = parseFloat(g('wCapital').value) || parseFloat(wData.capital) || 0;
+        if (cap <= 0) { toast('Introduce un importe válido', 'error'); return; }
+        wData.capital = cap;
+    }
+    if (paso === 3 && !wData.riesgo) { toast('Selecciona una opción', 'error'); return; }
+
+    // Actualizar barra progreso
+    [1,2,3].forEach(i => {
+        g('wp'+i).style.background = i <= paso ? '#667eea' : '#e0e0e0';
+    });
+    g('wStep').textContent = paso + '/3';
+
+    // Mostrar paso correcto
+    ['wPaso1','wPaso2','wPaso3'].forEach((id,i) => g(id).style.display = (i+1===paso)?'block':'none');
+
+    if (paso === 3 && wData.riesgo && wData.plazo) wMostrarRecomendacion();
+}
+
+function wMostrarRecomendacion() {
+    if (!wData.riesgo || !wData.plazo) return;
+    const perfilFinal = ajustarPerfilPorPlazo(wData.riesgo, wData.plazo);
+    const p = PERFILES_W[perfilFinal];
+    const rec = g('wRecomendacion');
+    rec.style.display = 'block';
+    rec.style.background = p.color + '15';
+    rec.style.border = '2px solid ' + p.color + '44';
+    g('wRecIcon').textContent = p.icon;
+    g('wRecTitulo').innerHTML = `Recomendación: <span style="color:${p.color}">${p.titulo}</span>`;
+    g('wRecDesc').textContent = p.desc;
+    g('wRecPcts').innerHTML = Object.entries(p.pcts).map(([k,v]) =>
+        `<span class="wPct">${k}: ${v}%</span>`).join('');
+    // Si el perfil fue ajustado por plazo, avisar
+    if (perfilFinal !== wData.riesgo) {
+        g('wRecDesc').innerHTML += `<br><em style="color:#e65100">⚠️ Ajustado a ${perfilFinal} por tu horizonte temporal corto.</em>`;
+    }
+    wData.perfilFinal = perfilFinal;
+    g('wBtnCrear').disabled = false;
+}
+
+function wCrearCartera() {
+    const capital = parseFloat(wData.capital) || 0;
+    const p = PERFILES_W[wData.perfilFinal];
+
+    // Distribución por defecto: 60% fondos, 30% efectivo, 10% ETFs
+    const efectivo = capital * 0.30;
+    const etfs     = capital * 0.10;
+    const fondos   = capital * 0.60;
+
+    // Rellenar formulario de nueva cartera y cambiar a ese modo
+    mostrarModo('nueva');
+    g('nEfectivo').value = Math.round(efectivo);
+    g('nFondos').value   = Math.round(fondos);
+    g('nEtfs').value     = Math.round(etfs);
+    g('nInmob').value    = 0;
+    g('nMon').value  = p.pcts.monetario;
+    g('nRFC').value  = p.pcts.rfCorto;
+    g('nRFM').value  = p.pcts.rfMedio;
+    g('nRV').value   = p.pcts.rv;
+    g('nAlt').value  = p.pcts.alternativos;
+
+    // Marcar perfil seleccionado visualmente
+    document.querySelectorAll('.btn-perfil').forEach(b => {
+        if (b.textContent.toLowerCase().includes(wData.perfilFinal.substring(0,5))) b.classList.add('sel');
+    });
+
+    actualizar();
+    toast('✅ Cartera configurada con perfil ' + p.titulo + '. Revisa y ajusta a tu gusto.', 'ok', 5000);
+}
+</script>
+</body>
+</html>

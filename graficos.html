@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gráficos de Evolución</title>
+    <link rel="stylesheet" href="css/estilo.css">
+    <style>
+        #barraEstado { background:#f8f9fa; padding:10px 15px; border-radius:8px; margin-top:15px; font-size:13px; border-left:4px solid #667eea; }
+        .grafico-wrap { position:relative; height:380px; margin-top:12px; }
+        .grafico-wrap-sm { position:relative; height:280px; margin-top:12px; }
+        .btn-rango { padding:8px 18px; border:2px solid #ddd; border-radius:20px; cursor:pointer; background:white; font-size:13px; font-weight:600; transition:all .2s; }
+        .btn-rango:hover { border-color:#667eea; color:#667eea; }
+        .btn-rango.activo { background:#667eea; color:white; border-color:#667eea; }
+        .rangos { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:5px; }
+        .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:15px; margin-bottom:25px; }
+        .stat-card { background:linear-gradient(135deg,#667eea,#764ba2); color:white; padding:18px; border-radius:12px; text-align:center; }
+        .stat-card h4 { font-size:12px; opacity:.85; margin-bottom:6px; }
+        .stat-card p  { font-size:20px; font-weight:700; }
+        .two-cols { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+        @media(max-width:768px){ .stats-row{grid-template-columns:1fr 1fr;} .two-cols{grid-template-columns:1fr;} }
+    </style>
+</head>
+<body>
+<div class="container">
+
+<div class="menu">
+    <h1>📈 GRÁFICOS DE EVOLUCIÓN</h1>
+    <div class="nav">
+        <button style="background:#4CAF50;" onclick="location.href='dashboard.html'">🏠 Dashboard</button>
+        <button style="background:#2196F3;" onclick="location.href='cartera.html'">📈 Cartera</button>
+        <button style="background:#FF9800;" onclick="location.href='rebalanceos.html'">🔄 Histórico</button>
+        <button style="background:#9C27B0;" onclick="location.href='analisis.html'">🔍 Analizador</button>
+        <button style="background:#00BCD4;" onclick="location.href='composicion.html'">📊 Composición</button>
+        <button style="background:#f44336;" onclick="location.href='graficos.html'">📈 Gráficos</button>
+        <button style="background:#607D8B;" onclick="location.href='herramientas.html'">🛠️ Herramientas</button>
+        <button style="background:#FF5722;" onclick="location.href='importar-cartera.html'">📥 Importar</button>
+        <button style="background:#795548;" onclick="location.href='ayuda.html'">❓ Ayuda</button>
+    </div>
+    <div id="barraEstado">Cargando...</div>
+</div>
+
+<!-- Stats -->
+<div class="stats-row">
+    <div class="stat-card"><h4>Variación periodo</h4><p id="statVariacion">—</p></div>
+    <div class="stat-card"><h4>Máximo histórico</h4><p id="statMax">—</p></div>
+    <div class="stat-card"><h4>Mínimo histórico</h4><p id="statMin">—</p></div>
+</div>
+
+<!-- Filtro de rango -->
+<div class="card">
+    <h2>⏱️ RANGO DE TIEMPO</h2>
+    <div class="rangos">
+        <button class="btn-rango" onclick="cambiarRango(7,this)">7 días</button>
+        <button class="btn-rango" onclick="cambiarRango(30,this)">30 días</button>
+        <button class="btn-rango" onclick="cambiarRango(90,this)">90 días</button>
+        <button class="btn-rango" onclick="cambiarRango(180,this)">6 meses</button>
+        <button class="btn-rango activo" onclick="cambiarRango(0,this)">Todo</button>
+    </div>
+    <p id="infoRango" style="color:#999;font-size:13px;margin-top:8px;"></p>
+</div>
+
+<!-- Evolución total -->
+<div class="card">
+    <h2>💰 Evolución del valor total</h2>
+    <div class="grafico-wrap"><canvas id="graficoTotal"></canvas></div>
+</div>
+
+<!-- Por categoría + dona -->
+<div class="two-cols">
+    <div class="card">
+        <h2>📊 Evolución por categorías</h2>
+        <div class="grafico-wrap-sm"><canvas id="graficoCategorias"></canvas></div>
+    </div>
+    <div class="card">
+        <h2>🍩 Distribución actual</h2>
+        <div class="grafico-wrap-sm"><canvas id="graficoDona"></canvas></div>
+    </div>
+</div>
+
+<!-- Efectivo e inmobiliario -->
+<div class="card">
+    <h2>💵 Evolución de Efectivo e Inmobiliario</h2>
+    <div class="grafico-wrap-sm"><canvas id="graficoOtros"></canvas></div>
+</div>
+
+<div class="button-group">
+    <button class="btn-secondary" onclick="location.href='rebalanceos.html'">🔄 Ver Histórico Completo</button>
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const fmtE = v => isNaN(v)||v==null?'0,00 €':v.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+const g    = id => document.getElementById(id);
+
+let historialCompleto=[], chartTotal=null, chartCat=null, chartDona=null, chartOtros=null;
+let diasFiltro=0; // 0 = todo
+
+function cargarDatos(){ try{return JSON.parse(localStorage.getItem('carteraActual'))||null;}catch(e){return null;} }
+
+function barraEstado(datos){
+    const el=g('barraEstado');if(!el)return;
+    if(!datos){el.innerHTML='📂 Sin datos. <a href="configuracion-inicial.html" style="color:#667eea">Configura tu cartera</a>';return;}
+    const hist=datos.historico||[],ult=hist.length?hist[hist.length-1]:null;
+    el.innerHTML=ult?`📁 Último guardado: <strong>${ult.fecha} ${ult.hora}</strong> &nbsp;|&nbsp; Total: <strong>${fmtE(ult.total||0)}</strong>`:'📂 Sin registros aún.';
+}
+
+function filtrarPorRango(hist, dias) {
+    if(!dias||!hist.length) return hist;
+    const desde=Date.now()-dias*24*3600*1000;
+    return hist.filter(h=>h.timestamp>=desde);
+}
+
+function destroyChart(c){ if(c){ try{c.destroy();}catch(e){} } }
+
+function renderGraficos(hist) {
+    if(!hist.length){
+        ['graficoTotal','graficoCategorias','graficoOtros'].forEach(id=>{
+            const ctx=g(id)?.getContext('2d');
+            if(ctx){ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);}
+        });
+        return;
+    }
+
+    const labels=hist.map(h=>h.fecha+(hist.length<=15?` ${h.hora?.slice(0,5)}`:''));
+
+    // Stats
+    const totals=hist.map(h=>h.total||0);
+    const v0=totals[0],v1=totals[totals.length-1];
+    const varP=v0>0?(v1-v0)/v0*100:0;
+    g('statVariacion').textContent=(varP>=0?'+':'')+varP.toFixed(1)+'%';
+    g('statVariacion').style.color=varP>=0?'#a5d6a7':'#ef9a9a';
+    g('statMax').textContent=fmtE(Math.max(...totals));
+    g('statMin').textContent=fmtE(Math.min(...totals));
+    g('infoRango').textContent=`${hist.length} registro(s) · ${hist[0].fecha} → ${hist[hist.length-1].fecha}`;
+
+    // Gráfico total
+    destroyChart(chartTotal);
+    chartTotal=new Chart(g('graficoTotal'),{
+        type:'line',
+        data:{labels,datasets:[{
+            label:'Total Cartera',
+            data:totals,
+            borderColor:'#667eea',backgroundColor:'rgba(102,126,234,.12)',
+            fill:true,tension:.35,pointRadius:hist.length<=20?4:1,pointHoverRadius:6,borderWidth:2
+        }]},
+        options:{responsive:true,maintainAspectRatio:false,
+            scales:{y:{ticks:{callback:v=>fmtE(v)},grid:{color:'rgba(0,0,0,.05)'}},x:{grid:{display:false},ticks:{maxTicksLimit:10}}},
+            plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${fmtE(ctx.raw)}`}}}}
+    });
+
+    // Gráfico categorías
+    const colors=['#667eea','#764ba2','#f093fb','#f5576c','#4facfe'];
+    const cats=['monetario','rfCorto','rfMedio','rv','alternativos'];
+    const catNombres=['Monetario','RF Corto','RF Medio','RV','Alternativos'];
+    destroyChart(chartCat);
+    chartCat=new Chart(g('graficoCategorias'),{
+        type:'line',
+        data:{labels,datasets:cats.map((c,i)=>({
+            label:catNombres[i],
+            data:hist.map(h=>h[c]||0),
+            borderColor:colors[i],backgroundColor:'transparent',
+            tension:.35,pointRadius:1,borderWidth:2
+        }))},
+        options:{responsive:true,maintainAspectRatio:false,
+            scales:{y:{ticks:{callback:v=>fmtE(v)},grid:{color:'rgba(0,0,0,.05)'}},x:{grid:{display:false},ticks:{maxTicksLimit:8}}},
+            plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:11}}},
+            tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmtE(ctx.raw)}`}}}}
+    });
+
+    // Gráfico otros
+    destroyChart(chartOtros);
+    chartOtros=new Chart(g('graficoOtros'),{
+        type:'line',
+        data:{labels,datasets:[
+            {label:'Efectivo',data:hist.map(h=>h.efectivo||0),borderColor:'#43e97b',backgroundColor:'rgba(67,233,123,.1)',fill:true,tension:.35,pointRadius:1,borderWidth:2},
+            {label:'Inmobiliario',data:hist.map(h=>h.inmobiliario||0),borderColor:'#fa709a',backgroundColor:'rgba(250,112,154,.1)',fill:true,tension:.35,pointRadius:1,borderWidth:2}
+        ]},
+        options:{responsive:true,maintainAspectRatio:false,
+            scales:{y:{ticks:{callback:v=>fmtE(v)},grid:{color:'rgba(0,0,0,.05)'}},x:{grid:{display:false},ticks:{maxTicksLimit:8}}},
+            plugins:{legend:{position:'top',labels:{boxWidth:12}},
+            tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmtE(ctx.raw)}`}}}}
+    });
+}
+
+function renderDona(datos) {
+    const c=datos?.cartera||{};
+    const fondoVals=[c.monetario||0,c.rfCorto||0,c.rfMedio||0,c.rv||0,c.alternativos||0];
+    const etfsInv=(c.etfs||[]).reduce((s,e)=>s+(e.cantidad||0)*(e.precioActual||0),0);
+    const etfsPres=parseFloat(c.etfsValorInicial)||0;
+    const etfs=etfsInv+Math.max(0,etfsPres-etfsInv);
+    const all=[...fondoVals,etfs,c.efectivo||0,c.inmobiliario||0];
+    const lbls=['Monetario','RF Corto','RF Medio','RV','Alternativos','ETFs','Efectivo','Inmob.'];
+    const colors=['#667eea','#764ba2','#f093fb','#f5576c','#4facfe','#43e97b','#fa709a','#fee140'];
+    const total=all.reduce((a,b)=>a+b,0);
+    const filtered=lbls.map((l,i)=>({l,v:all[i],c:colors[i]})).filter(x=>x.v>0);
+    destroyChart(chartDona);
+    chartDona=new Chart(g('graficoDona'),{
+        type:'doughnut',
+        data:{labels:filtered.map(x=>x.l),datasets:[{data:filtered.map(x=>x.v),backgroundColor:filtered.map(x=>x.c),borderWidth:2}]},
+        options:{responsive:true,maintainAspectRatio:false,
+            plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}},
+            tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmtE(ctx.raw)} (${total>0?(ctx.raw/total*100).toFixed(1):0}%)`}}}}
+    });
+}
+
+function cambiarRango(dias, btn) {
+    diasFiltro=dias;
+    document.querySelectorAll('.btn-rango').forEach(b=>b.classList.remove('activo'));
+    if(btn) btn.classList.add('activo');
+    renderGraficos(filtrarPorRango(historialCompleto,dias));
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+    const datos=cargarDatos();
+    barraEstado(datos);
+    historialCompleto=datos?.historico||[];
+    renderGraficos(historialCompleto);
+    renderDona(datos);
+});
+</script>
+</body>
+</html>

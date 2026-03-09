@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora - Gestión de Cartera</title>
+    <link rel="stylesheet" href="css/estilo.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        #barraEstado { background:#f8f9fa; padding:10px 15px; border-radius:8px; margin-top:15px; font-size:13px; border-left:4px solid #667eea; }
+
+        .calc-tabs { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+        .calc-tab { padding:10px 20px; border:2px solid #e0e0e0; border-radius:25px; cursor:pointer; font-weight:600; font-size:14px; background:white; transition:all .2s; }
+        .calc-tab.activo { background:#667eea; color:white; border-color:#667eea; }
+
+        .calc-panel { display:none; }
+        .calc-panel.activo { display:block; }
+
+        .inputs-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; margin-bottom:20px; }
+        .inp-group { display:flex; flex-direction:column; gap:5px; }
+        .inp-group label { font-size:12px; font-weight:700; color:#555; display:flex; align-items:center; gap:5px; }
+        .inp-group input, .inp-group select {
+            padding:10px 14px; border:2px solid #e0e0e0; border-radius:8px; font-size:15px; font-weight:600;
+            transition:border-color .2s;
+        }
+        .inp-group input:focus, .inp-group select:focus { outline:none; border-color:#667eea; }
+        .inp-group .hint { font-size:11px; color:#aaa; }
+
+        .resultado-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:14px; margin:20px 0; }
+        .res-card { border-radius:12px; padding:16px; text-align:center; }
+        .res-card h4 { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; opacity:.8; margin-bottom:6px; }
+        .res-card p  { font-size:22px; font-weight:800; }
+        .rc-azul    { background:linear-gradient(135deg,#667eea,#764ba2); color:white; }
+        .rc-verde   { background:linear-gradient(135deg,#43e97b,#38f9d7); color:#1a5c30; }
+        .rc-naranja { background:linear-gradient(135deg,#fa709a,#fee140); color:#7c2d12; }
+        .rc-gris    { background:#f8f9fa; color:#333; border:2px solid #e0e0e0; }
+
+        .chart-wrap { position:relative; height:320px; margin:20px 0; }
+        .tabla-proyeccion { width:100%; border-collapse:collapse; font-size:13px; }
+        .tabla-proyeccion th { background:#667eea; color:white; padding:8px 12px; text-align:right; }
+        .tabla-proyeccion th:first-child { text-align:left; }
+        .tabla-proyeccion td { padding:7px 12px; text-align:right; border-bottom:1px solid #f0f0f0; }
+        .tabla-proyeccion td:first-child { text-align:left; font-weight:600; }
+        .tabla-proyeccion tr:hover { background:#f5f7ff; }
+        .tabla-proyeccion tr.milestone { background:#fff9c4; }
+
+        .slider-wrap { margin:8px 0; }
+        .slider-wrap input[type=range] { width:100%; accent-color:#667eea; }
+        .slider-val { font-size:13px; font-weight:700; color:#667eea; text-align:right; margin-top:2px; }
+
+        .info-perfil { background:#e8f5e9; border-left:4px solid #4CAF50; border-radius:8px; padding:12px 16px; font-size:13px; margin-bottom:16px; }
+        .info-perfil.warn { background:#fff3e0; border-left-color:#FF9800; }
+
+        .tooltip-calc { position:relative; cursor:help; }
+        .tooltip-calc::after { content:attr(data-tip); position:absolute; bottom:120%; left:50%; transform:translateX(-50%); background:#333; color:white; padding:6px 10px; border-radius:6px; font-size:11px; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .2s; z-index:99; }
+        .tooltip-calc:hover::after { opacity:1; }
+        .icono-info { color:#667eea; font-size:13px; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+<div class="menu">
+    <h1>🧮 CALCULADORA FINANCIERA</h1>
+    <div class="nav">
+        <button style="background:#4CAF50;" onclick="location.href='dashboard.html'">🏠 Dashboard</button>
+        <button style="background:#2196F3;" onclick="location.href='cartera.html'">📈 Cartera</button>
+        <button style="background:#FF9800;" onclick="location.href='rebalanceos.html'">🔄 Histórico</button>
+        <button style="background:#9C27B0;" onclick="location.href='analisis.html'">🔍 Analizador</button>
+        <button style="background:#00BCD4;" onclick="location.href='composicion.html'">📊 Composición</button>
+        <button style="background:#f44336;" onclick="location.href='graficos.html'">📈 Gráficos</button>
+        <button style="background:#607D8B;" onclick="location.href='herramientas.html'">🛠️ Herramientas</button>
+        <button style="background:#FF5722;" onclick="location.href='importar-cartera.html'">📥 Importar</button>
+        <button style="background:#009688;" onclick="location.href='calculadora.html'">🧮 Calculadora</button>
+        <button style="background:#795548;" onclick="location.href='ayuda.html'">❓ Ayuda</button>
+    </div>
+    <div id="barraEstado">Cargando...</div>
+</div>
+
+<!-- Tabs -->
+<div class="card">
+    <div class="calc-tabs">
+        <button class="calc-tab activo" onclick="cambiarCalc('interes',this)">📈 Interés compuesto</button>
+        <button class="calc-tab" onclick="cambiarCalc('objetivo',this)">🎯 ¿Cuánto necesito ahorrar?</button>
+        <button class="calc-tab" onclick="cambiarCalc('retirada',this)">💸 Regla del 4% / Retirada</button>
+        <button class="calc-tab" onclick="cambiarCalc('inflacion',this)">🌡️ Inflación y poder adquisitivo</button>
+    </div>
+
+    <!-- ═══ CALCULADORA 1: INTERÉS COMPUESTO ═══ -->
+    <div id="calc-interes" class="calc-panel activo">
+        <h2 style="margin-bottom:6px;">📈 Calculadora de Interés Compuesto</h2>
+        <p style="color:#888;font-size:13px;margin-bottom:18px;">El interés compuesto es el <strong>"8º maravilla del mundo"</strong> según Einstein. Calcula cómo crece tu inversión con el tiempo.</p>
+
+        <div class="inputs-row">
+            <div class="inp-group">
+                <label>💶 Capital inicial <span class="icono-info tooltip-calc" data-tip="Dinero que inviertes desde el principio">ℹ️</span></label>
+                <input type="number" id="i_capital" value="10000" min="0" step="1000" oninput="calcInteres()">
+                <span class="hint">€</span>
+            </div>
+            <div class="inp-group">
+                <label>📅 Aportación mensual <span class="icono-info tooltip-calc" data-tip="Cuánto añades cada mes. Puede ser 0.">ℹ️</span></label>
+                <input type="number" id="i_mensual" value="200" min="0" step="50" oninput="calcInteres()">
+                <span class="hint">€ / mes</span>
+            </div>
+            <div class="inp-group">
+                <label>⏳ Años de inversión</label>
+                <div class="slider-wrap">
+                    <input type="range" id="i_anos" min="1" max="50" value="20" oninput="g('i_anos_v').textContent=this.value+' años';calcInteres()">
+                    <div class="slider-val" id="i_anos_v">20 años</div>
+                </div>
+            </div>
+            <div class="inp-group">
+                <label>📊 Rentabilidad anual esperada <span class="icono-info tooltip-calc" data-tip="Bolsa global históricamente ~7-8% real. RF ~2-3%. Monetario ~3-4%.">ℹ️</span></label>
+                <div class="slider-wrap">
+                    <input type="range" id="i_renta" min="0" max="20" value="7" step="0.5" oninput="g('i_renta_v').textContent=this.value+'%';calcInteres()">
+                    <div class="slider-val" id="i_renta_v">7%</div>
+                </div>
+            </div>
+            <div class="inp-group">
+                <label>💰 Retención fiscal <span class="icono-info tooltip-calc" data-tip="En España: hasta 6.000€ ganancias → 19%, 6k-50k → 21%, >50k → 23%">ℹ️</span></label>
+                <select id="i_fiscal" onchange="calcInteres()">
+                    <option value="0">Sin impuestos (estimación bruta)</option>
+                    <option value="19" selected>19% (ganancias hasta 6.000 €)</option>
+                    <option value="21">21% (ganancias 6.000–50.000 €)</option>
+                    <option value="23">23% (ganancias > 50.000 €)</option>
+                    <option value="28">28% (ganancias > 300.000 €)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="resultado-grid" id="resInteres"></div>
+        <div class="chart-wrap"><canvas id="chartInteres"></canvas></div>
+        <div style="overflow-x:auto;"><table class="tabla-proyeccion" id="tablaInteres"></table></div>
+    </div>
+
+    <!-- ═══ CALCULADORA 2: OBJETIVO ═══ -->
+    <div id="calc-objetivo" class="calc-panel">
+        <h2 style="margin-bottom:6px;">🎯 ¿Cuánto necesito ahorrar cada mes?</h2>
+        <p style="color:#888;font-size:13px;margin-bottom:18px;">Introduce tu objetivo y te digo cuánto debes ahorrar mensualmente para alcanzarlo.</p>
+
+        <div class="inputs-row">
+            <div class="inp-group">
+                <label>🏆 Capital objetivo</label>
+                <input type="number" id="o_objetivo" value="500000" min="0" step="10000" oninput="calcObjetivo()">
+                <span class="hint">€ que quieres tener</span>
+            </div>
+            <div class="inp-group">
+                <label>💶 Capital inicial disponible</label>
+                <input type="number" id="o_inicial" value="10000" min="0" step="1000" oninput="calcObjetivo()">
+                <span class="hint">€ ya ahorrados</span>
+            </div>
+            <div class="inp-group">
+                <label>⏳ Años para alcanzarlo</label>
+                <div class="slider-wrap">
+                    <input type="range" id="o_anos" min="1" max="50" value="25" oninput="g('o_anos_v').textContent=this.value+' años';calcObjetivo()">
+                    <div class="slider-val" id="o_anos_v">25 años</div>
+                </div>
+            </div>
+            <div class="inp-group">
+                <label>📊 Rentabilidad anual esperada</label>
+                <div class="slider-wrap">
+                    <input type="range" id="o_renta" min="0" max="15" value="7" step="0.5" oninput="g('o_renta_v').textContent=this.value+'%';calcObjetivo()">
+                    <div class="slider-val" id="o_renta_v">7%</div>
+                </div>
+            </div>
+        </div>
+        <div class="resultado-grid" id="resObjetivo"></div>
+        <div class="chart-wrap"><canvas id="chartObjetivo"></canvas></div>
+    </div>
+
+    <!-- ═══ CALCULADORA 3: REGLA DEL 4% ═══ -->
+    <div id="calc-retirada" class="calc-panel">
+        <h2 style="margin-bottom:6px;">💸 Regla del 4% — ¿Cuándo puedo retirarme?</h2>
+        <p style="color:#888;font-size:13px;margin-bottom:10px;">La <strong>regla del 4%</strong> dice que si retiras el 4% de tu cartera al año, esta dura al menos 30 años con alta probabilidad.</p>
+        <div class="info-perfil">
+            💡 <strong>Ejemplo:</strong> Si gastas 2.000€/mes (24.000€/año), necesitas una cartera de 600.000€ (24.000 ÷ 0.04).
+        </div>
+        <div class="inputs-row">
+            <div class="inp-group">
+                <label>💸 Gastos mensuales en el retiro</label>
+                <input type="number" id="r_gasto" value="2000" min="0" step="100" oninput="calcRetirada()">
+                <span class="hint">€ / mes</span>
+            </div>
+            <div class="inp-group">
+                <label>💶 Cartera actual</label>
+                <input type="number" id="r_cartera" value="50000" min="0" step="5000" oninput="calcRetirada()">
+                <span class="hint">€ acumulados hoy</span>
+            </div>
+            <div class="inp-group">
+                <label>📅 Aportación mensual actual</label>
+                <input type="number" id="r_aporte" value="500" min="0" step="100" oninput="calcRetirada()">
+                <span class="hint">€ / mes que ahorras</span>
+            </div>
+            <div class="inp-group">
+                <label>📊 Rentabilidad anual esperada</label>
+                <div class="slider-wrap">
+                    <input type="range" id="r_renta" min="0" max="15" value="7" step="0.5" oninput="g('r_renta_v').textContent=this.value+'%';calcRetirada()">
+                    <div class="slider-val" id="r_renta_v">7%</div>
+                </div>
+            </div>
+        </div>
+        <div class="resultado-grid" id="resRetirada"></div>
+        <div class="chart-wrap"><canvas id="chartRetirada"></canvas></div>
+    </div>
+
+    <!-- ═══ CALCULADORA 4: INFLACIÓN ═══ -->
+    <div id="calc-inflacion" class="calc-panel">
+        <h2 style="margin-bottom:6px;">🌡️ Inflación y poder adquisitivo</h2>
+        <p style="color:#888;font-size:13px;margin-bottom:10px;">La inflación erosiona el valor del dinero. Calcula cuánto valdrán tus ahorros en términos reales.</p>
+        <div class="inputs-row">
+            <div class="inp-group">
+                <label>💶 Capital actual</label>
+                <input type="number" id="in_capital" value="100000" min="0" step="5000" oninput="calcInflacion()">
+                <span class="hint">€</span>
+            </div>
+            <div class="inp-group">
+                <label>⏳ Años</label>
+                <div class="slider-wrap">
+                    <input type="range" id="in_anos" min="1" max="50" value="20" oninput="g('in_anos_v').textContent=this.value+' años';calcInflacion()">
+                    <div class="slider-val" id="in_anos_v">20 años</div>
+                </div>
+            </div>
+            <div class="inp-group">
+                <label>🌡️ Inflación anual estimada <span class="icono-info tooltip-calc" data-tip="Histórica en España: ~2-3%. Período 2021-2023: ~6-8%">ℹ️</span></label>
+                <div class="slider-wrap">
+                    <input type="range" id="in_inf" min="0" max="10" value="3" step="0.5" oninput="g('in_inf_v').textContent=this.value+'%';calcInflacion()">
+                    <div class="slider-val" id="in_inf_v">3%</div>
+                </div>
+            </div>
+            <div class="inp-group">
+                <label>📊 Rentabilidad inversión anual</label>
+                <div class="slider-wrap">
+                    <input type="range" id="in_renta" min="0" max="15" value="7" step="0.5" oninput="g('in_renta_v').textContent=this.value+'%';calcInflacion()">
+                    <div class="slider-val" id="in_renta_v">7%</div>
+                </div>
+            </div>
+        </div>
+        <div class="resultado-grid" id="resInflacion"></div>
+        <div class="chart-wrap"><canvas id="chartInflacion"></canvas></div>
+    </div>
+</div>
+
+<!-- Glosario rápido -->
+<div class="card">
+    <h2>📚 Conceptos clave para principiantes</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:12px;">
+        <div style="background:#f0f4ff;border-radius:10px;padding:14px;border-left:4px solid #667eea;">
+            <strong>🔄 Interés compuesto</strong>
+            <p style="font-size:13px;color:#555;margin-top:5px;">Los intereses generan a su vez más intereses. 10.000€ al 7% durante 30 años se convierten en 76.000€ sin aportar nada más.</p>
+        </div>
+        <div style="background:#f0fff4;border-radius:10px;padding:14px;border-left:4px solid #4CAF50;">
+            <strong>📅 DCA (Dollar Cost Averaging)</strong>
+            <p style="font-size:13px;color:#555;margin-top:5px;">Invertir la misma cantidad cada mes independientemente del precio. Reduce el riesgo de comprar todo en el peor momento.</p>
+        </div>
+        <div style="background:#fff8e1;border-radius:10px;padding:14px;border-left:4px solid #FFC107;">
+            <strong>🎯 Regla del 4%</strong>
+            <p style="font-size:13px;color:#555;margin-top:5px;">Si retiras el 4% de tu cartera al año, esta aguanta al menos 30 años. Base de la independencia financiera (FIRE).</p>
+        </div>
+        <div style="background:#fce4ec;border-radius:10px;padding:14px;border-left:4px solid #e91e63;">
+            <strong>🌡️ Inflación</strong>
+            <p style="font-size:13px;color:#555;margin-top:5px;">El dinero en el banco pierde valor. Con 3% de inflación, en 24 años tu poder adquisitivo se reduce a la mitad.</p>
+        </div>
+        <div style="background:#f3e5f5;border-radius:10px;padding:14px;border-left:4px solid #9C27B0;">
+            <strong>📊 Diversificación</strong>
+            <p style="font-size:13px;color:#555;margin-top:5px;">No poner todos los huevos en la misma cesta. Repartir entre monetario, renta fija y renta variable reduce el riesgo.</p>
+        </div>
+        <div style="background:#e3f2fd;border-radius:10px;padding:14px;border-left:4px solid #2196F3;">
+            <strong>🔄 Rebalanceo</strong>
+            <p style="font-size:13px;color:#555;margin-top:5px;">Ajustar la cartera para volver a los % objetivo. Si la bolsa sube mucho, vendes un poco y compras más renta fija.</p>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<script>
+const fmtE = v => isNaN(v)||v==null ? '0,00 €' : v.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' €';
+const g = id => document.getElementById(id);
+let charts = {};
+
+function cambiarCalc(id, btn) {
+    document.querySelectorAll('.calc-panel').forEach(p => p.classList.remove('activo'));
+    document.querySelectorAll('.calc-tab').forEach(b => b.classList.remove('activo'));
+    g('calc-'+id).classList.add('activo');
+    btn.classList.add('activo');
+}
+
+function barraEstado() {
+    const el = g('barraEstado'); if(!el) return;
+    try {
+        const datos = JSON.parse(localStorage.getItem('carteraActual'));
+        if(!datos) { el.textContent = '📂 Sin cartera cargada.'; return; }
+        const hist = datos.historico||[], ult = hist.length ? hist[hist.length-1] : null;
+        el.innerHTML = ult
+            ? `📁 Último guardado: <strong>${ult.fecha} ${ult.hora}</strong> | Total: <strong>${fmtE(ult.total||0)}</strong>`
+            : '📂 Sin datos guardados.';
+    } catch(e) { el.textContent = 'Sin datos.'; }
+}
+
+function crearOActualizarChart(id, config) {
+    if (charts[id]) charts[id].destroy();
+    charts[id] = new Chart(g(id), config);
+}
+
+// ── Interés compuesto ────────────────────────────────
+function calcInteres() {
+    const capital  = parseFloat(g('i_capital').value)  || 0;
+    const mensual  = parseFloat(g('i_mensual').value)  || 0;
+    const anos     = parseInt(g('i_anos').value)        || 20;
+    const renta    = parseFloat(g('i_renta').value)    / 100;
+    const fiscal   = parseFloat(g('i_fiscal').value)   / 100;
+    const rentaMes = renta / 12;
+
+    let acum = capital;
+    const labels=[], valTotal=[], valAportado=[], valInteres=[];
+    let totalAportado = capital;
+
+    for (let a = 1; a <= anos; a++) {
+        for (let m = 0; m < 12; m++) {
+            acum = acum * (1 + rentaMes) + mensual;
+            totalAportado += mensual;
+        }
+        labels.push('Año ' + a);
+        valAportado.push(Math.round(totalAportado));
+        valTotal.push(Math.round(acum));
+        valInteres.push(Math.round(acum - totalAportado));
+    }
+
+    const final = acum;
+    const ganancia = final - totalAportado;
+    const gananciaNet = ganancia * (1 - fiscal);
+    const finalNet = totalAportado + gananciaNet;
+    const x = final / totalAportado;
+
+    g('resInteres').innerHTML = `
+        <div class="res-card rc-azul"><h4>Capital final bruto</h4><p>${fmtE(final)}</p></div>
+        <div class="res-card rc-verde"><h4>Capital final neto (${Math.round(fiscal*100)}% imp.)</h4><p>${fmtE(finalNet)}</p></div>
+        <div class="res-card rc-naranja"><h4>Ganancia total</h4><p>${fmtE(ganancia)}</p></div>
+        <div class="res-card rc-gris"><h4>Total aportado</h4><p>${fmtE(totalAportado)}</p></div>
+        <div class="res-card rc-gris"><h4>Multiplicador</h4><p>×${x.toFixed(1)}</p></div>
+        <div class="res-card rc-gris"><h4>Aportación mensual</h4><p>${fmtE(mensual)}</p></div>`;
+
+    crearOActualizarChart('chartInteres', {
+        type:'bar', data:{
+            labels,
+            datasets:[
+                {label:'Aportado',data:valAportado,backgroundColor:'rgba(102,126,234,.5)',borderRadius:3},
+                {label:'Intereses',data:valInteres,backgroundColor:'rgba(67,233,123,.7)',borderRadius:3}
+            ]
+        },
+        options:{responsive:true,maintainAspectRatio:false,
+            scales:{x:{stacked:true,ticks:{maxTicksLimit:10}},y:{stacked:true,ticks:{callback:v=>fmtE(v)}}},
+            plugins:{legend:{position:'top'},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtE(c.raw)}`}}}}
+    });
+
+    // Tabla cada 5 años
+    let html='<thead><tr><th>Año</th><th>Total aportado</th><th>Valor cartera</th><th>Ganancia</th><th>Multiplicador</th></tr></thead><tbody>';
+    for (let i = 4; i < anos; i += 5) {
+        const cls = (i===anos-1)||(i%10===9) ? ' class="milestone"' : '';
+        html+=`<tr${cls}><td>Año ${i+1}</td><td>${fmtE(valAportado[i])}</td><td>${fmtE(valTotal[i])}</td><td>${fmtE(valInteres[i])}</td><td>×${(valTotal[i]/valAportado[i]).toFixed(2)}</td></tr>`;
+    }
+    html+='</tbody>';
+    g('tablaInteres').innerHTML = html;
+}
+
+// ── Objetivo ────────────────────────────────────────
+function calcObjetivo() {
+    const objetivo = parseFloat(g('o_objetivo').value) || 500000;
+    const inicial  = parseFloat(g('o_inicial').value)  || 0;
+    const anos     = parseInt(g('o_anos').value)        || 25;
+    const renta    = parseFloat(g('o_renta').value)    / 100;
+    const rentaMes = renta / 12;
+    const n        = anos * 12;
+
+    // Fórmula: objetivo = inicial*(1+r)^n + mensual*((1+r)^n - 1)/r
+    const factorInicial = Math.pow(1 + rentaMes, n);
+    const factorMensual = rentaMes > 0 ? (factorInicial - 1) / rentaMes : n;
+    const mensualNecesario = Math.max(0, (objetivo - inicial * factorInicial) / factorMensual);
+
+    const totalAportado = inicial + mensualNecesario * n;
+    const ganancia = objetivo - totalAportado;
+
+    g('resObjetivo').innerHTML = `
+        <div class="res-card rc-azul"><h4>Objetivo</h4><p>${fmtE(objetivo)}</p></div>
+        <div class="res-card rc-verde"><h4>Ahorro mensual necesario</h4><p>${fmtE(mensualNecesario)}</p></div>
+        <div class="res-card rc-naranja"><h4>Total aportado</h4><p>${fmtE(totalAportado)}</p></div>
+        <div class="res-card rc-gris"><h4>Ganancia por intereses</h4><p>${fmtE(ganancia)}</p></div>`;
+
+    // Gráfico evolución hacia el objetivo
+    const labs=[], vals=[], linea=[];
+    let acum = inicial;
+    for (let a = 1; a <= anos; a++) {
+        for (let m = 0; m < 12; m++) acum = acum*(1+rentaMes)+mensualNecesario;
+        labs.push('Año '+a);
+        vals.push(Math.round(acum));
+        linea.push(Math.round(objetivo));
+    }
+    crearOActualizarChart('chartObjetivo',{
+        type:'line', data:{labels:labs,datasets:[
+            {label:'Evolución cartera',data:vals,borderColor:'#667eea',backgroundColor:'rgba(102,126,234,.15)',fill:true,tension:.4},
+            {label:'Objetivo',data:linea,borderColor:'#f44336',borderDash:[6,3],pointRadius:0,fill:false}
+        ]},
+        options:{responsive:true,maintainAspectRatio:false,
+            scales:{y:{ticks:{callback:v=>fmtE(v)}}},
+            plugins:{tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtE(c.raw)}`}}}}
+    });
+}
+
+// ── Regla del 4% ────────────────────────────────────
+function calcRetirada() {
+    const gasto   = parseFloat(g('r_gasto').value)   || 2000;
+    const cartera = parseFloat(g('r_cartera').value) || 0;
+    const aporte  = parseFloat(g('r_aporte').value)  || 0;
+    const renta   = parseFloat(g('r_renta').value)  / 100;
+    const rentaMes= renta / 12;
+    const gastoAnual = gasto * 12;
+    const necesitas  = gastoAnual / 0.04;
+    const falta      = Math.max(0, necesitas - cartera);
+
+    // Calcular años para alcanzar la cifra
+    let acum = cartera, anosHasta = null;
+    for (let a = 1; a <= 60; a++) {
+        for (let m = 0; m < 12; m++) acum = acum*(1+rentaMes)+aporte;
+        if (acum >= necesitas && !anosHasta) anosHasta = a;
+    }
+
+    g('resRetirada').innerHTML = `
+        <div class="res-card rc-azul"><h4>Necesitas acumular</h4><p>${fmtE(necesitas)}</p></div>
+        <div class="res-card rc-verde"><h4>Te faltan</h4><p>${fmtE(falta)}</p></div>
+        <div class="res-card rc-naranja"><h4>Años para retirarte</h4><p>${anosHasta ? anosHasta+' años' : '>60 años'}</p></div>
+        <div class="res-card rc-gris"><h4>Retiro mensual (4%/año)</h4><p>${fmtE(necesitas*0.04/12)}</p></div>`;
+
+    // Gráfico crecimiento hasta el objetivo FIRE
+    const labs=[], vals=[], linFire=[];
+    acum = cartera;
+    for(let a=1;a<=Math.min(60, (anosHasta||40)+5);a++){
+        for(let m=0;m<12;m++) acum=acum*(1+rentaMes)+aporte;
+        labs.push('Año '+a); vals.push(Math.round(acum)); linFire.push(Math.round(necesitas));
+    }
+    crearOActualizarChart('chartRetirada',{
+        type:'line', data:{labels:labs,datasets:[
+            {label:'Cartera',data:vals,borderColor:'#667eea',backgroundColor:'rgba(102,126,234,.15)',fill:true,tension:.4},
+            {label:'Objetivo FIRE',data:linFire,borderColor:'#f44336',borderDash:[6,3],pointRadius:0,fill:false}
+        ]},
+        options:{responsive:true,maintainAspectRatio:false,
+            scales:{y:{ticks:{callback:v=>fmtE(v)}}},
+            plugins:{tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtE(c.raw)}`}}}}
+    });
+}
+
+// ── Inflación ────────────────────────────────────────
+function calcInflacion() {
+    const capital = parseFloat(g('in_capital').value) || 100000;
+    const anos    = parseInt(g('in_anos').value)      || 20;
+    const inf     = parseFloat(g('in_inf').value)    / 100;
+    const renta   = parseFloat(g('in_renta').value)  / 100;
+
+    const valorNominal  = capital * Math.pow(1+renta,  anos);
+    const poderAdq      = capital * Math.pow(1+renta-inf, anos);  // aprox real
+    const soloInflacion = capital * Math.pow(1+inf,   anos);
+    const erosion       = capital - capital/Math.pow(1+inf,anos);
+
+    g('resInflacion').innerHTML = `
+        <div class="res-card rc-azul"><h4>Valor nominal (sin invertir)</h4><p>${fmtE(capital)}</p></div>
+        <div class="res-card rc-naranja"><h4>Poder adquisitivo si NO inviertes</h4><p>${fmtE(capital/Math.pow(1+inf,anos))}</p></div>
+        <div class="res-card rc-verde"><h4>Valor real si inviertes al ${g('in_renta').value}%</h4><p>${fmtE(poderAdq)}</p></div>
+        <div class="res-card rc-gris"><h4>Necesitas en ${anos} años para mantener poder</h4><p>${fmtE(soloInflacion)}</p></div>`;
+
+    const labs=[], vNominal=[], vReal=[], vInflacion=[];
+    for(let a=1;a<=anos;a++){
+        labs.push('Año '+a);
+        vNominal.push(Math.round(capital*Math.pow(1+renta,a)));
+        vReal.push(Math.round(capital*Math.pow(1+renta-inf,a)));
+        vInflacion.push(Math.round(capital/Math.pow(1+inf,a)));
+    }
+    crearOActualizarChart('chartInflacion',{
+        type:'line', data:{labels:labs, datasets:[
+            {label:'Valor nominal (invirtiendo)',data:vNominal,borderColor:'#667eea',tension:.4,fill:false},
+            {label:'Poder adquisitivo real',data:vReal,borderColor:'#4CAF50',tension:.4,fill:false},
+            {label:'Valor real (sin invertir)',data:vInflacion,borderColor:'#f44336',borderDash:[5,3],tension:.4,fill:false}
+        ]},
+        options:{responsive:true,maintainAspectRatio:false,
+            scales:{y:{ticks:{callback:v=>fmtE(v)}}},
+            plugins:{tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtE(c.raw)}`}}}}
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    barraEstado();
+    calcInteres();
+    calcObjetivo();
+    calcRetirada();
+    calcInflacion();
+});
+</script>
+</body>
+</html>
