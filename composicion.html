@@ -34,6 +34,7 @@
         <button style="background:#00BCD4;" onclick="location.href='composicion.html'">📊 Composición</button>
         <button style="background:#f44336;" onclick="location.href='graficos.html'">📈 Gráficos</button>
         <button style="background:#607D8B;" onclick="location.href='herramientas.html'">🛠️ Herramientas</button>
+        <button style="background:#009688;" onclick="location.href='calculadora.html'">🧮 Calculadora</button>
         <button style="background:#FF5722;" onclick="location.href='importar-cartera.html'">📥 Importar</button>
         <button style="background:#795548;" onclick="location.href='ayuda.html'">❓ Ayuda</button>
     </div>
@@ -280,6 +281,76 @@ function exportarCSV() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+// ================================================================
+//  MODAL CONFIRMACIÓN AL SALIR + BEFOREUNLOAD (Gestión de Cartera)
+// ================================================================
+let _guardadoConfirmado = false;
+
+function generarNombreCartera() {
+    const n = new Date();
+    const dd = String(n.getDate()).padStart(2,"0");
+    const mm = String(n.getMonth()+1).padStart(2,"0");
+    const yy = n.getFullYear();
+    const hh = String(n.getHours()).padStart(2,"0");
+    const mi = String(n.getMinutes()).padStart(2,"0");
+    return "gestion_cartera_"+dd+mm+yy+"_"+hh+mi+".json";
+}
+
+function guardarArchivoYSalir() {
+    const raw = localStorage.getItem("carteraActual");
+    if (!raw) return;
+    const blob = new Blob([raw], {type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = generarNombreCartera();
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+}
+
+function mostrarModalSalida(callback) {
+    if (document.getElementById("_modalSalida")) return;
+    const overlay = document.createElement("div");
+    overlay.id = "_modalSalida";
+    overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;";
+    overlay.innerHTML = `
+        <div style="background:white;border-radius:18px;padding:32px 28px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4);text-align:center;">
+            <div style="font-size:52px;margin-bottom:12px;">💾</div>
+            <h3 style="font-size:19px;color:#333;margin-bottom:10px;font-weight:800;">¿Guardar antes de salir?</h3>
+            <p style="font-size:14px;color:#666;line-height:1.65;margin-bottom:22px;">
+                Se descargará el archivo<br>
+                <strong style="color:#667eea;font-size:13px;">${generarNombreCartera()}</strong><br>
+                con todos tus datos de cartera actualizados.
+            </p>
+            <div style="display:flex;gap:10px;margin-bottom:10px;">
+                <button id="_btnGS" style="flex:1;padding:14px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;">💾 Guardar y salir</button>
+                <button id="_btnSS" style="flex:1;padding:14px;background:#f0f0f0;color:#555;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">Salir sin guardar</button>
+            </div>
+            <button id="_btnCS" style="background:none;border:none;color:#aaa;font-size:13px;cursor:pointer;padding:6px;">↩ Cancelar — quedarme aquí</button>
+        </div>`;
+    document.body.appendChild(overlay);
+    document.getElementById("_btnGS").onclick = () => { guardarArchivoYSalir(); _guardadoConfirmado = true; document.body.removeChild(overlay); if(callback) callback(true); };
+    document.getElementById("_btnSS").onclick = () => { _guardadoConfirmado = true; document.body.removeChild(overlay); if(callback) callback(true); };
+    document.getElementById("_btnCS").onclick = () => { document.body.removeChild(overlay); if(callback) callback(false); };
+}
+
+window.addEventListener("beforeunload", e => {
+    const raw = localStorage.getItem("carteraActual");
+    if (raw && !_guardadoConfirmado) { e.preventDefault(); e.returnValue = "¿Guardar cartera antes de salir?"; }
+});
+
+document.addEventListener("click", e => {
+    const link = e.target.closest("a[href]");
+    if (link) {
+        const href = link.getAttribute("href") || "";
+        if (href && href !== "#" && !href.startsWith("javascript") && !href.startsWith("mailto")) {
+            const raw = localStorage.getItem("carteraActual");
+            if (raw && !_guardadoConfirmado) { e.preventDefault(); mostrarModalSalida(ok => { if(ok) location.href = href; }); }
+        }
+    }
+});
+
 </script>
 </body>
 </html>

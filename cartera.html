@@ -264,6 +264,19 @@
         <span class="desv-warn">■ ≤15% atención</span> &nbsp;
         <span class="desv-alert">■ &gt;15% rebalancear</span>
     </p>
+
+    <!-- Banner sincronización — solo aparece si hay fondosDetalle importados -->
+    <div id="bannerSincronizar" style="display:none;margin-top:14px;background:#fff3e0;border-left:4px solid #FF9800;border-radius:8px;padding:13px 16px;font-size:13px;">
+        <strong>🔄 Hay fondos individuales importados desde captura.</strong>
+        Los totales por categoría podrían no reflejar los valores actuales.
+        <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <button onclick="sincronizarTotalesDesdeFondos()" style="background:#FF9800;color:white;border:none;border-radius:8px;padding:9px 18px;font-weight:700;font-size:13px;cursor:pointer;">
+                🔄 Actualizar totales desde fondos importados
+            </button>
+            <span id="labelSincronizar" style="font-size:12px;color:#666;"></span>
+        </div>
+        <div id="previewSincronizar" style="display:none;margin-top:10px;font-size:12px;background:white;border-radius:6px;padding:10px 12px;border:1px solid #ffe0b2;"></div>
+    </div>
 </div>
 
 <!-- ═══ ETFs Y ACCIONES ═══ -->
@@ -454,7 +467,16 @@ let etfsLista              = [];
 let etfsValorInicial       = 0;   // importe total destinado a ETFs/acciones al crear la cartera
 let perfilesPersonalizados = [];
 let perfilActivo           = null;     // clave del perfil seleccionado
-let nombreArchivo          = 'mi-cartera.json';
+function generarNombreCartera() {
+    const n = new Date();
+    const dd = String(n.getDate()).padStart(2,'0');
+    const mm = String(n.getMonth()+1).padStart(2,'0');
+    const yy = n.getFullYear();
+    const hh = String(n.getHours()).padStart(2,'0');
+    const mi = String(n.getMinutes()).padStart(2,'0');
+    return `gestion_cartera_${dd}${mm}${yy}_${hh}${mi}.json`;
+}
+let nombreArchivo = generarNombreCartera();
 let editandoIndex          = -1;
 
 // ================================================================
@@ -501,6 +523,110 @@ function mostrarModalGuardado(callback) {
 // ================================================================
 //  CARGA INICIAL DESDE localStorage
 // ================================================================
+// ================================================================
+//  SINCRONIZAR TOTALES DESDE fondosDetalle (importación por IA)
+// ================================================================
+function mostrarBannerSincronizar() {
+    const datos = cargarLS();
+    const fd = datos?.cartera?.fondosDetalle;
+    const banner = document.getElementById('bannerSincronizar');
+    if(!banner) return;
+    if(fd && fd.length > 0) {
+        banner.style.display = 'block';
+        // Preview de lo que se sincronizaría
+        const CATS = ['monetario','rfCorto','rfMedio','rv','alternativos'];
+        const CAT_L = {monetario:'Monetario',rfCorto:'RF Corto',rfMedio:'RF Medio',rv:'Renta Variable',alternativos:'Alternativos'};
+        const totCat = {};
+        CATS.forEach(c => totCat[c] = 0);
+        fd.forEach(f => {
+            const cat = CATS.includes(f.categoria) ? f.categoria : 'rv';
+            totCat[cat] += (f.cantidad||0) * (f.precioActual||0);
+        });
+        const etfs   = datos?.cartera?.etfs || [];
+        const totETF = etfs.reduce((s,e)=>s+(e.cantidad||0)*(e.precioActual||0),0);
+        const efs    = datos?.cartera?.efectivo || 0;
+        const rows   = CATS.map(c => `<span style="margin-right:14px;"><strong>${CAT_L[c]}:</strong> ${fmtE(totCat[c])}</span>`).join('');
+        document.getElementById('previewSincronizar').style.display = 'block';
+        document.getElementById('previewSincronizar').innerHTML =
+            `<strong>Valores que se aplicarían:</strong><br><div style="margin-top:4px;line-height:2;">${rows}<span style="margin-right:14px;"><strong>ETFs/Acc:</strong> ${fmtE(totETF)}</span><span><strong>Efectivo:</strong> ${fmtE(efs)}</span></div>`;
+    } else {
+        banner.style.display = 'none';
+    }
+}
+
+function sincronizarTotalesDesdeFondos() {
+    const datos = cargarLS();
+    if(!datos?.cartera?.fondosDetalle) {
+        mostrarToast('No hay fondos importados desde captura', 'warning'); return;
+    }
+    const c  = datos.cartera;
+    const fd = c.fondosDetalle;
+    const CATS = ['monetario','rfCorto','rfMedio','rv','alternativos'];
+
+    // Recalcular totales por categoría desde los fondos individuales
+    const totCat = {};
+    CATS.forEach(cat => totCat[cat] = 0);
+    fd.forEach(f => {
+        const cat = CATS.includes(f.categoria) ? f.categoria : 'rv';
+        totCat[cat] += (f.cantidad||0) * (f.precioActual||0);
+    });
+
+    // Recalcular ETFs desde lista detallada
+    const etfs    = c.etfs || [];
+    const totETFs = etfs.reduce((s,e)=>s+(e.cantidad||0)*(e.precioActual||0),0);
+    const efectivo    = c.efectivo    || 0;
+    const inmobiliario= c.inmobiliario|| 0;
+
+    // Aplicar a los campos del formulario
+    const FONDO_MAP = { monetario:'impMon', rfCorto:'impRFC', rfMedio:'impRFM', rv:'impRV', alternativos:'impAlt' };
+    CATS.forEach(cat => {
+        const el = document.getElementById(FONDO_MAP[cat]);
+        if(el) {
+            el.setAttribute('data-anterior', el.value);
+            el.value = totCat[cat].toFixed(2);
+        }
+    });
+
+    // Actualizar presupuesto ETFs
+    if(totETFs > 0) {
+        const pEl = document.getElementById('etfsPresupuesto');
+        if(pEl) pEl.value = totETFs.toFixed(2);
+        etfsValorInicial = totETFs;
+    }
+
+    // Guardar en localStorage con los nuevos totales
+    CATS.forEach(cat => { c[cat] = totCat[cat]; });
+    c.etfsValorInicial = totETFs;
+    datos.cartera = c;
+
+    // Añadir al histórico
+    const totalFondos = Object.values(totCat).reduce((a,b)=>a+b,0);
+    const total = totalFondos + totETFs + efectivo + inmobiliario;
+    const hist = datos.historico || [];
+    hist.push({
+        fecha:     new Date().toLocaleDateString('es-ES'),
+        hora:      new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}),
+        timestamp: Date.now(),
+        ...totCat,
+        efectivo, inmobiliario,
+        etfsValorInicial: totETFs,
+        etfsInvertido:    totETFs,
+        etfsPendiente:    0,
+        total,
+        nota: 'Totales sincronizados desde fondos importados'
+    });
+    datos.historico = hist;
+
+    guardarLS(datos);
+    actualizarUI();
+    mostrarBannerSincronizar();
+
+    const lbl = document.getElementById('labelSincronizar');
+    if(lbl) lbl.innerHTML = `<span style="color:#2e7d32;font-weight:700;">✅ Totales actualizados — ${new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</span>`;
+
+    mostrarToast(`✅ Totales sincronizados. Total cartera: ${fmtE(total)}`, 'ok');
+}
+
 function cargarDatos() {
     try {
         const raw = localStorage.getItem('carteraActual');
@@ -572,6 +698,7 @@ function cargarDatos() {
         ANT_IDS.forEach((id,i) => g(id).textContent = fmtE(antVals[i]||0));
 
         actualizarBarraEstado(datos);
+        mostrarBannerSincronizar();
 
     } catch(e) { console.error('Error cargando datos:', e); }
 }
@@ -1202,6 +1329,76 @@ function renderComparativaPerfiles() {
         ${ids.map(id=>`<td style="padding:7px 10px;text-align:center;color:${PERFS[id].color};">${PERFS[id].riesgo}</td>`).join('')}
     </tr>`;
 }
+
+// ================================================================
+//  MODAL CONFIRMACIÓN AL SALIR + BEFOREUNLOAD
+// ================================================================
+let _guardadoConfirmado = false;
+
+function mostrarModalSalida(callback) {
+    if (document.getElementById('_modalSalida')) return;
+    const overlay = document.createElement('div');
+    overlay.id = '_modalSalida';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    overlay.innerHTML = `
+        <div style="background:white;border-radius:18px;padding:32px 28px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4);text-align:center;">
+            <div style="font-size:52px;margin-bottom:12px;">💾</div>
+            <h3 style="font-size:19px;color:#333;margin-bottom:10px;font-weight:800;">¿Guardar antes de salir?</h3>
+            <p style="font-size:14px;color:#666;line-height:1.65;margin-bottom:22px;">
+                Se descargará el archivo<br>
+                <strong style="color:#667eea;font-size:13px;">${generarNombreCartera()}</strong><br>
+                con todos tus datos actualizados.
+            </p>
+            <div style="display:flex;gap:10px;margin-bottom:10px;">
+                <button id="_btnGuardarSalir" style="flex:1;padding:14px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;">
+                    💾 Guardar y salir
+                </button>
+                <button id="_btnSinGuardar" style="flex:1;padding:14px;background:#f0f0f0;color:#555;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">
+                    Salir sin guardar
+                </button>
+            </div>
+            <button id="_btnCancelarSalida" style="background:none;border:none;color:#aaa;font-size:13px;cursor:pointer;padding:6px;">↩ Cancelar — quedarme aquí</button>
+        </div>`;
+    document.body.appendChild(overlay);
+
+    document.getElementById('_btnGuardarSalir').onclick = () => {
+        guardarArchivo(null);
+        _guardadoConfirmado = true;
+        document.body.removeChild(overlay);
+        if (callback) callback(true);
+    };
+    document.getElementById('_btnSinGuardar').onclick = () => {
+        _guardadoConfirmado = true;
+        document.body.removeChild(overlay);
+        if (callback) callback(true);
+    };
+    document.getElementById('_btnCancelarSalida').onclick = () => {
+        document.body.removeChild(overlay);
+        if (callback) callback(false);
+    };
+}
+
+window.addEventListener('beforeunload', e => {
+    const raw = localStorage.getItem('carteraActual');
+    if (raw && !_guardadoConfirmado) {
+        e.preventDefault();
+        e.returnValue = '¿Quieres guardar tu cartera antes de salir?';
+    }
+});
+
+document.addEventListener('click', e => {
+    const link = e.target.closest('a[href]');
+    if (link) {
+        const href = link.getAttribute('href') || '';
+        if (href && href !== '#' && !href.startsWith('javascript') && !href.startsWith('mailto')) {
+            const raw = localStorage.getItem('carteraActual');
+            if (raw && !_guardadoConfirmado) {
+                e.preventDefault();
+                mostrarModalSalida(ok => { if (ok) { location.href = href; } });
+            }
+        }
+    }
+});
 </script>
 </body>
 </html>

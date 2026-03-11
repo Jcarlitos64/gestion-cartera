@@ -132,6 +132,7 @@
         .btn-purple { background:linear-gradient(135deg,#667eea,#764ba2); }
         .btn-green  { background:linear-gradient(135deg,#43e97b,#38f9d7); color:#1a5c30; }
         .btn-blue   { background:linear-gradient(135deg,#48c6ef,#6f86d6); }
+        .btn-capture{ background:linear-gradient(135deg,#FF5722,#FF8F00); }
         .btn-text   { background:none; border:none; color:#667eea; font-size:13px; cursor:pointer; padding:6px 0; font-weight:600; }
         .btn-text:hover { text-decoration:underline; }
 
@@ -261,10 +262,11 @@
     </div>
 
     <!-- ══════════════════════════════════════════════ -->
-    <!-- MODO A: Cargar cartera existente               -->
+    <!-- MODO A: Inicio (cargar o crear)                -->
     <!-- ══════════════════════════════════════════════ -->
     <div id="modoCargar" class="modo">
 
+        <!-- Zona drop para cargar archivo existente -->
         <div id="dropZone"
              onclick="document.getElementById('inputJSON').click()"
              ondragover="event.preventDefault();this.classList.add('drag-over')"
@@ -272,20 +274,25 @@
              ondrop="onDrop(event)">
             <div class="dz-icon">📂</div>
             <p><strong>Haz clic o arrastra</strong> tu archivo <code>.json</code></p>
-            <small>Archivo guardado previamente con esta aplicación</small>
+            <small>Archivo <code>gestion_cartera_*.json</code> guardado previamente</small>
         </div>
         <input type="file" id="inputJSON" accept=".json" style="display:none" onchange="cargarJSON(this)">
 
         <div id="infoArchivo"></div>
 
+        <!-- Botón principal: solo activo cuando hay archivo cargado -->
         <button class="btn-main btn-purple" id="btnAbrir" disabled onclick="abrirDashboard()">
-            🚀 Abrir Dashboard
+            📂 Abrir cartera cargada
         </button>
 
-        <div class="divider"><span>¿Primera vez?</span></div>
+        <div class="divider"><span>¿Primera vez? Empieza aquí</span></div>
 
         <button class="btn-main btn-blue" onclick="mostrarModo('nueva')">
-            ✨ Crear nueva cartera
+            ✨ Crear nueva cartera manualmente
+        </button>
+
+        <button class="btn-main btn-capture" onclick="mostrarModo('captura')">
+            📸 Crear desde captura de broker
         </button>
     </div>
 
@@ -352,20 +359,53 @@
         </div>
 
         <!-- Nombre archivo -->
-        <div class="nombre-archivo">
-            <label>💾 Nombre del archivo</label>
-            <input type="text" id="nNombre" value="mi-cartera.json" placeholder="mi-cartera.json">
-        </div>
+        <!-- El nombre del archivo se genera automáticamente con fecha y hora -->
 
         <!-- Botón guardar -->
         <button class="btn-main btn-green" id="btnGuardar" onclick="guardarNuevaCartera()">
             💾 Generar archivo y entrar
         </button>
 
+        <div class="divider"><span>¿Tienes cartera en tu broker? Impórtala</span></div>
+
+        <button class="btn-main btn-capture" onclick="mostrarModo('captura')">
+            📸 Crear desde captura de broker
+        </button>
+
         <div class="divider"><span>¿Ya tienes un archivo?</span></div>
 
         <button class="btn-main btn-blue" onclick="mostrarModo('cargar')">
             📂 Cargar cartera existente
+        </button>
+    </div>
+
+    <!-- MODO C: Crear desde captura / IA               -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div id="modoCaptura" class="modo">
+        <div style="text-align:center;padding:8px 0 16px;">
+            <div style="font-size:48px;margin-bottom:8px;">📸</div>
+            <h3 style="font-size:17px;color:#333;font-weight:800;margin-bottom:8px;">Crear cartera desde captura de broker</h3>
+            <p style="font-size:14px;color:#666;line-height:1.65;">
+                Si ya tienes inversiones en tu banco o broker, la IA puede<br>
+                extraer automáticamente todos tus fondos, ETFs y efectivo<br>
+                a partir de una captura de pantalla.
+            </p>
+        </div>
+        <div style="background:#f0f4ff;border-radius:12px;padding:16px 18px;margin-bottom:18px;font-size:14px;color:#444;line-height:2;">
+            <div><span style="background:#667eea;color:white;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;font-size:11px;font-weight:700;margin-right:8px;flex-shrink:0;">1</span>Haz capturas de tu cartera en el broker (fondos, ETFs, efectivo)</div>
+            <div><span style="background:#667eea;color:white;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;font-size:11px;font-weight:700;margin-right:8px;flex-shrink:0;">2</span>El importador genera un prompt para Gemini o ChatGPT</div>
+            <div><span style="background:#667eea;color:white;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;font-size:11px;font-weight:700;margin-right:8px;flex-shrink:0;">3</span>Pega el JSON resultante y revisa cada producto por categoría</div>
+            <div><span style="background:#667eea;color:white;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;font-size:11px;font-weight:700;margin-right:8px;flex-shrink:0;">4</span>Confirma y tu cartera queda lista para rebalancear</div>
+        </div>
+        <button class="btn-main btn-capture" onclick="irAImportar()">
+            📸 Ir al importador con IA →
+        </button>
+        <div class="divider"><span>o prefiero introducirlo manualmente</span></div>
+        <button class="btn-main btn-blue" onclick="mostrarModo('nueva')">
+            ✨ Crear cartera manualmente
+        </button>
+        <button class="btn-main" style="background:#efefef;color:#666;margin-top:8px;" onclick="mostrarModo('cargar')">
+            ← Volver
         </button>
     </div>
 </div>
@@ -387,15 +427,95 @@ function toast(msg, tipo='info', ms=4000) {
     t._timer = setTimeout(() => t.style.display='none', ms);
 }
 
+// ─── NOMBRE DE ARCHIVO CON FECHA Y HORA ──────────────────────────
+function nombreArchivoCartera() {
+    const n = new Date();
+    const dd = String(n.getDate()).padStart(2,'0');
+    const mm = String(n.getMonth()+1).padStart(2,'0');
+    const yy = n.getFullYear();
+    const hh = String(n.getHours()).padStart(2,'0');
+    const mi = String(n.getMinutes()).padStart(2,'0');
+    return `gestion_cartera_${dd}${mm}${yy}_${hh}${mi}.json`;
+}
+
 function cargarLS()  { try { return JSON.parse(localStorage.getItem('carteraActual')) || null; } catch(e) { return null; } }
 function guardarLS(d){ localStorage.setItem('carteraActual', JSON.stringify(d)); }
+
+// ─── LIMPIAR DATOS AL ENTRAR (privacidad multi-usuario) ──────────
+function limpiarSesionAnterior() {
+    localStorage.removeItem('carteraActual');
+}
+
+// ─── GUARDAR ARCHIVO AL SALIR ─────────────────────────────────────
+function guardarArchivoSalida() {
+    const datos = cargarLS();
+    if (!datos) return;
+    const blob = new Blob([JSON.stringify(datos, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = nombreArchivoCartera();
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+}
+
+// ─── MODAL CONFIRMACIÓN AL SALIR ─────────────────────────────────
+let _guardadoConfirmado = false;
+function mostrarModalSalida(callback) {
+    const overlay = document.createElement('div');
+    overlay.id = 'modalSalida';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    overlay.innerHTML = `
+        <div style="background:white;border-radius:18px;padding:32px 28px;max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4);text-align:center;">
+            <div style="font-size:48px;margin-bottom:12px;">💾</div>
+            <h3 style="font-size:18px;color:#333;margin-bottom:10px;">¿Guardar antes de salir?</h3>
+            <p style="font-size:14px;color:#666;line-height:1.6;margin-bottom:20px;">
+                Se descargará el archivo <strong style="color:#667eea;">${nombreArchivoCartera()}</strong><br>
+                con todos tus datos actualizados.
+            </p>
+            <div style="display:flex;gap:10px;">
+                <button id="btnSalirGuardar" style="flex:1;padding:13px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">
+                    💾 Guardar y salir
+                </button>
+                <button id="btnSalirSin" style="flex:1;padding:13px;background:#f5f5f5;color:#555;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">
+                    Salir sin guardar
+                </button>
+            </div>
+            <button id="btnSalirCancelar" style="margin-top:10px;background:none;border:none;color:#aaa;font-size:13px;cursor:pointer;padding:6px;">↩ Cancelar — quedarme aquí</button>
+        </div>`;
+    document.body.appendChild(overlay);
+
+    document.getElementById('btnSalirGuardar').onclick = () => {
+        guardarArchivoSalida();
+        _guardadoConfirmado = true;
+        document.body.removeChild(overlay);
+        if (callback) callback(true);
+    };
+    document.getElementById('btnSalirSin').onclick = () => {
+        _guardadoConfirmado = true;
+        document.body.removeChild(overlay);
+        if (callback) callback(true);
+    };
+    document.getElementById('btnSalirCancelar').onclick = () => {
+        document.body.removeChild(overlay);
+        if (callback) callback(false);
+    };
+}
 
 // ── Modo de pantalla ────────────────────────────────────────────
 function mostrarModo(modo) {
     document.querySelectorAll('.modo').forEach(m => m.classList.remove('activo'));
-    const ids = { cargar:'modoCargar', nueva:'modoNueva', wizard:'modoWizard' };
+    const ids = { cargar:'modoCargar', nueva:'modoNueva', wizard:'modoWizard', captura:'modoCaptura' };
     const el = g(ids[modo]);
     if(el) el.classList.add('activo');
+}
+
+function irAImportar() {
+    // Limpiamos localStorage antes de ir (privacidad) y redirigimos
+    // al importador con el modo captura preseleccionado
+    _guardadoConfirmado = true;
+    location.href = 'importar-cartera.html?modo=captura';
 }
 
 // ── Perfiles ────────────────────────────────────────────────────
@@ -502,9 +622,8 @@ function guardarNuevaCartera() {
     // Guardar en localStorage
     guardarLS(datos);
 
-    // Descargar archivo
-    let nombre = (g('nNombre').value || '').trim() || 'mi-cartera.json';
-    if(!nombre.endsWith('.json')) nombre += '.json';
+    // Descargar archivo con nombre fecha/hora
+    const nombre = nombreArchivoCartera();
 
     const blob = new Blob([JSON.stringify(datos, null, 2)], { type:'application/json' });
     const a    = document.createElement('a');
@@ -513,8 +632,8 @@ function guardarNuevaCartera() {
     document.body.appendChild(a); a.click();
     document.body.removeChild(a); URL.revokeObjectURL(a.href);
 
-    toast('✅ Archivo generado. Abriendo cartera…', 'ok');
-    setTimeout(() => location.href = 'cartera.html', 1400);
+    toast('✅ Archivo generado: ' + nombre + '. Abriendo cartera…', 'ok');
+    setTimeout(() => location.href = 'cartera.html', 1600);
 }
 
 // ── Cargar JSON existente ────────────────────────────────────────
@@ -553,7 +672,7 @@ function procesarArchivo(file) {
                 `💰 Total: <strong>${fmtE(total)}</strong> · ${regs} registro(s) en el histórico`;
 
             g('btnAbrir').disabled = false;
-            toast('✅ Archivo listo. Pulsa «Abrir Dashboard»', 'ok');
+            toast('✅ Archivo cargado. Pulsa «Cargar mi cartera» para continuar.', 'ok');
         } catch(err) {
             g('infoArchivo').style.display = 'block';
             g('infoArchivo').style.background = '#fce4ec';
@@ -572,42 +691,36 @@ function abrirDashboard() {
 
 // ── Init ─────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    // Detectar si hay datos en localStorage
-    const datos = cargarLS();
-    if(datos && datos.cartera) {
-        // ── Reparar etfsValorInicial si falta ──────────────────
-        const c = datos.cartera;
-        if (!parseFloat(c.etfsValorInicial)) {
-            let val = 0;
-            const histRep = datos.historico || [];
-            for (let i = histRep.length - 1; i >= 0; i--) {
-                const v = parseFloat(histRep[i].etfsValorInicial);
-                if (v > 0) { val = v; break; }
-            }
-            if (!val && c.etfs && c.etfs.length > 0)
-                val = c.etfs.reduce((s,e) => s + (e.cantidad||0)*(e.precioActual||0), 0);
-            if (val > 0) { c.etfsValorInicial = val; datos.cartera = c; guardarLS(datos); }
-        }
+    // ⚠️ PRIVACIDAD: limpiar datos del usuario anterior al cargar la página
+    limpiarSesionAnterior();
 
-        // Hay cartera en memoria: mostrar modo cargar pero con info
-        mostrarModo('cargar');
-
-        const hist  = datos.historico || [];
-        const ult   = hist.length ? hist[hist.length-1] : null;
-        const total = ult?.total || 0;
-
-        if(total > 0) {
-            g('infoArchivo').style.display = 'block';
-            g('infoArchivo').innerHTML =
-                `📂 Datos en memoria: <strong>${fmtE(total)}</strong> · ${hist.length} registro(s)<br>` +
-                `<small style="color:#666">Carga tu archivo .json para actualizar, o abre directamente</small>`;
-            g('btnAbrir').disabled = false;
-        }
-    } else {
-        // Sin datos: mostrar wizard para nuevos usuarios
-        mostrarModo('wizard');
-    }
+    // Sin datos en localStorage (acabamos de limpiar): siempre mostrar pantalla de carga
+    mostrarModo('cargar');
     actualizar();
+});
+
+// ── Aviso al salir ────────────────────────────────────────────────
+window.addEventListener('beforeunload', e => {
+    const datos = cargarLS();
+    if (datos && datos.cartera && !_guardadoConfirmado) {
+        e.preventDefault();
+        e.returnValue = '¿Quieres guardar tu cartera antes de salir?';
+    }
+});
+
+// Interceptar clicks en links que salgan de la página
+document.addEventListener('click', e => {
+    const link = e.target.closest('a[href], button[onclick*="location"]');
+    if (link) {
+        const datos = cargarLS();
+        if (datos && datos.cartera) {
+            const href = link.getAttribute('href') || '';
+            if (href && href !== '#' && !href.startsWith('javascript')) {
+                e.preventDefault();
+                mostrarModalSalida(ok => { if (ok) location.href = href; });
+            }
+        }
+    }
 });
 
 // ══════════════════════════════════════════════════════

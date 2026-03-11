@@ -3,434 +3,802 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Importar Cartera</title>
+    <title>Importar Cartera — Gestión de Cartera</title>
     <link rel="stylesheet" href="css/estilo.css">
     <style>
         #barraEstado { background:#f8f9fa; padding:10px 15px; border-radius:8px; margin-top:15px; font-size:13px; border-left:4px solid #667eea; }
-        .opciones-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin:20px 0; }
-        .opcion-box { border:2px solid #e0e0e0; border-radius:12px; padding:20px; transition:border-color .2s; }
-        .opcion-box:hover { border-color:#667eea; }
-        .paso-num { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:#667eea; color:white; font-size:12px; font-weight:700; margin-right:6px; flex-shrink:0; }
-        .pasos-lista { background:#f8f9fa; border-radius:8px; padding:14px 16px; margin:12px 0; font-size:13px; line-height:2.2; }
-        .prompt-box { background:#1e1e2e; color:#cdd6f4; border-radius:8px; padding:15px; font-family:monospace; font-size:12px; max-height:260px; overflow-y:auto; white-space:pre-wrap; word-break:break-all; margin:10px 0; border:1px solid #313244; }
-        .btn-copiar { background:#9C27B0; color:white; padding:10px 18px; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:14px; transition:all .2s; }
-        .btn-copiar:hover { background:#7B1FA2; transform:translateY(-1px); }
-        .btn-generar { width:100%; padding:13px; border:none; border-radius:8px; cursor:pointer; font-weight:700; font-size:15px; color:white; transition:all .2s; margin-top:10px; }
-        .btn-generar:hover { transform:translateY(-2px); box-shadow:0 5px 15px rgba(0,0,0,.2); }
-        .btn-naranja { background:#FF5722; }
-        .btn-azul    { background:#2196F3; }
-        .json-input  { width:100%; font-family:monospace; padding:12px; font-size:13px; border:2px solid #ddd; border-radius:8px; resize:vertical; min-height:200px; transition:border-color .2s; }
-        .json-input:focus { outline:none; border-color:#667eea; }
-        .json-input.error { border-color:#f44336; }
-        .json-input.ok    { border-color:#4CAF50; }
-        .preview-importacion { background:#f8f9fa; border-radius:10px; padding:16px; margin:15px 0; display:none; }
-        .preview-importacion table { width:100%; font-size:13px; }
-        .preview-importacion th { background:#667eea; color:white; padding:8px; }
-        .preview-importacion td { padding:7px 10px; border-bottom:1px solid #eee; }
-        .info-box { padding:14px 18px; border-radius:8px; margin:12px 0; font-size:14px; }
+        .info-box  { padding:14px 18px; border-radius:8px; margin:12px 0; font-size:14px; line-height:1.65; }
         .info-ok   { background:#e8f5e9; border-left:4px solid #4CAF50; }
         .info-warn { background:#fff3e0; border-left:4px solid #FF9800; }
         .info-info { background:#e3f2fd; border-left:4px solid #2196F3; }
-        .ejemplo-json { background:#f5f5f5; border:1px solid #ddd; border-radius:8px; padding:14px; font-family:monospace; font-size:11px; max-height:220px; overflow-y:auto; margin:10px 0; }
-        .tabs { display:flex; gap:6px; margin-bottom:-1px; }
-        .tab-btn { padding:9px 18px; border:1px solid #ddd; border-bottom:none; border-radius:8px 8px 0 0; cursor:pointer; background:#f5f5f5; font-weight:600; font-size:13px; }
-        .tab-btn.activo { background:white; border-color:#667eea; color:#667eea; }
-        .tab-panel { display:none; border:1px solid #ddd; border-radius:0 8px 8px 8px; padding:20px; }
-        .tab-panel.activo { display:block; }
-        #estadoImportacion { min-height:30px; font-weight:600; font-size:14px; margin:8px 0; }
-        #dropZoneImportar { border:3px dashed #ccc; border-radius:12px; padding:35px; text-align:center; cursor:pointer; transition:all .2s; }
-        #dropZoneImportar:hover { border-color:#667eea; background:#f0f4ff; }
-        @media(max-width:768px){ .opciones-grid{grid-template-columns:1fr;} }
+
+        /* Modos */
+        .modos-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin:16px 0; }
+        .modo-card  { border:2.5px solid #e0e0e0; border-radius:14px; padding:20px; text-align:center; cursor:pointer; transition:all .2s; background:white; }
+        .modo-card:hover  { border-color:#667eea; background:#f5f7ff; transform:translateY(-2px); }
+        .modo-card.activo { border-color:#667eea; background:#f0f4ff; box-shadow:0 4px 14px rgba(102,126,234,.25); }
+        .modo-card .mc-ico  { font-size:40px; display:block; margin-bottom:8px; }
+        .modo-card .mc-tit  { font-weight:800; font-size:15px; color:#333; display:block; margin-bottom:4px; }
+        .modo-card .mc-desc { font-size:12px; color:#888; line-height:1.5; display:block; }
+
+        /* Pasos */
+        .paso-num { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:#667eea; color:white; font-size:12px; font-weight:700; margin-right:6px; flex-shrink:0; }
+        .pasos-lista { background:#f8f9fa; border-radius:8px; padding:14px 16px; margin:12px 0; font-size:13px; line-height:2.4; }
+
+        /* Prompt */
+        .prompt-box { background:#1e1e2e; color:#cdd6f4; border-radius:8px; padding:15px; font-family:monospace; font-size:12px; max-height:280px; overflow-y:auto; white-space:pre-wrap; word-break:break-all; margin:10px 0; }
+        .btn-copiar { background:#9C27B0; color:white; padding:10px 18px; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:14px; }
+        .btn-gen    { width:100%; padding:13px; border:none; border-radius:8px; cursor:pointer; font-weight:700; font-size:15px; color:white; margin-top:10px; transition:all .2s; }
+        .btn-gen:hover { transform:translateY(-2px); }
+        .bg-naranja { background:#FF5722; }
+        .bg-azul    { background:#2196F3; }
+
+        /* JSON input */
+        .json-input { width:100%; font-family:monospace; padding:12px; font-size:13px; border:2px solid #ddd; border-radius:8px; resize:vertical; min-height:180px; transition:border-color .2s; }
+        .json-input:focus { outline:none; border-color:#667eea; }
+        .json-input.ok    { border-color:#4CAF50; }
+        .json-input.error { border-color:#f44336; }
+
+        /* Tabla revisión */
+        .tabla-rev { width:100%; border-collapse:collapse; font-size:13px; }
+        .tabla-rev th { background:#667eea; color:white; padding:9px 12px; text-align:left; font-size:12px; }
+        .tabla-rev td { padding:8px 10px; border-bottom:1px solid #f0f0f0; vertical-align:middle; }
+        .tabla-rev tr:hover td { background:#f8f9ff; }
+        .tabla-rev input { padding:4px 6px; border:1px solid #ddd; border-radius:5px; font-size:12px; }
+        .cat-badge { display:inline-block; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:700; }
+        .cat-mon { background:#e3f2fd; color:#0d47a1; }
+        .cat-rfc { background:#e8f5e9; color:#1b5e20; }
+        .cat-rfm { background:#f3e5f5; color:#4a148c; }
+        .cat-rv  { background:#fff3e0; color:#e65100; }
+        .cat-alt { background:#fce4ec; color:#880e4f; }
+        .cat-etf { background:#e0f2f1; color:#004d40; }
+        .cat-acc { background:#fff9c4; color:#f57f17; }
+
+        /* Estados filas */
+        .fila-nuevo    { background:#f0fdf4 !important; }
+        .fila-existente{ background:#fffbf0 !important; }
+        .fila-nocap    { background:#fef2f2 !important; opacity:.8; }
+        .badge-nuevo { background:#dcfce7; color:#166534; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:700; }
+        .badge-act   { background:#fef9c3; color:#713f12; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:700; }
+        .badge-igual { background:#f3f4f6; color:#374151; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:700; }
+        .badge-nocap { background:#fee2e2; color:#991b1b; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:700; }
+
+        /* Sección revisión */
+        #seccionRevision { display:none; }
+        .rev-bloque { background:#f9f9f9; border-radius:10px; padding:16px; margin-bottom:14px; border:1px solid #e8e8e8; }
+        .rev-bloque h4 { font-size:15px; font-weight:800; color:#333; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+
+        /* Totales */
+        .totales-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:14px 0; }
+        .tot-card { background:white; border-radius:10px; padding:14px; text-align:center; border:1.5px solid #e0e0e0; }
+        .tot-card .tl { font-size:11px; color:#888; font-weight:700; text-transform:uppercase; margin-bottom:4px; }
+        .tot-card .tv { font-size:17px; font-weight:900; color:#667eea; }
+        .tot-card .tc { font-size:11px; color:#bbb; margin-top:2px; }
+
+        /* Panel modo */
+        .panel-modo { display:none; }
+        .panel-modo.activo { display:block; }
+
+        /* Drop zone */
+        .drop-zone { border:3px dashed #ccc; border-radius:12px; padding:30px; text-align:center; cursor:pointer; transition:all .2s; }
+        .drop-zone:hover { border-color:#667eea; background:#f0f4ff; }
+
+        @media(max-width:768px) {
+            .modos-grid { grid-template-columns:1fr; }
+            .totales-grid { grid-template-columns:1fr 1fr; }
+        }
     </style>
 </head>
 <body>
 <div class="container">
 
 <div class="menu">
-    <h1>📥 IMPORTAR CARTERA</h1>
+    <h1>📥 IMPORTAR / INICIALIZAR CARTERA</h1>
     <div class="nav">
-        <button style="background:#4CAF50;" onclick="location.href='dashboard.html'">🏠 Dashboard</button>
-        <button style="background:#2196F3;" onclick="location.href='cartera.html'">📈 Cartera</button>
-        <button style="background:#FF9800;" onclick="location.href='rebalanceos.html'">🔄 Histórico</button>
-        <button style="background:#9C27B0;" onclick="location.href='analisis.html'">🔍 Analizador</button>
-        <button style="background:#00BCD4;" onclick="location.href='composicion.html'">📊 Composición</button>
-        <button style="background:#f44336;" onclick="location.href='graficos.html'">📈 Gráficos</button>
-        <button style="background:#607D8B;" onclick="location.href='herramientas.html'">🛠️ Herramientas</button>
-        <button style="background:#FF5722;" onclick="location.href='importar-cartera.html'">📥 Importar</button>
-        <button style="background:#795548;" onclick="location.href='ayuda.html'">❓ Ayuda</button>
+        <button style="background:#4CAF50;" onclick="navegar('dashboard.html')">🏠 Dashboard</button>
+        <button style="background:#2196F3;" onclick="navegar('cartera.html')">📈 Cartera</button>
+        <button style="background:#FF9800;" onclick="navegar('rebalanceos.html')">🔄 Histórico</button>
+        <button style="background:#9C27B0;" onclick="navegar('analisis.html')">🔍 Analizador</button>
+        <button style="background:#00BCD4;" onclick="navegar('composicion.html')">📊 Composición</button>
+        <button style="background:#f44336;" onclick="navegar('graficos.html')">📈 Gráficos</button>
+        <button style="background:#607D8B;" onclick="navegar('herramientas.html')">🛠️ Herramientas</button>
+        <button style="background:#009688;" onclick="navegar('calculadora.html')">🧮 Calculadora</button>
+        <button style="background:#FF5722;" onclick="navegar('importar-cartera.html')">📥 Importar</button>
+        <button style="background:#795548;" onclick="navegar('ayuda.html')">❓ Ayuda</button>
     </div>
     <div id="barraEstado">Cargando...</div>
 </div>
 
-<!-- Carga rápida de archivo JSON -->
+<!-- PASO 1: MODO DE IMPORTACIÓN -->
 <div class="card">
-    <h2>⚡ CARGA RÁPIDA — Archivo JSON</h2>
-    <div class="info-box info-ok">Si ya tienes un archivo <code>.json</code> guardado de esta app, cárgalo aquí directamente.</div>
-    <div id="dropZoneImportar"
-         onclick="document.getElementById('inputArchivoJSON').click()"
+    <h2>① Elige cómo importar tu cartera</h2>
+    <div class="modos-grid">
+        <div class="modo-card activo" id="mc-archivo" onclick="seleccionarModo('archivo')">
+            <span class="mc-ico">📂</span>
+            <span class="mc-tit">Cargar archivo JSON</span>
+            <span class="mc-desc">Restaura desde un archivo <code>gestion_cartera_*.json</code> guardado anteriormente</span>
+        </div>
+        <div class="modo-card" id="mc-captura" onclick="seleccionarModo('captura')">
+            <span class="mc-ico">📸</span>
+            <span class="mc-tit">Desde captura de imagen</span>
+            <span class="mc-desc">Envía una captura de tu broker a Gemini o ChatGPT y pega aquí el JSON</span>
+        </div>
+        <div class="modo-card" id="mc-texto" onclick="seleccionarModo('texto')">
+            <span class="mc-ico">📋</span>
+            <span class="mc-tit">Desde texto de extracto</span>
+            <span class="mc-desc">Pega el texto de tu extracto bancario y la IA extrae los datos</span>
+        </div>
+    </div>
+</div>
+
+<!-- PANEL: Archivo JSON -->
+<div class="card panel-modo activo" id="panel-archivo">
+    <h2>📂 Restaurar desde archivo JSON</h2>
+    <div class="info-box info-ok">Carga un archivo <code>gestion_cartera_*.json</code> generado con esta app. Se restaurarán todos los datos y el histórico completo.</div>
+    <div class="drop-zone"
+         onclick="document.getElementById('inputJSON').click()"
          ondragover="event.preventDefault();this.style.borderColor='#667eea';this.style.background='#f0f4ff';"
          ondragleave="this.style.borderColor='#ccc';this.style.background='';"
          ondrop="onDropJSON(event)">
         <div style="font-size:40px;margin-bottom:8px;">📂</div>
-        <p><strong>Haz clic o arrastra aquí</strong> tu archivo <code>.json</code></p>
+        <p><strong>Haz clic o arrastra</strong> el archivo <code>gestion_cartera_*.json</code></p>
+        <p style="font-size:12px;color:#aaa;margin-top:4px;">Se restaurará la cartera completa con todo el histórico</p>
     </div>
-    <input type="file" id="inputArchivoJSON" accept=".json" style="display:none" onchange="cargarArchivoJSON(this)">
+    <input type="file" id="inputJSON" accept=".json" style="display:none" onchange="cargarArchivoJSON(this)">
 </div>
 
-<!-- Importar desde IA -->
-<div class="card">
-    <h2>🤖 IMPORTAR DESDE IA (captura o texto)</h2>
-    <div class="info-box info-warn">
-        <strong>¿Cómo funciona?</strong> Genera un prompt, envíaselo a una IA (DeepSeek, ChatGPT…) junto con tu captura o texto, y pega aquí el JSON que te devuelva.
+<!-- PANEL: Captura imagen -->
+<div class="card panel-modo" id="panel-captura">
+    <h2>📸 Importar desde captura de pantalla</h2>
+    <div class="info-box info-info">
+        <strong>¿Cómo funciona?</strong> Haz capturas de tu cartera en el broker (puedes hacer varias), genera el prompt, pégalo en Gemini o ChatGPT adjuntando las capturas, y pega aquí el JSON resultante.
     </div>
-
-    <div class="tabs">
-        <button class="tab-btn activo" onclick="cambiarTab('captura',this)">📸 Desde captura</button>
-        <button class="tab-btn"       onclick="cambiarTab('texto',this)">📋 Desde texto</button>
+    <div class="pasos-lista">
+        <div><span class="paso-num">1</span> Haz capturas de pantalla de tu cartera en el broker (fondos, ETFs, efectivo)</div>
+        <div><span class="paso-num">2</span> Pulsa <strong>«Generar prompt»</strong> y cópialo</div>
+        <div><span class="paso-num">3</span> Ve a <a href="https://gemini.google.com" target="_blank" style="color:#667eea">Gemini</a> o <a href="https://chat.openai.com" target="_blank" style="color:#667eea">ChatGPT</a>, adjunta las capturas y pega el prompt</div>
+        <div><span class="paso-num">4</span> Copia el JSON que devuelva la IA y pégalo en el paso 2 de abajo</div>
     </div>
-
-    <div id="tab-captura" class="tab-panel activo">
-        <div class="pasos-lista">
-            <div><span class="paso-num">1</span> Haz una captura de pantalla de tu cartera en el broker</div>
-            <div><span class="paso-num">2</span> Pulsa <strong>«Generar prompt»</strong> y cópialo</div>
-            <div><span class="paso-num">3</span> Ve a <a href="https://chat.deepseek.com" target="_blank" style="color:#667eea">DeepSeek</a>, pega el prompt y adjunta la imagen</div>
-            <div><span class="paso-num">4</span> Copia el JSON que devuelva la IA y pégalo en la sección de abajo</div>
-        </div>
-        <button class="btn-generar btn-naranja" onclick="generarPrompt('captura')">📸 Generar prompt para captura</button>
-    </div>
-
-    <div id="tab-texto" class="tab-panel">
-        <div class="pasos-lista">
-            <div><span class="paso-num">1</span> Selecciona y copia el texto de tu extracto bancario</div>
-            <div><span class="paso-num">2</span> Pégalo en el área de abajo</div>
-            <div><span class="paso-num">3</span> Pulsa <strong>«Generar prompt»</strong> y cópialo</div>
-            <div><span class="paso-num">4</span> Pega el prompt en DeepSeek y copia el JSON resultante</div>
-        </div>
-        <textarea id="textoCartera" rows="5"
-            style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;font-family:monospace;font-size:13px;margin:8px 0;"
-            placeholder="Pega aquí el texto de tu extracto…"></textarea>
-        <button class="btn-generar btn-azul" onclick="generarPrompt('texto')">📋 Generar prompt para texto</button>
-    </div>
-
-    <div id="promptContainer" style="display:none;margin-top:20px;">
+    <button class="btn-gen bg-naranja" onclick="generarPromptIA('captura')">📸 Generar prompt para imagen</button>
+    <div id="pCont_captura" style="display:none;margin-top:18px;">
         <h3 style="margin-bottom:8px;">📋 Prompt generado:</h3>
-        <div class="prompt-box" id="promptBox"></div>
-        <button class="btn-copiar" onclick="copiarPrompt()">📋 Copiar prompt al portapapeles</button>
+        <div class="prompt-box" id="pBox_captura"></div>
+        <button class="btn-copiar" style="margin-top:8px;" onclick="copiarPrompt('captura')">📋 Copiar prompt</button>
     </div>
 </div>
 
-<!-- Pegar JSON de la IA -->
-<div class="card">
-    <h2>📋 PEGA AQUÍ EL JSON DE LA IA</h2>
+<!-- PANEL: Texto -->
+<div class="card panel-modo" id="panel-texto">
+    <h2>📋 Importar desde texto de extracto</h2>
+    <div class="info-box info-info">Copia el texto de tu extracto bancario o de la web de tu broker y pégalo abajo.</div>
+    <div class="pasos-lista">
+        <div><span class="paso-num">1</span> Selecciona y copia el texto completo de tu extracto o página de inversiones</div>
+        <div><span class="paso-num">2</span> Pégalo en el área de abajo</div>
+        <div><span class="paso-num">3</span> Pulsa <strong>«Generar prompt»</strong>, cópialo y pégalo en <a href="https://chat.deepseek.com" target="_blank" style="color:#667eea">DeepSeek</a></div>
+        <div><span class="paso-num">4</span> Copia el JSON resultante y pégalo en el paso 2 de abajo</div>
+    </div>
+    <textarea id="textoCartera" rows="6"
+        style="width:100%;padding:10px;border:1.5px solid #ccc;border-radius:8px;font-size:13px;font-family:inherit;margin:8px 0;resize:vertical;"
+        placeholder="Pega aquí el texto de tu extracto bancario…"></textarea>
+    <button class="btn-gen bg-azul" onclick="generarPromptIA('texto')">📋 Generar prompt para texto</button>
+    <div id="pCont_texto" style="display:none;margin-top:18px;">
+        <h3 style="margin-bottom:8px;">📋 Prompt generado:</h3>
+        <div class="prompt-box" id="pBox_texto"></div>
+        <button class="btn-copiar" style="margin-top:8px;" onclick="copiarPrompt('texto')">📋 Copiar prompt</button>
+    </div>
+</div>
 
-    <details style="margin-bottom:15px;">
-        <summary style="cursor:pointer;font-weight:600;color:#667eea;padding:8px 0;">📄 Ver ejemplo de JSON esperado</summary>
-        <div class="ejemplo-json">{
-  "efectivo": 10000,
-  "inmobiliario": 0,
-  "fondos": [
-    {
-      "isin": "ES0137988004",
-      "nombre": "Fondo Monetario Test",
-      "categoria": "monetario",
-      "cantidad": 1000,
-      "precioCompra": 10.50,
-      "precioActual": 10.75
-    },
-    {
-      "isin": "ES0173354035",
-      "nombre": "Fondo RF Corto Test",
-      "categoria": "rfCorto",
-      "cantidad": 500,
-      "precioCompra": 25.30,
-      "precioActual": 26.10
-    }
-  ],
-  "etfs": [
-    {
-      "tipo": "ETF",
-      "isin": "IE00B53SZB19",
-      "nombre": "iShares NASDAQ 100",
-      "cantidad": 50,
-      "precioCompra": 45.20,
-      "precioActual": 48.10
-    }
-  ]
-}</div>
-        <p style="font-size:12px;color:#888;margin-top:6px;">Categorías: <code>monetario</code> · <code>rfCorto</code> · <code>rfMedio</code> · <code>rv</code> · <code>alternativos</code></p>
+<!-- PASO 2: PEGAR JSON -->
+<div class="card" id="seccionPegarJSON" style="display:none;">
+    <h2>② Pega el JSON que te devolvió la IA</h2>
+    <div class="info-box info-warn">La IA debe devolver <strong>SOLO JSON</strong> sin texto adicional. Si añade texto, elimínalo y deja solo el bloque entre <code>{</code> y <code>}</code>.</div>
+    <details style="margin-bottom:12px;">
+        <summary style="cursor:pointer;font-weight:600;color:#667eea;padding:6px 0;">📄 Ver ejemplo de JSON esperado</summary>
+        <pre style="background:#f5f5f5;border:1px solid #ddd;border-radius:8px;padding:12px;font-size:11px;max-height:200px;overflow-y:auto;margin-top:8px;">{"efectivo":5000,"inmobiliario":0,"fondos":[{"isin":"ES0137988004","nombre":"Fondo Monetario Ejemplo","categoria":"monetario","cantidad":1000,"precioCompra":10.50,"precioActual":10.75},{"isin":"LU1234567890","nombre":"ETF Renta Variable Global","categoria":"rv","cantidad":200,"precioCompra":50.00,"precioActual":55.20}],"etfs":[{"tipo":"ETF","isin":"IE00B4L5Y983","nombre":"iShares MSCI World","cantidad":50,"precioCompra":80.20,"precioActual":88.50}]}</pre>
+        <p style="font-size:12px;color:#888;margin-top:6px;">Categorías fondos: <code>monetario</code> · <code>rfCorto</code> · <code>rfMedio</code> · <code>rv</code> · <code>alternativos</code></p>
     </details>
-
-    <textarea id="jsonCartera" class="json-input" rows="12"
-        placeholder="Pega aquí el JSON que te devuelva la IA…"
-        oninput="validarJSON()"></textarea>
-
-    <div id="estadoImportacion"></div>
-
-    <div class="preview-importacion" id="previewImportacion">
-        <h4 style="margin-bottom:10px;">👀 Vista previa:</h4>
-        <table>
-            <thead><tr><th>Concepto</th><th>Valor</th></tr></thead>
-            <tbody id="tbodyPreview"></tbody>
-        </table>
-    </div>
-
-    <div class="button-group" style="margin-top:15px;">
-        <button class="btn-primary" id="btnImportar" onclick="importarJSON()"
-            style="font-size:16px;padding:14px 30px;" disabled>📥 Importar cartera</button>
-        <button class="btn-secondary" onclick="limpiarJSON()">🗑️ Limpiar</button>
-        <button class="btn-warning"   onclick="location.href='cartera.html'">← Ver cartera actual</button>
-    </div>
-
-    <div class="info-box info-warn" style="margin-top:15px;">
-        <strong>⚠️ Al importar</strong> se añade un nuevo registro al histórico y los fondos se distribuyen por categorías. Los datos previos del histórico no se pierden.
+    <textarea id="jsonCartera" class="json-input" rows="10" placeholder="Pega aquí el JSON…" oninput="validarJSONIA()"></textarea>
+    <div id="estadoJSON" style="min-height:26px;font-weight:600;font-size:14px;margin:8px 0;"></div>
+    <div style="margin-top:8px;">
+        <button class="btn-primary" id="btnAnalizar" onclick="analizarJSON()" disabled style="font-size:15px;padding:13px 28px;">🔍 Analizar y revisar datos</button>
+        <button class="btn-secondary" onclick="limpiarJSON()" style="margin-left:8px;">🗑️ Limpiar</button>
     </div>
 </div>
 
+<!-- PASO 3: REVISIÓN -->
+<div id="seccionRevision">
+
+    <div class="card">
+        <h2>③ Revisión inteligente — confirma los datos</h2>
+        <div class="info-box info-info" id="infoRevision"></div>
+        <div class="totales-grid" id="totalesGrid"></div>
+    </div>
+
+    <!-- Fondos por categoría -->
+    <div class="card">
+        <h2>🏦 Fondos de inversión por categoría</h2>
+        <div class="info-box info-info" style="font-size:13px;">
+            <span style="background:#dcfce7;color:#166534;padding:1px 8px;border-radius:10px;font-weight:700;">Verde = Nuevo</span> &nbsp;
+            <span style="background:#fef9c3;color:#713f12;padding:1px 8px;border-radius:10px;font-weight:700;">Amarillo = Actualiza datos</span> &nbsp;
+            <span style="background:#fee2e2;color:#991b1b;padding:1px 8px;border-radius:10px;font-weight:700;">Rojo = En cartera pero no en captura → marca ☑ para eliminar</span>
+        </div>
+
+        <div id="bloques-fondos"></div>
+    </div>
+
+    <!-- ETFs y Acciones -->
+    <div class="card">
+        <h2>📈 ETFs y Acciones individuales</h2>
+        <div class="rev-bloque">
+            <table class="tabla-rev">
+                <thead><tr><th>Tipo</th><th>ISIN/Ticker</th><th>Nombre</th><th>Cantidad</th><th>P.Compra</th><th>P.Actual</th><th>Valor</th><th>Estado</th><th>Eliminar</th></tr></thead>
+                <tbody id="tbody-etfs"></tbody>
+            </table>
+            <button class="btn-secondary" style="margin-top:10px;font-size:13px;" onclick="addManual('etf')">+ Añadir ETF/Acción manualmente</button>
+        </div>
+    </div>
+
+    <!-- Efectivo e Inmobiliario -->
+    <div class="card">
+        <h2>💶 Efectivo e Inmobiliario</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div>
+                <label style="font-size:13px;font-weight:700;color:#555;display:block;margin-bottom:6px;">💶 Efectivo (€)</label>
+                <input type="number" id="inputEfectivo" min="0" step="any"
+                    style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;font-size:16px;"
+                    placeholder="0" oninput="recalcular()">
+                <p style="font-size:12px;color:#888;margin-top:4px;">Saldo en cuenta o pendiente de invertir</p>
+            </div>
+            <div>
+                <label style="font-size:13px;font-weight:700;color:#555;display:block;margin-bottom:6px;">🏠 Inmobiliario (€)</label>
+                <input type="number" id="inputInmobiliario" min="0" step="any"
+                    style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;font-size:16px;"
+                    placeholder="0" oninput="recalcular()">
+                <p style="font-size:12px;color:#888;margin-top:4px;">Valor de inmuebles en cartera</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Totales finales + importar -->
+    <div class="card">
+        <h2>④ Total calculado — confirmar importación</h2>
+        <div id="tablaFinal" style="margin-bottom:16px;"></div>
+        <div id="avisoDesajuste" class="info-box info-warn" style="display:none;"></div>
+        <div class="button-group">
+            <button class="btn-primary" onclick="importarFinal()" style="font-size:16px;padding:14px 32px;">✅ Confirmar e importar</button>
+            <button class="btn-secondary" onclick="cancelarRevision()">↩ Cancelar</button>
+        </div>
+        <div class="info-box info-ok" style="margin-top:14px;font-size:13px;">
+            ✅ El histórico anterior <strong>no se borra</strong>. Se añade un nuevo registro con los datos importados.
+        </div>
+    </div>
+
 </div>
+</div><!-- /container -->
 
 <script>
-// ── Utilidades ──────────────────────────────────────────────────
-const fmtE = v => isNaN(v)||v==null ? '0,00 €'
-    : v.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+// ═══════════════════════════════════════════════════════
+//  CONSTANTES Y UTILIDADES
+// ═══════════════════════════════════════════════════════
 const g = id => document.getElementById(id);
+const fmtE = v => isNaN(v)||v==null ? '0,00 €' : (+v).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
 
-function toast(msg, tipo='info') {
+const CATS = ['monetario','rfCorto','rfMedio','rv','alternativos'];
+const CAT_LABEL = { monetario:'Monetario', rfCorto:'RF Corto Plazo', rfMedio:'RF Medio Plazo', rv:'Renta Variable', alternativos:'Alternativos' };
+const CAT_BADGE_CLASS = { monetario:'cat-mon', rfCorto:'cat-rfc', rfMedio:'cat-rfm', rv:'cat-rv', alternativos:'cat-alt' };
+
+function toast(msg, tipo='info', ms=4500) {
+    const c = tipo==='ok'?'#2e7d32':tipo==='warn'?'#e65100':tipo==='error'?'#c62828':'#1565c0';
     const t = document.createElement('div');
-    t.style.cssText = 'position:fixed;bottom:22px;right:22px;padding:13px 20px;border-radius:10px;'
-        + 'box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:9999;cursor:pointer;max-width:340px;'
-        + 'font-size:14px;color:white;background:'
-        + (tipo==='warning'?'#e65100':tipo==='error'?'#c62828':'#2196F3') + ';';
-    t.innerHTML = msg + ' <span style="opacity:.6;margin-left:8px">✖</span>';
+    t.style.cssText = `position:fixed;bottom:22px;right:22px;padding:13px 20px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:9999;cursor:pointer;max-width:380px;font-size:14px;color:white;background:${c};`;
+    t.innerHTML = msg + ' <span style="opacity:.5;margin-left:8px;">✖</span>';
     t.onclick = () => t.remove();
     document.body.appendChild(t);
-    setTimeout(() => { if(t.parentNode) t.remove(); }, 5000);
+    setTimeout(() => { if(t.parentNode) t.remove(); }, ms);
 }
 
-function cargarLS()  { try { return JSON.parse(localStorage.getItem('carteraActual')) || null; } catch(e) { return null; } }
-function guardarLS(d){ localStorage.setItem('carteraActual', JSON.stringify(d)); }
+function cargarLS()   { try { return JSON.parse(localStorage.getItem('carteraActual')) || null; } catch(e) { return null; } }
+function guardarLS(d) { localStorage.setItem('carteraActual', JSON.stringify(d)); }
 
-// ── Barra estado ────────────────────────────────────────────────
 function barraEstado() {
     const el = g('barraEstado'); if(!el) return;
     const datos = cargarLS();
-    if(!datos) {
-        el.innerHTML = '📂 Sin datos. <a href="configuracion-inicial.html" style="color:#667eea;font-weight:600">Configura tu cartera</a>';
-        return;
-    }
+    if(!datos) { el.innerHTML = '📂 Sin datos. <a href="configuracion-inicial.html" style="color:#667eea;font-weight:600">Configura tu cartera →</a>'; return; }
     const hist = datos.historico || [], ult = hist.length ? hist[hist.length-1] : null;
     el.innerHTML = ult
         ? `📁 Último guardado: <strong>${ult.fecha} ${ult.hora}</strong> &nbsp;|&nbsp; Total: <strong>${fmtE(ult.total||0)}</strong>`
-        : '📂 Datos en memoria sin guardar aún.';
+        : '📂 Datos en memoria.';
 }
 
-// ── Tabs ─────────────────────────────────────────────────────────
-function cambiarTab(nombre, btn) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('activo'));
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('activo'));
-    if(btn) btn.classList.add('activo');
-    const panel = g('tab-' + nombre); if(panel) panel.classList.add('activo');
+function navegar(href) {
+    const raw = localStorage.getItem('carteraActual');
+    if(raw && !_guardadoConfirmado) { mostrarModalSalida(ok => { if(ok) location.href = href; }); }
+    else location.href = href;
 }
 
-// ── Carga archivo JSON ───────────────────────────────────────────
+// ═══════════════════════════════════════════════════════
+//  SELECCIÓN DE MODO
+// ═══════════════════════════════════════════════════════
+function seleccionarModo(modo) {
+    document.querySelectorAll('.modo-card').forEach(c => c.classList.remove('activo'));
+    document.querySelectorAll('.panel-modo').forEach(p => p.classList.remove('activo'));
+    g('mc-'+modo).classList.add('activo');
+    g('panel-'+modo).classList.add('activo');
+    const esIA = modo === 'captura' || modo === 'texto';
+    g('seccionPegarJSON').style.display = esIA ? 'block' : 'none';
+    g('seccionRevision').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════════
+//  CARGA RÁPIDA JSON
+// ═══════════════════════════════════════════════════════
 function onDropJSON(e) {
     e.preventDefault();
-    const dz = g('dropZoneImportar');
-    dz.style.borderColor = '#ccc'; dz.style.background = '';
     const file = e.dataTransfer?.files?.[0];
     if(file) procesarArchivoJSON(file);
 }
-
 function cargarArchivoJSON(input) {
     const file = input?.files?.[0]; if(!file) return;
     procesarArchivoJSON(file);
 }
-
 function procesarArchivoJSON(file) {
-    const reader = new FileReader();
-    reader.onload = e => {
+    const r = new FileReader();
+    r.onload = e => {
         try {
             const datos = JSON.parse(e.target.result);
-            if(!datos.version && !datos.cartera) {
-                toast('El archivo no parece un JSON válido de esta app', 'warning');
-                return;
-            }
-            guardarLS(datos);
-            barraEstado();
-            toast(`✅ "${file.name}" cargado. Redirigiendo a Cartera…`, 'info');
-            setTimeout(() => location.href = 'cartera.html', 1600);
-        } catch(err) {
-            toast('❌ Error al leer el archivo: ' + err.message, 'error');
-        }
+            if(!datos.version && !datos.cartera) throw new Error('No parece un JSON válido de esta app');
+            guardarLS(datos); barraEstado();
+            toast(`✅ "${file.name}" cargado. Redirigiendo…`, 'ok');
+            setTimeout(() => { _guardadoConfirmado = true; location.href = 'cartera.html'; }, 1600);
+        } catch(err) { toast('❌ Error: ' + err.message, 'error'); }
     };
-    reader.readAsText(file);
+    r.readAsText(file);
 }
 
-// ── Prompt para IA ───────────────────────────────────────────────
-const PROMPT_BASE = `Extrae los datos de mi cartera de inversión y devuélveme ÚNICAMENTE un JSON con esta estructura exacta, sin texto adicional ni bloques de código markdown:
+// ═══════════════════════════════════════════════════════
+//  PROMPT IA
+// ═══════════════════════════════════════════════════════
+const PROMPT_BASE = `Extrae los datos de mi cartera de inversión y devuélveme ÚNICAMENTE un JSON con esta estructura exacta.
+No añadas texto antes ni después, no uses bloques de código markdown:
 
 {
-  "efectivo": número,
-  "inmobiliario": número,
+  "efectivo": número (saldo disponible en cuenta, 0 si no aparece),
+  "inmobiliario": número (valor de inmuebles, 0 si no aparece),
   "fondos": [
     {
-      "isin": "código ISIN",
-      "nombre": "nombre del fondo",
+      "isin": "código ISIN del fondo (ej: ES0137988004)",
+      "nombre": "nombre completo del fondo",
       "categoria": "monetario" | "rfCorto" | "rfMedio" | "rv" | "alternativos",
       "cantidad": número de participaciones,
-      "precioCompra": número,
-      "precioActual": número
+      "precioCompra": precio medio de compra por participación (0 si no aparece),
+      "precioActual": valor liquidativo actual por participación
     }
   ],
   "etfs": [
     {
       "tipo": "ETF" | "ACCION",
-      "isin": "código ISIN o ticker",
-      "nombre": "nombre",
-      "cantidad": número,
-      "precioCompra": número,
-      "precioActual": número
+      "isin": "código ISIN o ticker de bolsa",
+      "nombre": "nombre del ETF o acción",
+      "cantidad": número de títulos,
+      "precioCompra": precio medio de compra (0 si no aparece),
+      "precioActual": precio actual de mercado
     }
   ]
 }
 
+CLASIFICACIÓN DE FONDOS (campo "categoria"):
+- monetario: fondos monetarios, de liquidez, money market, FIAMM
+- rfCorto: renta fija corto plazo (bonos < 3 años, pagarés corporativos)
+- rfMedio: renta fija medio/largo plazo (bonos > 3 años, mixtos conservadores < 30% RV)
+- rv: renta variable, acciones, mixtos agresivos (> 30% RV), fondos globales de bolsa
+- alternativos: oro, materias primas, inmobiliario cotizado (REITs), retorno absoluto
+
 REGLAS:
-- Un fondo por objeto, no totales agregados.
-- Categorías: monetario=liquidez/monetarios, rfCorto=RF<3años, rfMedio=RF>3años/mixtos conservadores, rv=renta variable/acciones/mixtos agresivos, alternativos=oro/materias primas/inmobiliario cotizado.
-- Si un dato no aparece usa 0.
-- Devuelve SOLO el JSON, sin explicaciones.`;
+- Fondos de inversión tradicionales (ISIN largo ej: ES..., LU...) → array "fondos"
+- ETFs cotizados en bolsa y acciones → array "etfs"
+- Un objeto por producto, NUNCA totales agregados
+- Si un dato no aparece → usa 0
+- Devuelve SOLO el JSON, absolutamente nada más`;
 
-function generarPrompt(tipo) {
-    let prompt = '';
+function generarPromptIA(tipo) {
+    let prompt;
     if(tipo === 'captura') {
-        prompt = '[Adjunta la imagen de tu cartera a este mensaje]\n\n' + PROMPT_BASE;
+        prompt = '[ADJUNTA AQUÍ LA IMAGEN O IMÁGENES DE TU CARTERA ANTES DE ENVIAR]\n\n' + PROMPT_BASE;
+        g('pBox_captura').textContent = prompt;
+        g('pCont_captura').style.display = 'block';
+        g('pCont_captura').scrollIntoView({ behavior:'smooth', block:'start' });
     } else {
-        const texto = (g('textoCartera').value || '').trim();
-        if(!texto) { toast('Pega primero el texto de tu extracto', 'warning'); return; }
-        prompt = `Tengo el siguiente texto de mi extracto de inversiones:\n\n--- INICIO ---\n${texto}\n--- FIN ---\n\n` + PROMPT_BASE;
+        const txt = (g('textoCartera').value||'').trim();
+        if(!txt) { toast('Pega primero el texto de tu extracto', 'warn'); return; }
+        prompt = `Tengo el siguiente extracto de mis inversiones:\n\n--- INICIO ---\n${txt}\n--- FIN ---\n\n` + PROMPT_BASE;
+        g('pBox_texto').textContent = prompt;
+        g('pCont_texto').style.display = 'block';
+        g('pCont_texto').scrollIntoView({ behavior:'smooth', block:'start' });
     }
-    g('promptBox').textContent = prompt;
-    g('promptContainer').style.display = 'block';
-    g('promptContainer').scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
-function copiarPrompt() {
-    const texto = g('promptBox').textContent || '';
-    navigator.clipboard.writeText(texto)
-        .then(() => toast('✅ Prompt copiado', 'info'))
-        .catch(() => toast('No se pudo copiar automáticamente. Selecciona el texto con Ctrl+A y Ctrl+C.', 'warning'));
+function copiarPrompt(tipo) {
+    const txt = g('pBox_' + tipo)?.textContent || '';
+    navigator.clipboard.writeText(txt)
+        .then(() => toast('✅ Prompt copiado al portapapeles', 'ok'))
+        .catch(() => toast('Selecciona el texto y cópialo con Ctrl+C', 'warn'));
 }
 
-// ── Validación en tiempo real ────────────────────────────────────
-let jsonValidado = null;
+// ═══════════════════════════════════════════════════════
+//  VALIDACIÓN JSON
+// ═══════════════════════════════════════════════════════
+let jsonParsed = null;
 
-function validarJSON() {
-    const raw = (g('jsonCartera').value || '').trim();
-    const el = g('jsonCartera'), estado = g('estadoImportacion');
-    const btn = g('btnImportar'), preview = g('previewImportacion');
-    jsonValidado = null; btn.disabled = true; preview.style.display = 'none';
-
-    if(!raw) { el.className = 'json-input'; estado.textContent = ''; return; }
-
-    // Limpiar markdown que la IA a veces envuelve
-    const limpio = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
-
+function validarJSONIA() {
+    const raw = (g('jsonCartera').value||'').trim();
+    const el = g('jsonCartera'), est = g('estadoJSON'), btn = g('btnAnalizar');
+    jsonParsed = null; btn.disabled = true;
+    if(!raw) { el.className = 'json-input'; est.textContent = ''; return; }
+    const limpio = raw.replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'').trim();
     try {
-        const datos = JSON.parse(limpio);
-        const tieneFondos = Array.isArray(datos.fondos) && datos.fondos.length > 0;
-        const tieneETFs   = Array.isArray(datos.etfs)   && datos.etfs.length   > 0;
-        if(!tieneFondos && !tieneETFs && datos.efectivo == null)
-            throw new Error('El JSON no contiene fondos, ETFs ni efectivo');
-
-        jsonValidado = datos;
+        const d = JSON.parse(limpio);
+        if(!Array.isArray(d.fondos) && !Array.isArray(d.etfs) && d.efectivo == null)
+            throw new Error('No contiene fondos, ETFs ni efectivo');
+        jsonParsed = d;
         el.className = 'json-input ok';
-
-        // Calcular preview
-        const CATS = ['monetario','rfCorto','rfMedio','rv','alternativos'];
-        const totCat = {};
-        CATS.forEach(c => totCat[c] = 0);
-        (datos.fondos || []).forEach(f => {
-            const cat = CATS.includes(f.categoria) ? f.categoria : 'rv';
-            totCat[cat] += (f.cantidad || 0) * (f.precioActual || 0);
-        });
-        const totalFondos = Object.values(totCat).reduce((a,b) => a+b, 0);
-        const totalETFs   = (datos.etfs || []).reduce((s,e) => s + (e.cantidad||0)*(e.precioActual||0), 0);
-        const total       = totalFondos + totalETFs + (datos.efectivo||0) + (datos.inmobiliario||0);
-
-        g('tbodyPreview').innerHTML = [
-            ['Fondos (' + (datos.fondos||[]).length + ')',         fmtE(totalFondos)],
-            ['ETFs / Acciones (' + (datos.etfs||[]).length + ')', fmtE(totalETFs)],
-            ['Efectivo',     fmtE(datos.efectivo    || 0)],
-            ['Inmobiliario', fmtE(datos.inmobiliario || 0)],
-            ['<strong>TOTAL ESTIMADO</strong>', '<strong>' + fmtE(total) + '</strong>']
-        ].map(([k,v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
-        preview.style.display = 'block';
-
-        estado.innerHTML = '<span style="color:#2e7d32;">✅ JSON válido — listo para importar</span>';
+        est.innerHTML = `<span style="color:#2e7d32;">✅ JSON válido — ${(d.fondos||[]).length} fondo(s) · ${(d.etfs||[]).length} ETF/acción(es) · Efectivo: ${fmtE(d.efectivo||0)}</span>`;
         btn.disabled = false;
     } catch(err) {
         el.className = 'json-input error';
-        estado.innerHTML = `<span style="color:#c62828;">❌ JSON inválido: ${err.message}</span>`;
+        est.innerHTML = `<span style="color:#c62828;">❌ ${err.message}</span>`;
     }
 }
 
-// ── Importar ─────────────────────────────────────────────────────
-function importarJSON() {
-    if(!jsonValidado) { toast('No hay JSON válido', 'warning'); return; }
+function limpiarJSON() {
+    g('jsonCartera').value = ''; g('jsonCartera').className = 'json-input';
+    g('estadoJSON').textContent = ''; g('btnAnalizar').disabled = true;
+    g('seccionRevision').style.display = 'none'; jsonParsed = null;
+}
 
-    const datos = jsonValidado;
-    const CATS  = ['monetario','rfCorto','rfMedio','rv','alternativos'];
+// ═══════════════════════════════════════════════════════
+//  ESTADO DE REVISIÓN
+// ═══════════════════════════════════════════════════════
+// revFondos: { monetario: [{...fondo, _estado, _eliminar}], ... }
+// revETFs:   [{...etf, _estado, _eliminar}]
+let revFondos = {};
+let revETFs   = [];
 
-    // Totales por categoría desde fondos individuales
-    const totCat = {};
-    CATS.forEach(c => totCat[c] = 0);
-    (datos.fondos || []).forEach(f => {
-        const cat = CATS.includes(f.categoria) ? f.categoria : 'rv';
-        totCat[cat] += (f.cantidad || 0) * (f.precioActual || 0);
+function analizarJSON() {
+    if(!jsonParsed) return;
+    const nvo = jsonParsed;
+    const datosLS  = cargarLS();
+    const cartAct  = datosLS?.cartera || {};
+
+    // Índice de fondos detallados existentes
+    const fondosIdx = {};
+    (cartAct.fondosDetalle || []).forEach(f => {
+        if(f.isin) fondosIdx[f.isin.toUpperCase()] = f;
     });
 
-    const datosLS = cargarLS() || { version:'3.0', cartera:{}, configuracion:{}, historico:[] };
-    const cfg     = datosLS.configuracion || {};
+    // Índice ETFs existentes
+    const etfsIdx = {};
+    (cartAct.etfs || []).forEach(e => {
+        const k = (e.isin||e.ticker||'').toUpperCase();
+        if(k) etfsIdx[k] = e;
+    });
+
+    // ── Fondos: construir revFondos por categoría ──
+    CATS.forEach(c => revFondos[c] = []);
+
+    (nvo.fondos || []).forEach(f => {
+        const cat = CATS.includes(f.categoria) ? f.categoria : 'rv';
+        const k   = (f.isin||'').toUpperCase();
+        const ex  = k && fondosIdx[k];
+        let est   = 'nuevo';
+        if(ex) {
+            est = (Math.abs((f.precioActual||0)-(ex.precioActual||0))>0.001 ||
+                   Math.abs((f.cantidad||0)-(ex.cantidad||0))>0.001) ? 'actualizado' : 'igual';
+        }
+        revFondos[cat].push({...f, categoria:cat, _estado:est, _eliminar:false});
+    });
+
+    // Fondos en cartera que no están en la captura
+    (cartAct.fondosDetalle || []).forEach(f => {
+        const k  = (f.isin||'').toUpperCase();
+        const ya = (nvo.fondos||[]).some(nf => (nf.isin||'').toUpperCase()===k);
+        if(!ya) {
+            const cat = CATS.includes(f.categoria) ? f.categoria : 'rv';
+            revFondos[cat].push({...f, _estado:'noEnCaptura', _eliminar:false});
+        }
+    });
+
+    // ── ETFs ──
+    revETFs = [];
+    (nvo.etfs || []).forEach(e => {
+        const k = (e.isin||e.ticker||'').toUpperCase();
+        const ex = k && etfsIdx[k];
+        let est = 'nuevo';
+        if(ex) est = (Math.abs((e.precioActual||0)-(ex.precioActual||0))>0.001 ||
+                      Math.abs((e.cantidad||0)-(ex.cantidad||0))>0.001) ? 'actualizado' : 'igual';
+        revETFs.push({...e, _estado:est, _eliminar:false});
+    });
+
+    // ETFs en cartera no en captura
+    (cartAct.etfs||[]).forEach(e => {
+        const k = (e.isin||e.ticker||'').toUpperCase();
+        const ya = (nvo.etfs||[]).some(ne => (ne.isin||ne.ticker||'').toUpperCase()===k);
+        if(!ya) revETFs.push({...e, _estado:'noEnCaptura', _eliminar:false});
+    });
+
+    // Efectivo / inmobiliario
+    g('inputEfectivo').value    = nvo.efectivo     || '';
+    g('inputInmobiliario').value= nvo.inmobiliario || '';
+
+    renderRevision();
+    g('seccionRevision').style.display = 'block';
+    g('seccionRevision').scrollIntoView({ behavior:'smooth', block:'start' });
+
+    // Info resumen
+    const allFondos = Object.values(revFondos).flat();
+    const nNuevo  = allFondos.filter(f=>f._estado==='nuevo').length + revETFs.filter(e=>e._estado==='nuevo').length;
+    const nAct    = allFondos.filter(f=>f._estado==='actualizado').length + revETFs.filter(e=>e._estado==='actualizado').length;
+    const nNoCap  = allFondos.filter(f=>f._estado==='noEnCaptura').length + revETFs.filter(e=>e._estado==='noEnCaptura').length;
+    let info = `Detectados: <strong>${nNuevo} nuevo(s)</strong> · <strong>${nAct} actualizado(s)</strong> · <strong>${Object.values(revFondos).flat().filter(f=>f._estado==='igual').length + revETFs.filter(e=>e._estado==='igual').length} sin cambios</strong>`;
+    if(nNoCap>0) info += `<br><span style="color:#c62828;">⚠️ <strong>${nNoCap} producto(s)</strong> están en tu cartera pero <strong>no aparecen en la captura</strong>. Márcalos con ☑ si los has vendido o si no caben en la captura (puedes hacer otra captura de ellos).</span>`;
+    g('infoRevision').innerHTML = info;
+
+    recalcular();
+}
+
+// ═══════════════════════════════════════════════════════
+//  RENDER TABLAS
+// ═══════════════════════════════════════════════════════
+function renderRevision() {
+    // Fondos: un bloque por categoría
+    const cont = g('bloques-fondos');
+    cont.innerHTML = '';
+    CATS.forEach(cat => {
+        const lista = revFondos[cat];
+        const div = document.createElement('div');
+        div.className = 'rev-bloque';
+        div.innerHTML = `
+            <h4>
+                <span class="cat-badge ${CAT_BADGE_CLASS[cat]}">${CAT_LABEL[cat]}</span>
+                <span style="font-size:13px;color:#888;font-weight:400;">(${lista.length} producto${lista.length!==1?'s':''})</span>
+            </h4>
+            <table class="tabla-rev">
+                <thead><tr><th>ISIN</th><th>Nombre</th><th>Participaciones</th><th>P.Compra</th><th>P.Actual</th><th>Valor</th><th>Estado</th><th>Eliminar</th></tr></thead>
+                <tbody id="tbody-${cat}">${lista.map((f,i)=>renderFilaFondo(f,cat,i)).join('')||'<tr><td colspan="8" style="text-align:center;color:#bbb;padding:12px;">Sin fondos en esta categoría</td></tr>'}</tbody>
+            </table>
+            <button class="btn-secondary" style="margin-top:10px;font-size:13px;" onclick="addManual('${cat}')">+ Añadir fondo manualmente</button>`;
+        cont.appendChild(div);
+    });
+
+    // ETFs
+    g('tbody-etfs').innerHTML = revETFs.map((e,i)=>renderFilaETF(e,i)).join('') ||
+        '<tr><td colspan="9" style="text-align:center;color:#bbb;padding:12px;">Sin ETFs ni acciones</td></tr>';
+}
+
+function badgeEstado(est) {
+    if(est==='nuevo')       return '<span class="badge-nuevo">✨ Nuevo</span>';
+    if(est==='actualizado') return '<span class="badge-act">🔄 Actualizado</span>';
+    if(est==='igual')       return '<span class="badge-igual">Sin cambios</span>';
+    if(est==='noEnCaptura') return '<span class="badge-nocap">⚠️ No en captura</span>';
+    return '';
+}
+function trClass(est) {
+    if(est==='nuevo') return 'class="fila-nuevo"';
+    if(est==='actualizado') return 'class="fila-existente"';
+    if(est==='noEnCaptura') return 'class="fila-nocap"';
+    return '';
+}
+
+function renderFilaFondo(f, cat, idx) {
+    const val = (f.cantidad||0)*(f.precioActual||0);
+    const chkCell = f._estado==='noEnCaptura'
+        ? `<input type="checkbox" ${f._eliminar?'checked':''} style="width:16px;height:16px;cursor:pointer;" title="Marcar para eliminar" onchange="toggleFondo('${cat}',${idx},this.checked)">`
+        : '—';
+    return `<tr ${trClass(f._estado)}>
+        <td><code style="font-size:11px;">${f.isin||'—'}</code></td>
+        <td style="max-width:180px;">${f.nombre||'—'}</td>
+        <td><input type="number" value="${f.cantidad||0}" step="any" style="width:88px;" onchange="updFondo('${cat}',${idx},'cantidad',this.value)"></td>
+        <td><input type="number" value="${+(f.precioCompra||0).toFixed(4)}" step="any" style="width:88px;" onchange="updFondo('${cat}',${idx},'precioCompra',this.value)"></td>
+        <td><input type="number" value="${+(f.precioActual||0).toFixed(4)}" step="any" style="width:88px;" onchange="updFondo('${cat}',${idx},'precioActual',this.value)"></td>
+        <td><strong>${fmtE(val)}</strong></td>
+        <td>${badgeEstado(f._estado)}</td>
+        <td style="text-align:center;">${chkCell}</td>
+    </tr>`;
+}
+
+function renderFilaETF(e, idx) {
+    const val = (e.cantidad||0)*(e.precioActual||0);
+    const tipoBadge = e.tipo==='ACCION'
+        ? '<span class="cat-badge cat-acc">ACCIÓN</span>'
+        : '<span class="cat-badge cat-etf">ETF</span>';
+    const chkCell = e._estado==='noEnCaptura'
+        ? `<input type="checkbox" ${e._eliminar?'checked':''} style="width:16px;height:16px;cursor:pointer;" title="Marcar para eliminar" onchange="toggleETF(${idx},this.checked)">`
+        : '—';
+    return `<tr ${trClass(e._estado)}>
+        <td>${tipoBadge}</td>
+        <td><code style="font-size:11px;">${e.isin||e.ticker||'—'}</code></td>
+        <td style="max-width:160px;">${e.nombre||'—'}</td>
+        <td><input type="number" value="${e.cantidad||0}" step="any" style="width:80px;" onchange="updETF(${idx},'cantidad',this.value)"></td>
+        <td><input type="number" value="${+(e.precioCompra||0).toFixed(4)}" step="any" style="width:80px;" onchange="updETF(${idx},'precioCompra',this.value)"></td>
+        <td><input type="number" value="${+(e.precioActual||0).toFixed(4)}" step="any" style="width:80px;" onchange="updETF(${idx},'precioActual',this.value)"></td>
+        <td><strong>${fmtE(val)}</strong></td>
+        <td>${badgeEstado(e._estado)}</td>
+        <td style="text-align:center;">${chkCell}</td>
+    </tr>`;
+}
+
+// ── Callbacks edición ──
+function updFondo(cat,idx,campo,val){ revFondos[cat][idx][campo]=parseFloat(val)||0; recalcular(); }
+function updETF(idx,campo,val){ revETFs[idx][campo]=parseFloat(val)||0; recalcular(); }
+function toggleFondo(cat,idx,chk){ revFondos[cat][idx]._eliminar=chk; recalcular(); }
+function toggleETF(idx,chk){ revETFs[idx]._eliminar=chk; recalcular(); }
+
+// ── Añadir manual ──
+function addManual(tipo) {
+    if(tipo==='etf') {
+        revETFs.push({tipo:'ETF',isin:'',nombre:'',cantidad:0,precioCompra:0,precioActual:0,_estado:'nuevo',_eliminar:false});
+    } else {
+        revFondos[tipo].push({isin:'',nombre:'',categoria:tipo,cantidad:0,precioCompra:0,precioActual:0,_estado:'nuevo',_eliminar:false});
+    }
+    renderRevision(); recalcular();
+    // Scroll al último fondo añadido
+    const tbody = tipo==='etf' ? g('tbody-etfs') : g('tbody-'+tipo);
+    tbody?.lastElementChild?.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ── Recalcular totales ──
+function recalcular() {
+    const totCat = {};
+    CATS.forEach(cat => {
+        totCat[cat] = revFondos[cat].filter(f=>!f._eliminar)
+            .reduce((s,f)=>s+(f.cantidad||0)*(f.precioActual||0),0);
+    });
+    const totalFondos = Object.values(totCat).reduce((a,b)=>a+b,0);
+    const totalETFs   = revETFs.filter(e=>!e._eliminar).reduce((s,e)=>s+(e.cantidad||0)*(e.precioActual||0),0);
+    const efectivo    = parseFloat(g('inputEfectivo').value)||0;
+    const inmobiliario= parseFloat(g('inputInmobiliario').value)||0;
+    const total       = totalFondos+totalETFs+efectivo+inmobiliario;
+
+    // Totales grid
+    g('totalesGrid').innerHTML = [
+        ['🏦 Fondos', fmtE(totalFondos), Object.values(revFondos).flat().filter(f=>!f._eliminar).length+' productos'],
+        ['📈 ETFs/Acciones', fmtE(totalETFs), revETFs.filter(e=>!e._eliminar).length+' productos'],
+        ['💶 Efectivo', fmtE(efectivo), ''],
+        ['🏠 Inmobiliario', fmtE(inmobiliario), '']
+    ].map(([l,v,c])=>`<div class="tot-card"><div class="tl">${l}</div><div class="tv">${v}</div>${c?`<div class="tc">${c}</div>`:''}</div>`).join('');
+
+    // Tabla final
+    g('tablaFinal').innerHTML = `
+        <table class="tabla-rev">
+            <thead><tr><th>Categoría</th><th>Importe</th></tr></thead>
+            <tbody>
+                ${CATS.map(c=>`<tr><td>${CAT_LABEL[c]}</td><td>${fmtE(totCat[c])}</td></tr>`).join('')}
+                <tr><td>ETFs / Acciones</td><td>${fmtE(totalETFs)}</td></tr>
+                <tr><td>Efectivo</td><td>${fmtE(efectivo)}</td></tr>
+                <tr><td>Inmobiliario</td><td>${fmtE(inmobiliario)}</td></tr>
+                <tr style="background:#f0f4ff;font-weight:900;font-size:16px;"><td>💼 TOTAL CARTERA</td><td style="color:#667eea;">${fmtE(total)}</td></tr>
+            </tbody>
+        </table>`;
+
+    // Aviso desajuste vs cartera actual
+    const datosLS = cargarLS();
+    const ult = (datosLS?.historico||[]).slice(-1)[0];
+    if(ult?.total && Math.abs(total-ult.total)>1) {
+        const diff = Math.abs(total-ult.total), pct = (diff/ult.total*100).toFixed(1);
+        g('avisoDesajuste').style.display='block';
+        g('avisoDesajuste').innerHTML=`ℹ️ El total calculado (${fmtE(total)}) difiere ${fmtE(diff)} (${pct}%) del último guardado (${fmtE(ult.total)}). Normal si has actualizado precios o movido dinero.`;
+    } else { g('avisoDesajuste').style.display='none'; }
+
+    return {totCat,totalFondos,totalETFs,efectivo,inmobiliario,total};
+}
+
+// ═══════════════════════════════════════════════════════
+//  IMPORTAR FINAL
+// ═══════════════════════════════════════════════════════
+function importarFinal() {
+    const {totCat,totalETFs,efectivo,inmobiliario,total} = recalcular();
+
+    // Fondos detallados limpios
+    const fondosDetalle = [];
+    CATS.forEach(cat => {
+        revFondos[cat].filter(f=>!f._eliminar&&(f.isin||f.nombre)).forEach(f => {
+            const {_estado,_eliminar,...limpio} = f;
+            fondosDetalle.push(limpio);
+        });
+    });
+
+    // ETFs limpios
+    const etfsFinal = revETFs.filter(e=>!e._eliminar&&(e.isin||e.nombre)).map(e=>{
+        const {_estado,_eliminar,...limpio}=e; return limpio;
+    });
+    const etvsValorInicial = etfsFinal.reduce((s,e)=>s+(e.cantidad||0)*(e.precioActual||0),0);
 
     const nuevaCartera = {
-        ...totCat,
-        efectivo:     datos.efectivo     || 0,
-        inmobiliario: datos.inmobiliario || 0,
-        etfs:         datos.etfs         || []
+        ...totCat, efectivo, inmobiliario,
+        etfs: etfsFinal,
+        etfsValorInicial: etvsValorInicial,
+        fondosDetalle
     };
 
-    const totalFondos = Object.values(totCat).reduce((a,b) => a+b, 0);
-    const totalETFs   = nuevaCartera.etfs.reduce((s,e) => s + (e.cantidad||0)*(e.precioActual||0), 0);
-    const total       = totalFondos + totalETFs + nuevaCartera.efectivo + nuevaCartera.inmobiliario;
+    const datosLS = cargarLS() || {version:'3.0',cartera:{},configuracion:{},historico:[]};
+    const cfg = datosLS.configuracion || {};
+    if(!cfg.porcentajes) cfg.porcentajes = {monetario:5,rfCorto:15,rfMedio:25,rv:40,alternativos:15};
 
     const hist = datosLS.historico || [];
     hist.push({
-        fecha:     new Date().toLocaleDateString(),
-        hora:      new Date().toLocaleTimeString(),
-        timestamp: Date.now(),
-        ...nuevaCartera,
+        fecha:      new Date().toLocaleDateString('es-ES'),
+        hora:       new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}),
+        timestamp:  Date.now(),
+        ...totCat, efectivo, inmobiliario,
+        etfsValorInicial: etvsValorInicial,
+        etfsInvertido: etvsValorInicial,
+        etfsPendiente: 0,
         total
     });
 
-    // Mantener porcentajes existentes o usar defaults
-    if(!cfg.porcentajes)
-        cfg.porcentajes = { monetario:5, rfCorto:15, rfMedio:25, rv:40, alternativos:15 };
-
-    guardarLS({ version:'3.0', fecha:new Date().toISOString(), cartera:nuevaCartera, configuracion:cfg, historico:hist });
-
-    toast('✅ Cartera importada. Redirigiendo…', 'info');
-    setTimeout(() => location.href = 'cartera.html', 1600);
+    guardarLS({version:'3.0', fecha:new Date().toISOString(), cartera:nuevaCartera, configuracion:cfg, historico:hist});
+    toast(`✅ Cartera importada. Total: ${fmtE(total)}`, 'ok', 3000);
+    _guardadoConfirmado = true;
+    setTimeout(() => location.href = 'cartera.html', 1800);
 }
 
-function limpiarJSON() {
-    g('jsonCartera').value = '';
-    g('jsonCartera').className = 'json-input';
-    g('estadoImportacion').textContent = '';
-    g('previewImportacion').style.display = 'none';
-    g('btnImportar').disabled = true;
-    jsonValidado = null;
+function cancelarRevision() {
+    g('seccionRevision').style.display='none';
+    limpiarJSON();
+    window.scrollTo({top:0,behavior:'smooth'});
 }
 
-document.addEventListener('DOMContentLoaded', barraEstado);
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+    barraEstado();
+    g('seccionPegarJSON').style.display = 'none';
+    // Si viene desde el index con ?modo=captura, preseleccionar ese modo
+    const params = new URLSearchParams(window.location.search);
+    if(params.get('modo') === 'captura') seleccionarModo('captura');
+});
+
+// ═══════════════════════════════════════════════════════
+//  MODAL SALIDA + BEFOREUNLOAD
+// ═══════════════════════════════════════════════════════
+let _guardadoConfirmado = false;
+
+function generarNombreCartera() {
+    const n=new Date(), dd=String(n.getDate()).padStart(2,'0'), mm=String(n.getMonth()+1).padStart(2,'0'),
+          yy=n.getFullYear(), hh=String(n.getHours()).padStart(2,'0'), mi=String(n.getMinutes()).padStart(2,'0');
+    return `gestion_cartera_${dd}${mm}${yy}_${hh}${mi}.json`;
+}
+function guardarArchivoYSalir() {
+    const raw=localStorage.getItem('carteraActual'); if(!raw) return;
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([raw],{type:'application/json'}));
+    a.download=generarNombreCartera();
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+}
+function mostrarModalSalida(callback) {
+    if(document.getElementById('_ms')) return;
+    const ov=document.createElement('div'); ov.id='_ms';
+    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    ov.innerHTML=`<div style="background:white;border-radius:18px;padding:32px 28px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4);text-align:center;">
+        <div style="font-size:52px;margin-bottom:12px;">💾</div>
+        <h3 style="font-size:19px;color:#333;margin-bottom:10px;font-weight:800;">¿Guardar antes de salir?</h3>
+        <p style="font-size:14px;color:#666;line-height:1.65;margin-bottom:22px;">Se descargará el archivo<br><strong style="color:#667eea;font-size:13px;">${generarNombreCartera()}</strong><br>con todos tus datos.</p>
+        <div style="display:flex;gap:10px;margin-bottom:10px;">
+            <button id="_mg" style="flex:1;padding:14px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;">💾 Guardar y salir</button>
+            <button id="_ms2" style="flex:1;padding:14px;background:#f0f0f0;color:#555;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">Salir sin guardar</button>
+        </div>
+        <button id="_mc" style="background:none;border:none;color:#aaa;font-size:13px;cursor:pointer;padding:6px;">↩ Cancelar</button>
+    </div>`;
+    document.body.appendChild(ov);
+    g('_mg').onclick =()=>{ guardarArchivoYSalir(); _guardadoConfirmado=true; document.body.removeChild(ov); if(callback) callback(true); };
+    g('_ms2').onclick=()=>{ _guardadoConfirmado=true; document.body.removeChild(ov); if(callback) callback(true); };
+    g('_mc').onclick =()=>{ document.body.removeChild(ov); if(callback) callback(false); };
+}
+window.addEventListener('beforeunload', e => {
+    const raw=localStorage.getItem('carteraActual');
+    if(raw && !_guardadoConfirmado){ e.preventDefault(); e.returnValue='¿Guardar cartera antes de salir?'; }
+});
 </script>
 </body>
 </html>

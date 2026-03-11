@@ -298,51 +298,151 @@
 
 <!-- FAQ -->
 <div class="card">
-    <h2>&#10067; PREGUNTAS FRECUENTES</h2>
+    <h2>❓ PREGUNTAS FRECUENTES</h2>
 
-    <div class="faq-item">
-        <div class="faq-q" onclick="toggleFaq(this)">&#128218; &#191;Por d&#243;nde empiezo si soy completamente nuevo? <span class="chevron">&#9660;</span></div>
-        <div class="faq-a">Abre <strong>index.html</strong> y deja que el wizard te gu&#237;e: 3 preguntas r&#225;pidas y te recomienda un perfil. Despu&#233;s ajusta los importes exactos, pulsa &#171;Generar archivo y entrar&#187; y ya estar&#225;s en Cartera. Si tienes dudas sobre t&#233;rminos, pasa el rat&#243;n sobre las categor&#237;as (Monetario, RF&#8230;) para ver la explicaci&#243;n. Visita tambi&#233;n la <strong>Calculadora</strong> para entender c&#243;mo crece el dinero.</div>
+    <!-- GRUPO: Primeros pasos -->
+    <p style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#888;margin:0 0 10px;">🟢 Primeros pasos</p>
+
+    <div class="faq-item" data-buscar="empezar nuevo primera vez wizard perfil configurar">
+        <div class="faq-q" onclick="toggleFaq(this)">📚 ¿Por dónde empiezo si soy completamente nuevo? <span class="chevron">▼</span></div>
+        <div class="faq-a">Abre la pantalla de inicio y pulsa <strong>«✨ Crear nueva cartera»</strong>. El wizard te hace 3 preguntas rápidas (capital, tolerancia al riesgo y horizonte temporal) y te recomienda automáticamente el perfil más adecuado para ti. Después ajusta los importes exactos y ya estás dentro.<br><br>Si ya tienes una cartera guardada de antes, elige <strong>«Cargar cartera existente»</strong> y arrastra tu archivo <code>gestion_cartera_*.json</code>.</div>
     </div>
 
-    <div class="faq-item">
-        <div class="faq-q" onclick="toggleFaq(this)">&#128274; &#191;D&#243;nde se guardan mis datos? &#191;Son seguros? <span class="chevron">&#9660;</span></div>
-        <div class="faq-a">En dos sitios: en el <strong>localStorage de tu navegador</strong> y en el <strong>archivo .json que descargas</strong> al guardar. Los datos <strong>nunca salen de tu equipo</strong>. No hay servidor, no hay cuenta, no hay conexi&#243;n con nadie. Si limpias el navegador perder&#225;s el localStorage, pero el archivo JSON siempre es tuyo.</div>
+    <div class="faq-item" data-buscar="perfil riesgo elegir conservador equilibrado crecimiento arriesgado principiante">
+        <div class="faq-q" onclick="toggleFaq(this)">🎯 ¿Qué perfil de riesgo elijo si soy principiante? <span class="chevron">▼</span></div>
+        <div class="faq-a">El wizard te lo recomienda según tus respuestas, pero como referencia:<br><br>
+        • <strong>Ultraconservador / Conservador</strong> — Si necesitas el dinero en menos de 3 años o una caída del 10% te quitaría el sueño. Capital muy protegido, poco crecimiento.<br>
+        • <strong>Equilibrado</strong> — Si no necesitas el dinero en 5 años y podrías tolerar una caída temporal del 20%. Buen balance riesgo/rentabilidad para la mayoría.<br>
+        • <strong>Crecimiento / Arriesgado</strong> — Si tienes más de 10-15 años por delante y no te importa ver caídas fuertes temporales a cambio de mayor rentabilidad.<br><br>
+        Recuerda: puedes cambiar el perfil en cualquier momento desde la pantalla de Cartera.</div>
     </div>
 
-    <div class="faq-item">
-        <div class="faq-q" onclick="toggleFaq(this)">&#128260; &#191;La actualizaci&#243;n autom&#225;tica de precios es realmente gratis? <span class="chevron">&#9660;</span></div>
-        <div class="faq-a">S&#237;, 100% gratis. Te registras en Twelve Data, te dan una API key sin pagar nada. El plan gratuito permite 800 consultas al d&#237;a, m&#225;s que suficiente. <strong>Limitaci&#243;n importante:</strong> solo funciona con tickers de bolsa (IWDA, AAPL&#8230;), no con ISINs de fondos de inversi&#243;n tradicionales (esos no tienen precio p&#250;blico gratuito en tiempo real).</div>
+    <div class="faq-item" data-buscar="diferencia fondo ETF acción categoría monetario renta fija variable">
+        <div class="faq-q" onclick="toggleFaq(this)">📊 ¿Qué diferencia hay entre las categorías de la cartera? <span class="chevron">▼</span></div>
+        <div class="faq-a">La aplicación divide la cartera en 5 tipos principales:<br><br>
+        • <strong>Monetario</strong> — Fondos de dinero a muy corto plazo. Casi sin riesgo. Rentabilidad similar al Euribor.<br>
+        • <strong>Renta Fija Corto Plazo</strong> — Bonos con vencimiento &lt; 3 años. Poco riesgo, rentabilidad moderada.<br>
+        • <strong>Renta Fija Medio Plazo</strong> — Bonos con vencimiento 3-10 años. Más rentabilidad, algo más de riesgo.<br>
+        • <strong>Renta Variable</strong> — Acciones y ETFs de bolsa. Alto potencial de rentabilidad a largo plazo, alta volatilidad.<br>
+        • <strong>Alternativos</strong> — Todo lo demás: REITs, materias primas, infraestructuras, mixtos.<br><br>
+        Los ETFs son un tipo de fondo que cotiza en bolsa. Puedes añadirlos dentro de cualquier categoría.</div>
     </div>
 
-    <div class="faq-item">
-        <div class="faq-q" onclick="toggleFaq(this)">&#128680; Aparece una alerta roja de rebalanceo. &#191;Qu&#233; hago? <span class="chevron">&#9660;</span></div>
-        <div class="faq-a">Significa que una categor&#237;a se ha desviado m&#225;s del 20% de su objetivo. Por ejemplo, si el objetivo de Renta Variable es 40% pero la bolsa ha subido mucho y ahora pesa un 55%, toca rebalancear. Pulsa el enlace &#171;Calcular ahora&#187; en la alerta o ve a Cartera y usa &#171;Rebalanceo Directo&#187;. Te mostrar&#225; exactamente cu&#225;nto mover de cada categor&#237;a para volver al equilibrio.</div>
+    <!-- GRUPO: Datos y archivos -->
+    <p style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#888;margin:18px 0 10px;">💾 Datos y archivos</p>
+
+    <div class="faq-item" data-buscar="guardar datos seguro privado servidor cuenta localStorage JSON archivo">
+        <div class="faq-q" onclick="toggleFaq(this)">🔒 ¿Dónde se guardan mis datos? ¿Son privados? <span class="chevron">▼</span></div>
+        <div class="faq-a">Tus datos se guardan en <strong>dos sitios</strong>, ambos en tu propio equipo:<br><br>
+        1. <strong>localStorage del navegador</strong> — Se guarda automáticamente mientras usas la aplicación. Se mantiene aunque cierres la ventana, pero se borrará si limpias el historial del navegador.<br>
+        2. <strong>El archivo JSON que descargas</strong> — Al pulsar «Guardar», se descarga un archivo <code>gestion_cartera_FECHA_HORA.json</code> que queda en tu ordenador para siempre.<br><br>
+        <strong>Los datos nunca salen de tu equipo.</strong> No hay ningún servidor, ninguna cuenta, ninguna conexión a internet desde esta aplicación. Es 100% local.</div>
     </div>
 
-    <div class="faq-item">
-        <div class="faq-q" onclick="toggleFaq(this)">&#129518; &#191;Cu&#225;ndo debo usar la Calculadora? <span class="chevron">&#9660;</span></div>
-        <div class="faq-a">Es una herramienta educativa y de planificaci&#243;n. &#218;sala para: saber c&#243;mo crecer&#225; tu inversi&#243;n con el tiempo, calcular cu&#225;nto necesitas ahorrar al mes para llegar a un objetivo, entender cu&#225;ndo podr&#237;as retirarte con la regla del 4%, o ver c&#243;mo la inflaci&#243;n destruye el poder adquisitivo. No modifica tu cartera, es solo para planificar y entender conceptos.</div>
+    <div class="faq-item" data-buscar="nombre archivo fecha hora json gestion_cartera guardar cuando format">
+        <div class="faq-q" onclick="toggleFaq(this)">📁 ¿Cómo se llama el archivo que se descarga? <span class="chevron">▼</span></div>
+        <div class="faq-a">El archivo incluye automáticamente la fecha y hora del momento en que lo guardas. Por ejemplo:<br><br>
+        <code>gestion_cartera_10032026_1743.json</code><br><br>
+        Esto significa: Gestión de Cartera, guardado el <strong>10 de marzo de 2026 a las 17:43</strong>. Así siempre sabrás cuál es tu versión más reciente sin tener que recordarlo.<br><br>
+        Al cargar la aplicación la próxima vez, arrastra ese mismo archivo para recuperar todos tus datos.</div>
     </div>
 
-    <div class="faq-item">
-        <div class="faq-q" onclick="toggleFaq(this)">&#129302; &#191;C&#243;mo funciona el Analizador con las IAs? <span class="chevron">&#9660;</span></div>
-        <div class="faq-a">El Analizador genera un prompt muy detallado que puedes pegar en cualquier IA gratuita. La IA devuelve un JSON que la app procesa para rellenar los ratios del activo. Recomendamos <strong>DeepSeek</strong> para an&#225;lisis financieros y <strong>Perplexity</strong> si quieres datos actualizados de internet en tiempo real. El panel de IAs que aparece al generar el prompt tiene botones de acceso directo a las 8 IAs disponibles.</div>
+    <div class="faq-item" data-buscar="cerrar navegador perder datos beforeunload aviso salir guardar advertencia">
+        <div class="faq-q" onclick="toggleFaq(this)">⚠️ ¿Qué pasa si cierro el navegador sin guardar? <span class="chevron">▼</span></div>
+        <div class="faq-a">La aplicación te avisará con un <strong>diálogo de confirmación</strong> antes de que cierres o salgas. Tendrás tres opciones:<br><br>
+        • <strong>💾 Guardar y salir</strong> — Descarga el JSON con la fecha y hora actual, luego cierra.<br>
+        • <strong>Salir sin guardar</strong> — Cierra sin descargar. Los datos del localStorage seguirán ahí si no limpias el navegador.<br>
+        • <strong>Cancelar</strong> — Te quedes en la aplicación.<br><br>
+        <strong>Recomendación:</strong> guarda siempre el archivo antes de cerrar. El localStorage puede perderse si limpias el historial o usas otro dispositivo.</div>
     </div>
 
-    <div class="faq-item">
-        <div class="faq-q" onclick="toggleFaq(this)">&#127919; &#191;Qu&#233; perfil de riesgo elijo si soy principiante? <span class="chevron">&#9660;</span></div>
-        <div class="faq-a">Depende de tu horizonte temporal y tolerancia a las p&#233;rdidas temporales. Como regla general: si no necesitas el dinero en menos de 5 a&#241;os y no te angustiar&#237;a ver una ca&#237;da del 20%, el perfil <strong>Equilibrado</strong> (40% RV) es un buen punto de partida. Si eres muy conservador o el plazo es corto, elige <strong>Conservador</strong>. Para m&#225;s de 15 a&#241;os sin preocuparte por la volatilidad, <strong>Crecimiento</strong>. El wizard del index te lo recomienda autom&#225;ticamente.</div>
+    <div class="faq-item" data-buscar="privacidad varios usuarios compartido público web otro usuario datos anteriores">
+        <div class="faq-q" onclick="toggleFaq(this)">👤 Si varios usuarios usan la aplicación, ¿se mezclan los datos? <span class="chevron">▼</span></div>
+        <div class="faq-a">No. Cuando cualquier usuario abre la pantalla de inicio, la aplicación <strong>limpia automáticamente el localStorage</strong> del usuario anterior. Así cada sesión empieza completamente vacía.<br><br>
+        Cada usuario debe cargar su propio archivo JSON al entrar. Al salir, cada uno descarga su propio archivo actualizado. Los datos de una sesión nunca persisten para el siguiente usuario.<br><br>
+        Por eso es fundamental que <strong>cada usuario descargue su archivo antes de cerrar</strong>.</div>
     </div>
 
-    <div class="faq-item">
-        <div class="faq-q" onclick="toggleFaq(this)">&#128190; &#191;Qu&#233; pasa si cierro el navegador sin guardar? <span class="chevron">&#9660;</span></div>
-        <div class="faq-a">Los datos en localStorage se mantienen mientras no limpies el navegador. Pero para garant&#237;a total, <strong>guarda siempre el archivo JSON</strong> antes de cerrar. El bot&#243;n &#171;Guardar&#187; est&#225; en Cartera y en Herramientas.</div>
+    <!-- GRUPO: Rebalanceo y alertas -->
+    <p style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#888;margin:18px 0 10px;">🔔 Rebalanceo y alertas</p>
+
+    <div class="faq-item" data-buscar="alerta roja naranja rebalanceo desviación qué hacer cuándo">
+        <div class="faq-q" onclick="toggleFaq(this)">🚨 Aparece una alerta roja. ¿Qué significa y qué hago? <span class="chevron">▼</span></div>
+        <div class="faq-a">Una alerta roja significa que una categoría se ha <strong>desviado más del 20%</strong> de su peso objetivo. Por ejemplo, si el objetivo de Renta Variable es 40% pero la bolsa ha subido y ahora pesa un 50%, hay una desviación del 25% (10 puntos sobre 40).<br><br>
+        <strong>Qué hacer:</strong> pulsa el enlace «Calcular rebalanceo» en la alerta, o ve a la pantalla de Cartera y usa el botón «Rebalanceo Directo». La aplicación te muestra exactamente cuánto mover de cada categoría para volver al equilibrio.<br><br>
+        <strong>Alerta naranja</strong> = desviación entre 10-20%: recomendable corregir pronto pero no urgente.<br>
+        <strong>Alerta roja</strong> = desviación > 20%: actuar en la próxima aportación.</div>
     </div>
 
-    <div class="faq-item">
-        <div class="faq-q" onclick="toggleFaq(this)">&#128260; &#191;C&#243;mo ajusto el efectivo al cambiar un fondo? <span class="chevron">&#9660;</span></div>
-        <div class="faq-a">Al editar el importe de cualquier categor&#237;a de fondos en la columna &#171;Importe Actual&#187;, el efectivo se ajusta autom&#225;ticamente por la diferencia. Si subes Monetario en 1.000&#8364;, el efectivo baja en 1.000&#8364;. As&#237; el total siempre cuadra.</div>
+    <div class="faq-item" data-buscar="rebalanceo cuándo frecuencia cada cuánto hacer comprar vender mover dinero">
+        <div class="faq-q" onclick="toggleFaq(this)">🔄 ¿Con qué frecuencia debo rebalancear? <span class="chevron">▼</span></div>
+        <div class="faq-a">Hay dos estrategias habituales:<br><br>
+        • <strong>Por umbrales (recomendada):</strong> solo rebalanceas cuando una categoría se desvía más del umbral configurado (por defecto 20%). Así solo actúas cuando de verdad hace falta.<br>
+        • <strong>Periódica:</strong> revisas trimestralmente o anualmente aunque no haya alerta.<br><br>
+        La estrategia por umbrales genera menos operaciones y costes. Para carteras largas de más de 10 años, muchos expertos recomiendan rebalancear 1-2 veces al año como máximo.<br><br>
+        La próxima fecha de rebalanceo sugerida aparece en la parte superior de la pantalla de Cartera.</div>
+    </div>
+
+    <div class="faq-item" data-buscar="efectivo ajusta cambiar fondo baja sube negativo total cuadra">
+        <div class="faq-q" onclick="toggleFaq(this)">💶 ¿Por qué cambia el efectivo cuando modifico un fondo? <span class="chevron">▼</span></div>
+        <div class="faq-a">Porque la aplicación mantiene el <strong>total siempre constante</strong>. Si aumentas el importe de una categoría, el efectivo baja en la misma cantidad. Si bajas una categoría, el efectivo sube.<br><br>
+        La lógica es: el efectivo representa dinero pendiente de invertir. Cuando inviertes ese dinero en un fondo, el efectivo disminuye y el fondo aumenta, pero el total no cambia.<br><br>
+        Si el efectivo se vuelve negativo, hay un error: estás poniendo más dinero en fondos del que tienes disponible. La app lo avisa en rojo.</div>
+    </div>
+
+    <!-- GRUPO: ETFs y precios automáticos -->
+    <p style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#888;margin:18px 0 10px;">📈 ETFs y actualización automática de precios</p>
+
+    <div class="faq-item" data-buscar="API precio automático ETF ticker ISIN gratis twelve data alpha vantage cómo funciona">
+        <div class="faq-q" onclick="toggleFaq(this)">🔄 ¿La actualización automática de precios es gratis? ¿Cómo funciona? <span class="chevron">▼</span></div>
+        <div class="faq-a">Sí, completamente gratis. El proceso es:<br><br>
+        1. Regístrate en <strong>Twelve Data</strong> (twelvedata.com) — tardan 2 minutos y no piden tarjeta.<br>
+        2. Copia tu API Key gratuita.<br>
+        3. Pégala en <strong>Herramientas → Actualización automática de precios ETFs</strong>.<br>
+        4. Pulsa «Actualizar precios ahora».<br><br>
+        El plan gratuito permite 800 consultas al día, más que suficiente para cualquier cartera personal.<br><br>
+        <strong>Limitación importante:</strong> solo funciona con <strong>tickers de bolsa</strong> (IWDA, AAPL, SAN…), NO con ISINs de fondos tradicionales (LU…, ES…). Los fondos de inversión no tienen precio público en tiempo real gratuito.</div>
+    </div>
+
+    <div class="faq-item" data-buscar="ISIN ticker diferencia qué usar fondo ETF cuál poner campo">
+        <div class="faq-q" onclick="toggleFaq(this)">🏷️ ¿Cuándo uso el ISIN y cuándo el Ticker en un ETF? <span class="chevron">▼</span></div>
+        <div class="faq-a">Son dos códigos distintos del mismo producto:<br><br>
+        • <strong>ISIN</strong> (ej: <code>IE00B4L5Y983</code>) — Código internacional de 12 caracteres. Identifica el producto de forma universal. Úsalo para registro y referencia en la app.<br>
+        • <strong>Ticker de bolsa</strong> (ej: <code>IWDA</code>) — Símbolo corto con el que cotiza en bolsa. Úsalo para la actualización automática de precios.<br><br>
+        Para los ETFs, rellena <strong>ambos campos</strong>: el ISIN para identificarlo y el Ticker para que la API pueda actualizar el precio automáticamente.</div>
+    </div>
+
+    <!-- GRUPO: Herramientas -->
+    <p style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#888;margin:18px 0 10px;">🛠️ Herramientas de la aplicación</p>
+
+    <div class="faq-item" data-buscar="calculadora qué sirve para qué usar interés compuesto jubilación retiro planificación">
+        <div class="faq-q" onclick="toggleFaq(this)">🧮 ¿Para qué sirve la Calculadora? <span class="chevron">▼</span></div>
+        <div class="faq-a">La Calculadora tiene 4 herramientas de planificación financiera personal:<br><br>
+        1. <strong>Interés compuesto</strong> — Simula cómo crece tu inversión con el tiempo según rentabilidad anual.<br>
+        2. <strong>Ahorro por objetivos</strong> — Calcula cuánto debes ahorrar al mes para llegar a una cantidad objetivo.<br>
+        3. <strong>Retirada sostenible (regla del 4%)</strong> — Te dice de cuánto capital necesitas para vivir de las rentas sin agotarlo.<br>
+        4. <strong>Inflación</strong> — Muestra cómo el poder adquisitivo de tu dinero baja con el tiempo si no inviertes.<br><br>
+        No modifica tu cartera, es solo para planificar y entender conceptos. Es la herramienta más educativa de la aplicación.</div>
+    </div>
+
+    <div class="faq-item" data-buscar="analizador IA DeepSeek Gemini ChatGPT análisis financiero qué hace cómo usar ratio prompt">
+        <div class="faq-q" onclick="toggleFaq(this)">🤖 ¿Cómo funciona el Analizador con IA? <span class="chevron">▼</span></div>
+        <div class="faq-a">El Analizador está conectado con la <strong>herramienta de Análisis Financiero con IA</strong> (la aplicación hermana de esta). Desde Cartera puedes acceder directamente.<br><br>
+        El proceso es: introduces el ISIN o Ticker de un producto, eliges el tipo de análisis, y la app genera un prompt detallado. Lo pegas en una IA gratuita (Gemini, DeepSeek, ChatGPT…) y guardas la respuesta.<br><br>
+        Recomendamos <strong>DeepSeek</strong> para análisis financiero profundo y <strong>Gemini</strong> si quieres adjuntar capturas de pantalla de tu broker. Ambos son gratuitos.</div>
+    </div>
+
+    <div class="faq-item" data-buscar="dashboard gráficos histórico composición qué muestra sección pantalla">
+        <div class="faq-q" onclick="toggleFaq(this)">📊 ¿Para qué sirve cada sección de la app? <span class="chevron">▼</span></div>
+        <div class="faq-a">Resumen de todas las secciones:<br><br>
+        • <strong>Dashboard</strong> — Resumen rápido: valor total, evolución, alertas. Vista general de un vistazo.<br>
+        • <strong>Cartera</strong> — El núcleo: editar importes, ver desviaciones, calcular rebalanceo, añadir ETFs.<br>
+        • <strong>Composición</strong> — Detalle visual de qué porcentaje ocupa cada categoría.<br>
+        • <strong>Histórico</strong> — Tabla de todos los registros guardados con evolución temporal.<br>
+        • <strong>Gráficos</strong> — Visualizaciones de la evolución del valor total y composición en el tiempo.<br>
+        • <strong>Herramientas</strong> — Actualización automática de precios ETFs y configuración de API.<br>
+        • <strong>Calculadora</strong> — 4 herramientas de planificación financiera.<br>
+        • <strong>Analizador</strong> — Conexión con la herramienta de análisis con IA.</div>
     </div>
 </div>
 
