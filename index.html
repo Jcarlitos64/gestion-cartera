@@ -460,48 +460,9 @@ function guardarArchivoSalida() {
     URL.revokeObjectURL(a.href);
 }
 
-// ─── MODAL CONFIRMACIÓN AL SALIR ─────────────────────────────────
-let _guardadoConfirmado = false;
-function mostrarModalSalida(callback) {
-    const overlay = document.createElement('div');
-    overlay.id = 'modalSalida';
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
-    overlay.innerHTML = `
-        <div style="background:white;border-radius:18px;padding:32px 28px;max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4);text-align:center;">
-            <div style="font-size:48px;margin-bottom:12px;">💾</div>
-            <h3 style="font-size:18px;color:#333;margin-bottom:10px;">¿Guardar antes de salir?</h3>
-            <p style="font-size:14px;color:#666;line-height:1.6;margin-bottom:20px;">
-                Se descargará el archivo <strong style="color:#667eea;">${nombreArchivoCartera()}</strong><br>
-                con todos tus datos actualizados.
-            </p>
-            <div style="display:flex;gap:10px;">
-                <button id="btnSalirGuardar" style="flex:1;padding:13px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">
-                    💾 Guardar y salir
-                </button>
-                <button id="btnSalirSin" style="flex:1;padding:13px;background:#f5f5f5;color:#555;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">
-                    Salir sin guardar
-                </button>
-            </div>
-            <button id="btnSalirCancelar" style="margin-top:10px;background:none;border:none;color:#aaa;font-size:13px;cursor:pointer;padding:6px;">↩ Cancelar — quedarme aquí</button>
-        </div>`;
-    document.body.appendChild(overlay);
-
-    document.getElementById('btnSalirGuardar').onclick = () => {
-        guardarArchivoSalida();
-        _guardadoConfirmado = true;
-        document.body.removeChild(overlay);
-        if (callback) callback(true);
-    };
-    document.getElementById('btnSalirSin').onclick = () => {
-        _guardadoConfirmado = true;
-        document.body.removeChild(overlay);
-        if (callback) callback(true);
-    };
-    document.getElementById('btnSalirCancelar').onclick = () => {
-        document.body.removeChild(overlay);
-        if (callback) callback(false);
-    };
-}
+// ─── index.html no tiene cartera cargada, no necesita modal de guardado ─────
+// La navegación desde aquí siempre es libre (se crea o se carga cartera)
+let _guardadoConfirmado = true; // siempre true en index: no hay nada que guardar aquí
 
 // ── Modo de pantalla ────────────────────────────────────────────
 function mostrarModo(modo) {
@@ -699,29 +660,7 @@ document.addEventListener('DOMContentLoaded', () => {
     actualizar();
 });
 
-// ── Aviso al salir ────────────────────────────────────────────────
-window.addEventListener('beforeunload', e => {
-    const datos = cargarLS();
-    if (datos && datos.cartera && !_guardadoConfirmado) {
-        e.preventDefault();
-        e.returnValue = '¿Quieres guardar tu cartera antes de salir?';
-    }
-});
-
-// Interceptar clicks en links que salgan de la página
-document.addEventListener('click', e => {
-    const link = e.target.closest('a[href], button[onclick*="location"]');
-    if (link) {
-        const datos = cargarLS();
-        if (datos && datos.cartera) {
-            const href = link.getAttribute('href') || '';
-            if (href && href !== '#' && !href.startsWith('javascript')) {
-                e.preventDefault();
-                mostrarModalSalida(ok => { if (ok) location.href = href; });
-            }
-        }
-    }
-});
+// index.html: sin beforeunload — aquí no hay datos que perder
 
 // ══════════════════════════════════════════════════════
 //  WIZARD ONBOARDING

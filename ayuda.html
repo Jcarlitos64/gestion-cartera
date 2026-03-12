@@ -55,16 +55,16 @@
 <div class="menu">
     <h1>&#10067; AYUDA</h1>
     <div class="nav">
-        <button style="background:#4CAF50;" onclick="location.href='dashboard.html'">&#127968; Dashboard</button>
-        <button style="background:#2196F3;" onclick="location.href='cartera.html'">&#128200; Cartera</button>
-        <button style="background:#FF9800;" onclick="location.href='rebalanceos.html'">&#128260; Hist&#243;rico</button>
-        <button style="background:#9C27B0;" onclick="location.href='analisis.html'">&#128269; Analizador</button>
-        <button style="background:#00BCD4;" onclick="location.href='composicion.html'">&#128202; Composici&#243;n</button>
-        <button style="background:#f44336;" onclick="location.href='graficos.html'">&#128200; Gr&#225;ficos</button>
-        <button style="background:#607D8B;" onclick="location.href='herramientas.html'">&#128295; Herramientas</button>
-        <button style="background:#FF5722;" onclick="location.href='importar-cartera.html'">&#128229; Importar</button>
-        <button style="background:#009688;" onclick="location.href='calculadora.html'">&#129518; Calculadora</button>
-        <button style="background:#795548;" onclick="location.href='ayuda.html'">&#10067; Ayuda</button>
+        <button style="background:#4CAF50;" onclick="navegar('dashboard.html')">&#127968; Dashboard</button>
+        <button style="background:#2196F3;" onclick="navegar('cartera.html')">&#128200; Cartera</button>
+        <button style="background:#FF9800;" onclick="navegar('rebalanceos.html')">&#128260; Hist&#243;rico</button>
+        <button style="background:#9C27B0;" onclick="navegar('analisis.html')">&#128269; Analizador</button>
+        <button style="background:#00BCD4;" onclick="navegar('composicion.html')">&#128202; Composici&#243;n</button>
+        <button style="background:#f44336;" onclick="navegar('graficos.html')">&#128200; Gr&#225;ficos</button>
+        <button style="background:#607D8B;" onclick="navegar('herramientas.html')">&#128295; Herramientas</button>
+        <button style="background:#FF5722;" onclick="navegar('importar-cartera.html')">&#128229; Importar</button>
+        <button style="background:#009688;" onclick="navegar('calculadora.html')">&#129518; Calculadora</button>
+        <button style="background:#795548;" onclick="navegar('ayuda.html')">&#10067; Ayuda</button>
     </div>
     <div id="barraEstado">Cargando...</div>
 </div>
@@ -486,9 +486,9 @@
 </div>
 
 <div class="button-group">
-    <button class="btn-primary"   onclick="location.href='cartera.html'">&#128200; Ir a Cartera</button>
-    <button class="btn-secondary" onclick="location.href='calculadora.html'">&#129518; Ir a Calculadora</button>
-    <button class="btn-secondary" onclick="location.href='dashboard.html'">&#127968; Ir a Dashboard</button>
+    <button class="btn-primary"   onclick="navegar('cartera.html')">&#128200; Ir a Cartera</button>
+    <button class="btn-secondary" onclick="navegar('calculadora.html')">&#129518; Ir a Calculadora</button>
+    <button class="btn-secondary" onclick="navegar('dashboard.html')">&#127968; Ir a Dashboard</button>
 </div>
 
 </div>
@@ -501,11 +501,11 @@ function barraEstado() {
     const el = g('barraEstado'); if(!el) return;
     try {
         const datos = JSON.parse(localStorage.getItem('carteraActual'));
-        if(!datos) { el.innerHTML='&#128194; Sin datos. <a href="index.html" style="color:#667eea;font-weight:600">Empieza aquí →</a>'; return; }
+        if(!datos) { el.innerHTML='&#128194; Sin datos. <a href="index.html" style="color:#667eea;font-weight:600">Empieza aquí \u2192</a>'; return; }
         const hist = datos.historico||[], ult = hist.length ? hist[hist.length-1] : null;
         el.innerHTML = ult
-            ? \`&#128193; Último guardado: <strong>\${ult.fecha} \${ult.hora}</strong> &nbsp;|&nbsp; Total: <strong>\${fmtE(ult.total||0)}</strong>\`
-            : '&#128194; Datos en memoria sin guardar aún.';
+            ? '&#128193; \u00DAltimo guardado: <strong>' + ult.fecha + ' ' + ult.hora + '</strong> &nbsp;|&nbsp; Total: <strong>' + fmtE(ult.total||0) + '</strong>'
+            : '&#128194; Datos en memoria sin guardar a\u00FAn.';
     } catch(e) { el.textContent = 'Sin datos.'; }
 }
 
@@ -534,6 +534,39 @@ function toggleFaq(qEl) {
 }
 
 document.addEventListener('DOMContentLoaded', barraEstado);
+
+let _navegando = false;
+function navegar(href) { _navegando = true; location.href = href; }
+function _nombreArchivo() {
+    const n=new Date(), dd=String(n.getDate()).padStart(2,'0'),
+          mm=String(n.getMonth()+1).padStart(2,'0'), yy=n.getFullYear(),
+          hh=String(n.getHours()).padStart(2,'0'), mi=String(n.getMinutes()).padStart(2,'0');
+    return `gestion_cartera_${dd}${mm}${yy}_${hh}${mi}.json`;
+}
+function _descargarJSON() {
+    const raw = localStorage.getItem('carteraActual');
+    if (!raw) return;
+    const nombre = _nombreArchivo();
+    const blob = new Blob([raw], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = nombre;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(a.href);
+}
+function mostrarModalCierre() {
+    if (document.getElementById('_modalCierre')) return;
+    const ov = document.createElement('div');
+    ov.id = '_modalCierre';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    ov.innerHTML = `<div style="background:white;border-radius:18px;padding:36px 30px;max-width:420px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.4);text-align:center;"><div style="font-size:52px;margin-bottom:14px;">💾</div><h3 style="font-size:19px;color:#333;margin-bottom:10px;">¿Cerrar la aplicación?</h3><p style="font-size:13px;color:#666;line-height:1.7;margin-bottom:24px;">Los datos están guardados en memoria.<br>¿Quieres descargar el JSON antes de salir?<br><span style="font-size:12px;color:#999;">${_nombreArchivo()}</span></p><div style="display:flex;flex-direction:column;gap:10px;"><button id="_btnCierre_DL" style="padding:13px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">⬇️ Salir y descargar JSON</button><button id="_btnCierre_SS" style="padding:13px;background:#f0f0f0;color:#444;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">🚪 Salir sin descargar</button><button id="_btnCierre_CA" style="padding:8px;background:none;border:none;color:#aaa;font-size:13px;cursor:pointer;">↩ Cancelar — quedarme aquí</button></div></div>`;
+    document.body.appendChild(ov);
+    document.getElementById('_btnCierre_DL').onclick = () => { _descargarJSON(); window.close(); };
+    document.getElementById('_btnCierre_SS').onclick = () => { window.close(); };
+    document.getElementById('_btnCierre_CA').onclick = () => ov.remove();
+}
+document.addEventListener('mouseleave', e => {
+    if (e.clientY <= 0 && localStorage.getItem('carteraActual')) mostrarModalCierre();
+});
 </script>
 </body>
 </html>

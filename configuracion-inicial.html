@@ -236,22 +236,12 @@
     }
 
     function mostrarModalGuardado(callback) {
-        const prev = document.getElementById('_mGuardado'); if(prev) prev.remove();
-        const ov   = document.createElement('div');
-        ov.id      = '_mGuardado';
-        ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;justify-content:center;align-items:center;z-index:99999;';
-        ov.innerHTML = `<div style="background:white;border-radius:16px;padding:40px;max-width:420px;width:90%;text-align:center;box-shadow:0 25px 60px rgba(0,0,0,.3);">
-            <div style="font-size:52px;margin-bottom:16px;">💾</div>
-            <h3 style="color:#333;margin-bottom:12px;">Archivo guardado</h3>
-            <p style="color:#555;line-height:1.7;margin-bottom:28px;">
-                El archivo se ha descargado en <strong>Descargas</strong>.<br>Muévelo a donde quieras conservarlo.
-            </p>
-            <button id="_btnOk" style="background:#4CAF50;color:white;border:none;padding:13px 45px;border-radius:9px;font-size:16px;font-weight:700;cursor:pointer;">Aceptar</button>
-        </div>`;
-        document.body.appendChild(ov);
-        const cerrar = () => { ov.remove(); if(callback) callback(); };
-        document.getElementById('_btnOk').addEventListener('click', cerrar);
-        ov.addEventListener('click', e => { if(e.target === ov) cerrar(); });
+        // Reemplazado por toast — el modal de confirmación confundía con el guardado automático
+        const t = document.createElement('div');
+        t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#2e7d32;color:white;padding:14px 22px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:9999;';
+        t.innerHTML = '⬇️ Archivo descargado en <strong>Descargas</strong>. Muévelo donde quieras conservarlo.';
+        document.body.appendChild(t);
+        setTimeout(() => { if(t.parentNode) t.remove(); if(callback) callback(); }, 3500);
     }
     </script>
     <script>

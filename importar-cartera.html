@@ -310,10 +310,11 @@ function barraEstado() {
         : '📂 Datos en memoria.';
 }
 
+let _navegando = false;
+
 function navegar(href) {
-    const raw = localStorage.getItem('carteraActual');
-    if(raw && !_guardadoConfirmado) { mostrarModalSalida(ok => { if(ok) location.href = href; }); }
-    else location.href = href;
+    _navegando = true;
+    location.href = href;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -349,7 +350,8 @@ function procesarArchivoJSON(file) {
             if(!datos.version && !datos.cartera) throw new Error('No parece un JSON válido de esta app');
             guardarLS(datos); barraEstado();
             toast(`✅ "${file.name}" cargado. Redirigiendo…`, 'ok');
-            setTimeout(() => { _guardadoConfirmado = true; location.href = 'cartera.html'; }, 1600);
+            _navegando = true;
+            location.href = 'cartera.html';
         } catch(err) { toast('❌ Error: ' + err.message, 'error'); }
     };
     r.readAsText(file);
@@ -737,8 +739,8 @@ function importarFinal() {
 
     guardarLS({version:'3.0', fecha:new Date().toISOString(), cartera:nuevaCartera, configuracion:cfg, historico:hist});
     toast(`✅ Cartera importada. Total: ${fmtE(total)}`, 'ok', 3000);
-    _guardadoConfirmado = true;
-    setTimeout(() => location.href = 'cartera.html', 1800);
+    _navegando = true;
+    location.href = 'cartera.html';
 }
 
 function cancelarRevision() {
@@ -759,45 +761,63 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ═══════════════════════════════════════════════════════
-//  MODAL SALIDA + BEFOREUNLOAD
 // ═══════════════════════════════════════════════════════
-let _guardadoConfirmado = false;
-
+//  GUARDAR SILENCIOSO + NAVEGAR (sin modal al navegar)
+// ═══════════════════════════════════════════════════════
 function generarNombreCartera() {
     const n=new Date(), dd=String(n.getDate()).padStart(2,'0'), mm=String(n.getMonth()+1).padStart(2,'0'),
           yy=n.getFullYear(), hh=String(n.getHours()).padStart(2,'0'), mi=String(n.getMinutes()).padStart(2,'0');
     return `gestion_cartera_${dd}${mm}${yy}_${hh}${mi}.json`;
 }
-function guardarArchivoYSalir() {
-    const raw=localStorage.getItem('carteraActual'); if(!raw) return;
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(new Blob([raw],{type:'application/json'}));
-    a.download=generarNombreCartera();
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(a.href);
+
+// Sin beforeunload activo: el modal mouseleave sustituye al diálogo nativo
+function _nombreArchivoImp() {
+    const n=new Date(), dd=String(n.getDate()).padStart(2,'0'),
+          mm=String(n.getMonth()+1).padStart(2,'0'), yy=n.getFullYear(),
+          hh=String(n.getHours()).padStart(2,'0'), mi=String(n.getMinutes()).padStart(2,'0');
+    return `gestion_cartera_${dd}${mm}${yy}_${hh}${mi}.json`;
 }
-function mostrarModalSalida(callback) {
-    if(document.getElementById('_ms')) return;
-    const ov=document.createElement('div'); ov.id='_ms';
-    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
-    ov.innerHTML=`<div style="background:white;border-radius:18px;padding:32px 28px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4);text-align:center;">
-        <div style="font-size:52px;margin-bottom:12px;">💾</div>
-        <h3 style="font-size:19px;color:#333;margin-bottom:10px;font-weight:800;">¿Guardar antes de salir?</h3>
-        <p style="font-size:14px;color:#666;line-height:1.65;margin-bottom:22px;">Se descargará el archivo<br><strong style="color:#667eea;font-size:13px;">${generarNombreCartera()}</strong><br>con todos tus datos.</p>
-        <div style="display:flex;gap:10px;margin-bottom:10px;">
-            <button id="_mg" style="flex:1;padding:14px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;">💾 Guardar y salir</button>
-            <button id="_ms2" style="flex:1;padding:14px;background:#f0f0f0;color:#555;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">Salir sin guardar</button>
+
+function _descargarJSONImp() {
+    const raw = localStorage.getItem('carteraActual');
+    if (!raw) return;
+    const nombre = _nombreArchivoImp();
+    const blob = new Blob([raw], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = nombre;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(a.href);
+}
+
+function mostrarModalCierreImp() {
+    if (document.getElementById('_modalCierre')) return;
+    const ov = document.createElement('div');
+    ov.id = '_modalCierre';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    ov.innerHTML = `
+      <div style="background:white;border-radius:18px;padding:36px 30px;max-width:420px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.4);text-align:center;">
+        <div style="font-size:52px;margin-bottom:14px;">💾</div>
+        <h3 style="font-size:19px;color:#333;margin-bottom:10px;">¿Cerrar la aplicación?</h3>
+        <p style="font-size:13px;color:#666;line-height:1.7;margin-bottom:24px;">
+          Los datos están guardados en memoria.<br>
+          ¿Quieres descargar el JSON antes de salir?<br>
+          <span style="font-size:12px;color:#999;">${_nombreArchivoImp()}</span>
+        </p>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button id="_btnCierre_DL" style="padding:13px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">⬇️ Salir y descargar JSON</button>
+          <button id="_btnCierre_SS" style="padding:13px;background:#f0f0f0;color:#444;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">🚪 Salir sin descargar</button>
+          <button id="_btnCierre_CA" style="padding:8px;background:none;border:none;color:#aaa;font-size:13px;cursor:pointer;">↩ Cancelar — quedarme aquí</button>
         </div>
-        <button id="_mc" style="background:none;border:none;color:#aaa;font-size:13px;cursor:pointer;padding:6px;">↩ Cancelar</button>
-    </div>`;
+      </div>`;
     document.body.appendChild(ov);
-    g('_mg').onclick =()=>{ guardarArchivoYSalir(); _guardadoConfirmado=true; document.body.removeChild(ov); if(callback) callback(true); };
-    g('_ms2').onclick=()=>{ _guardadoConfirmado=true; document.body.removeChild(ov); if(callback) callback(true); };
-    g('_mc').onclick =()=>{ document.body.removeChild(ov); if(callback) callback(false); };
+    document.getElementById('_btnCierre_DL').onclick = () => { _descargarJSONImp(); _navegando = true; window.close(); };
+    document.getElementById('_btnCierre_SS').onclick = () => { _navegando = true; window.close(); };
+    document.getElementById('_btnCierre_CA').onclick = () => ov.remove();
 }
-window.addEventListener('beforeunload', e => {
-    const raw=localStorage.getItem('carteraActual');
-    if(raw && !_guardadoConfirmado){ e.preventDefault(); e.returnValue='¿Guardar cartera antes de salir?'; }
+
+document.addEventListener('mouseleave', e => {
+    if (_navegando) return;
+    if (e.clientY <= 0 && localStorage.getItem('carteraActual')) mostrarModalCierreImp();
 });
 </script>
 </body>

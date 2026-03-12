@@ -98,16 +98,16 @@
 <div class="menu">
     <h1>📈 GESTIÓN DE CARTERA — REBALANCEO</h1>
     <div class="nav">
-        <button style="background:#4CAF50;" onclick="location.href='dashboard.html'">🏠 Dashboard</button>
-                <button style="background:#2196F3;" onclick="location.href='cartera.html'">📈 Cartera</button>
-                <button style="background:#FF9800;" onclick="location.href='rebalanceos.html'">🔄 Histórico</button>
-                <button style="background:#9C27B0;" onclick="location.href='analisis.html'">🔍 Analizador</button>
-                <button style="background:#00BCD4;" onclick="location.href='composicion.html'">📊 Composición</button>
-                <button style="background:#f44336;" onclick="location.href='graficos.html'">📈 Gráficos</button>
-                <button style="background:#607D8B;" onclick="location.href='herramientas.html'">🛠️ Herramientas</button>
-        <button style="background:#009688;" onclick="location.href='calculadora.html'">🧮 Calculadora</button>
-                <button style="background:#FF5722;" onclick="location.href='importar-cartera.html'">📥 Importar</button>
-                <button style="background:#795548;" onclick="location.href='ayuda.html'">❓ Ayuda</button>
+        <button style="background:#4CAF50;" onclick="navegar('dashboard.html')">🏠 Dashboard</button>
+                <button style="background:#2196F3;" onclick="navegar('cartera.html')">📈 Cartera</button>
+                <button style="background:#FF9800;" onclick="navegar('rebalanceos.html')">🔄 Histórico</button>
+                <button style="background:#9C27B0;" onclick="navegar('analisis.html')">🔍 Analizador</button>
+                <button style="background:#00BCD4;" onclick="navegar('composicion.html')">📊 Composición</button>
+                <button style="background:#f44336;" onclick="navegar('graficos.html')">📈 Gráficos</button>
+                <button style="background:#607D8B;" onclick="navegar('herramientas.html')">🛠️ Herramientas</button>
+        <button style="background:#009688;" onclick="navegar('calculadora.html')">🧮 Calculadora</button>
+                <button style="background:#FF5722;" onclick="navegar('importar-cartera.html')">📥 Importar</button>
+                <button style="background:#795548;" onclick="navegar('ayuda.html')">❓ Ayuda</button>
             </div>
     <div id="barraEstado">Cargando datos...</div>
 </div>
@@ -405,8 +405,8 @@
 
 <!-- ═══ BOTONES GUARDAR ═══ -->
 <div class="button-group">
-    <button class="btn-guardar" id="btnGuardar" onclick="guardarArchivo(this)">💾 GUARDAR EN ARCHIVO</button>
-    <button class="btn-guardarcomo" onclick="guardarComo()">📁 Guardar como...</button>
+    <button class="btn-guardar" id="btnGuardar" onclick="guardarSilencioso(this)">💾 Guardar</button>
+    <button class="btn-guardarcomo" onclick="descargarArchivo()">⬇️ Descargar JSON</button>
 </div>
 
 <!-- ═══ CONSEJOS ═══ -->
@@ -476,8 +476,7 @@ function generarNombreCartera() {
     const mi = String(n.getMinutes()).padStart(2,'0');
     return `gestion_cartera_${dd}${mm}${yy}_${hh}${mi}.json`;
 }
-let nombreArchivo = generarNombreCartera();
-let editandoIndex          = -1;
+let editandoIndex = -1;
 
 // ================================================================
 //  UTILIDADES
@@ -497,28 +496,6 @@ function mostrarToast(msg, tipo='info') {
     setTimeout(() => { if(t.parentNode) t.remove(); }, 5000);
 }
 
-function mostrarModalGuardado(callback) {
-    const prev = g('_mGuardado'); if(prev) prev.remove();
-    const ov = document.createElement('div');
-    ov.id = '_mGuardado';
-    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;'
-        + 'justify-content:center;align-items:center;z-index:99999;';
-    ov.innerHTML = `<div style="background:white;border-radius:16px;padding:40px;max-width:420px;
-        width:90%;text-align:center;box-shadow:0 25px 60px rgba(0,0,0,.3);">
-        <div style="font-size:52px;margin-bottom:16px;">💾</div>
-        <h3 style="color:#333;margin-bottom:12px;font-size:21px;">Archivo guardado</h3>
-        <p style="color:#555;line-height:1.7;margin-bottom:28px;">
-            El archivo se ha descargado en la carpeta <strong>Descargas</strong> del navegador.<br><br>
-            Muévelo a la carpeta donde quieras conservarlo.
-        </p>
-        <button id="_btnOk" style="background:#4CAF50;color:white;border:none;padding:13px 45px;
-            border-radius:9px;font-size:16px;font-weight:700;cursor:pointer;">Aceptar</button>
-    </div>`;
-    document.body.appendChild(ov);
-    const cerrar = () => { ov.remove(); if(callback) callback(); };
-    g('_btnOk').addEventListener('click', cerrar);
-    ov.addEventListener('click', e => { if(e.target===ov) cerrar(); });
-}
 
 // ================================================================
 //  CARGA INICIAL DESDE localStorage
@@ -1202,28 +1179,31 @@ function persistirEstado() {
 }
 
 // ================================================================
-//  GUARDAR ARCHIVO JSON
+//  GUARDAR / DESCARGAR
+//  - guardarSilencioso(): guarda en localStorage sin descargar.
+//    Se llama automáticamente al navegar entre páginas.
+//  - descargarArchivo(): descarga el JSON (acción explícita del usuario).
+//  - beforeunload: solo al cerrar/recargar pestaña → ofrece descargar.
 // ================================================================
+
 function construirSnapshot() {
     const raw  = localStorage.getItem('carteraActual');
     const datos= raw ? JSON.parse(raw) : {version:'3.0',historico:[]};
     const c    = datos.cartera || {};
 
-    const totalF    = (c.monetario||0)+(c.rfCorto||0)+(c.rfMedio||0)+(c.rv||0)+(c.alternativos||0);
-    const etfsInv   = etfsLista.reduce((s,e)=>s+(e.cantidad||0)*(e.precioActual||0),0);
-    const etfsPend  = Math.max(0, etfsValorInicial - etfsInv);
-    const totalE    = etfsInv + etfsPend;   // invertido + pendiente
-    const total     = totalF + totalE + (c.efectivo||0) + (c.inmobiliario||0);
+    const totalF  = (c.monetario||0)+(c.rfCorto||0)+(c.rfMedio||0)+(c.rv||0)+(c.alternativos||0);
+    const etfsInv = etfsLista.reduce((s,e)=>s+(e.cantidad||0)*(e.precioActual||0),0);
+    const etfsPend= Math.max(0, etfsValorInicial - etfsInv);
+    const totalE  = etfsInv + etfsPend;
+    const total   = totalF + totalE + (c.efectivo||0) + (c.inmobiliario||0);
 
-    // Preservar etfsValorInicial en la cartera
     c.etfsValorInicial = etfsValorInicial;
     datos.cartera = c;
 
-    // Añadir registro al histórico
     const hist = datos.historico||[];
     hist.push({
-        fecha:new Date().toLocaleDateString(),
-        hora:new Date().toLocaleTimeString(),
+        fecha:new Date().toLocaleDateString('es-ES'),
+        hora:new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}),
         timestamp:Date.now(),
         monetario:c.monetario||0, rfCorto:c.rfCorto||0, rfMedio:c.rfMedio||0,
         rv:c.rv||0, alternativos:c.alternativos||0,
@@ -1237,33 +1217,89 @@ function construirSnapshot() {
     return datos;
 }
 
-function descargarJSON(datos, nombre) {
-    const blob=new Blob([JSON.stringify(datos,null,2)],{type:'application/json'});
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(blob); a.download=nombre;
+// Guardar silencioso: solo localStorage, sin descarga, sin modal
+function guardarSilencioso(btn) {
+    construirSnapshot();
+    actualizarBarraEstado(JSON.parse(localStorage.getItem('carteraActual')));
+    mostrarToast('✅ Datos guardados en memoria', 'info', 2000);
+    if(btn) { btn.textContent='✅ Guardado'; setTimeout(()=>{ btn.textContent='💾 Guardar'; },1800); }
+}
+
+// Navegar entre páginas: guardar silencioso y moverse sin preguntar
+// Descargar JSON: acción explícita, pide nombre si el usuario quiere personalizar
+function descargarArchivo(nombrePersonalizado) {
+    const datos = construirSnapshot();
+    const nombre = nombrePersonalizado || generarNombreCartera();
+    const blob = new Blob([JSON.stringify(datos,null,2)],{type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = nombre;
     document.body.appendChild(a); a.click();
     document.body.removeChild(a); URL.revokeObjectURL(a.href);
+    actualizarBarraEstado(JSON.parse(localStorage.getItem('carteraActual')));
+    mostrarToast(`⬇️ Descargado: ${nombre}`, 'info', 3000);
 }
 
-function guardarArchivo(btn) {
-    if(btn){btn.disabled=true;btn.textContent='⏳ Guardando...';}
-    descargarJSON(construirSnapshot(), nombreArchivo);
-    mostrarModalGuardado(()=>{
-        if(btn){btn.disabled=false;btn.textContent='💾 GUARDAR EN ARCHIVO';}
-        actualizarBarraEstado(JSON.parse(localStorage.getItem('carteraActual')));
-    });
+// ================================================================
+//  NOMBRE DE ARCHIVO
+// ================================================================
+function generarNombreCartera() {
+    const n=new Date(), dd=String(n.getDate()).padStart(2,'0'),
+          mm=String(n.getMonth()+1).padStart(2,'0'), yy=n.getFullYear(),
+          hh=String(n.getHours()).padStart(2,'0'), mi=String(n.getMinutes()).padStart(2,'0');
+    return `gestion_cartera_${dd}${mm}${yy}_${hh}${mi}.json`;
 }
 
-function guardarComo() {
-    let nombre=(prompt('Nombre del archivo:',nombreArchivo)||'').trim();
-    if(!nombre) return;
-    if(!nombre.endsWith('.json')) nombre+='.json';
-    nombreArchivo=nombre;
-    descargarJSON(construirSnapshot(), nombre);
-    mostrarModalGuardado(()=>{
-        actualizarBarraEstado(JSON.parse(localStorage.getItem('carteraActual')));
-    });
+// ================================================================
+//  BEFOREUNLOAD — solo al cerrar/recargar pestaña (no al navegar)
+//  Guarda automáticamente en localStorage; el aviso del navegador
+//  es el estándar de Chrome (no se puede personalizar)
+// ================================================================
+let _navegando = false;
+
+function navegar(href) {
+    _navegando = true;
+    construirSnapshot();
+    location.href = href;
 }
+
+// ── Modal de cierre propio (3 botones) ───────────────────────────
+function mostrarModalCierre() {
+    if (document.getElementById('_modalCierre')) return;
+    const nombre = generarNombreCartera();
+    const ov = document.createElement('div');
+    ov.id = '_modalCierre';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    ov.innerHTML = `
+      <div style="background:white;border-radius:18px;padding:36px 30px;max-width:420px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.4);text-align:center;">
+        <div style="font-size:52px;margin-bottom:14px;">💾</div>
+        <h3 style="font-size:19px;color:#333;margin-bottom:10px;">¿Cerrar la aplicación?</h3>
+        <p style="font-size:13px;color:#666;line-height:1.7;margin-bottom:24px;">
+          Los datos están guardados en memoria.<br>
+          ¿Quieres descargar el archivo JSON antes de salir?<br>
+          <span style="font-size:12px;color:#999;">${nombre}</span>
+        </p>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button id="_btnCierre_DL" style="padding:13px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">⬇️ Descargar y salir</button>
+          <button id="_btnCierre_SS" style="padding:13px;background:#f0f0f0;color:#444;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">🚪 Salir sin descargar</button>
+          <button id="_btnCierre_CA" style="padding:8px;background:none;border:none;color:#aaa;font-size:13px;cursor:pointer;">↩ Cancelar — quedarme aquí</button>
+        </div>
+      </div>`;
+    document.body.appendChild(ov);
+    document.getElementById('_btnCierre_DL').onclick = () => {
+        descargarArchivo();
+        setTimeout(() => { _navegando = true; window.close(); }, 600);
+    };
+    document.getElementById('_btnCierre_SS').onclick = () => {
+        _navegando = true; window.close();
+    };
+    document.getElementById('_btnCierre_CA').onclick = () => ov.remove();
+}
+
+// Detectar cursor saliendo por arriba → zona de X / pestaña
+document.addEventListener('mouseleave', e => {
+    if (_navegando) return;
+    if (e.clientY <= 0 && localStorage.getItem('carteraActual')) mostrarModalCierre();
+});
 
 // ================================================================
 //  BARRA DE ESTADO
@@ -1271,28 +1307,20 @@ function guardarComo() {
 function actualizarBarraEstado(datos) {
     const el=g('barraEstado'); if(!el) return;
     if (!datos) {
-        el.innerHTML='📂 Sin datos. <a href="configuracion-inicial.html" style="color:#667eea;font-weight:600;">Configura tu cartera</a> o '
-            +'<a href="importar-cartera.html" style="color:#667eea;font-weight:600;">importa desde un archivo</a>.';
+        el.innerHTML='📂 Sin datos. <a href="importar-cartera.html" style="color:#667eea;font-weight:600;">Importa tu cartera</a>.';
         return;
     }
     const hist=datos.historico||[];
     const ult =hist.length?hist[hist.length-1]:null;
+    const nombre = generarNombreCartera();
     el.innerHTML= ult
-        ? `📁 <strong>${nombreArchivo}</strong> &nbsp;|&nbsp; Guardado: ${ult.fecha} ${ult.hora} &nbsp;|&nbsp; Total: <strong>${fmtE(ult.total)}</strong>`
-        : `📁 <strong>${nombreArchivo}</strong> &nbsp;|&nbsp; Sin registros históricos aún`;
+        ? `📁 <strong>${nombre}</strong> &nbsp;|&nbsp; Guardado: ${ult.fecha} ${ult.hora} &nbsp;|&nbsp; Total: <strong>${fmtE(ult.total)}</strong>`
+        : `📁 Sin registros históricos aún`;
 }
 
 // ================================================================
-//  INIT
+//  COMPARATIVA PERFILES
 // ================================================================
-document.addEventListener('DOMContentLoaded', ()=>{
-    cargarDatos();
-    calcularProximaFecha();
-    actualizarUI();
-    renderComparativaPerfiles();
-});
-
-// ── Comparativa visual de perfiles ────────────────────────────
 function renderComparativaPerfiles() {
     const PERFS = {
         ultraconservador: { mon:30, rfc:30, rfm:25, rv:10, alt:5,  color:'#1a237e', rent:'~3-4%', riesgo:'Muy bajo' },
@@ -1303,8 +1331,6 @@ function renderComparativaPerfiles() {
     };
     const cats = [['Monetario','mon'],['RF Corto','rfc'],['RF Medio','rfm'],['Renta Variable','rv'],['Alternativos','alt']];
     const ids  = Object.keys(PERFS);
-
-    // Tabla
     const tb = document.getElementById('tablaComparativa');
     if (!tb) return;
     tb.innerHTML = cats.map(([nom, key]) =>
@@ -1312,11 +1338,9 @@ function renderComparativaPerfiles() {
             <td style="padding:7px 10px;font-weight:600;">${nom}</td>
             ${ids.map(id => {
                 const v = PERFS[id][key];
-                const w = Math.max(4, v);
                 return `<td style="padding:7px 10px;text-align:center;">
-                    <div style="background:${PERFS[id].color};height:6px;border-radius:3px;width:${w}%;min-width:4px;margin:0 auto 3px;"></div>
-                    <strong>${v}%</strong>
-                </td>`;
+                    <div style="background:${PERFS[id].color};height:6px;border-radius:3px;width:${Math.max(4,v)}%;min-width:4px;margin:0 auto 3px;"></div>
+                    <strong>${v}%</strong></td>`;
             }).join('')}
         </tr>`
     ).join('') +
@@ -1331,73 +1355,13 @@ function renderComparativaPerfiles() {
 }
 
 // ================================================================
-//  MODAL CONFIRMACIÓN AL SALIR + BEFOREUNLOAD
+//  INIT
 // ================================================================
-let _guardadoConfirmado = false;
-
-function mostrarModalSalida(callback) {
-    if (document.getElementById('_modalSalida')) return;
-    const overlay = document.createElement('div');
-    overlay.id = '_modalSalida';
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
-    overlay.innerHTML = `
-        <div style="background:white;border-radius:18px;padding:32px 28px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4);text-align:center;">
-            <div style="font-size:52px;margin-bottom:12px;">💾</div>
-            <h3 style="font-size:19px;color:#333;margin-bottom:10px;font-weight:800;">¿Guardar antes de salir?</h3>
-            <p style="font-size:14px;color:#666;line-height:1.65;margin-bottom:22px;">
-                Se descargará el archivo<br>
-                <strong style="color:#667eea;font-size:13px;">${generarNombreCartera()}</strong><br>
-                con todos tus datos actualizados.
-            </p>
-            <div style="display:flex;gap:10px;margin-bottom:10px;">
-                <button id="_btnGuardarSalir" style="flex:1;padding:14px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;">
-                    💾 Guardar y salir
-                </button>
-                <button id="_btnSinGuardar" style="flex:1;padding:14px;background:#f0f0f0;color:#555;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">
-                    Salir sin guardar
-                </button>
-            </div>
-            <button id="_btnCancelarSalida" style="background:none;border:none;color:#aaa;font-size:13px;cursor:pointer;padding:6px;">↩ Cancelar — quedarme aquí</button>
-        </div>`;
-    document.body.appendChild(overlay);
-
-    document.getElementById('_btnGuardarSalir').onclick = () => {
-        guardarArchivo(null);
-        _guardadoConfirmado = true;
-        document.body.removeChild(overlay);
-        if (callback) callback(true);
-    };
-    document.getElementById('_btnSinGuardar').onclick = () => {
-        _guardadoConfirmado = true;
-        document.body.removeChild(overlay);
-        if (callback) callback(true);
-    };
-    document.getElementById('_btnCancelarSalida').onclick = () => {
-        document.body.removeChild(overlay);
-        if (callback) callback(false);
-    };
-}
-
-window.addEventListener('beforeunload', e => {
-    const raw = localStorage.getItem('carteraActual');
-    if (raw && !_guardadoConfirmado) {
-        e.preventDefault();
-        e.returnValue = '¿Quieres guardar tu cartera antes de salir?';
-    }
-});
-
-document.addEventListener('click', e => {
-    const link = e.target.closest('a[href]');
-    if (link) {
-        const href = link.getAttribute('href') || '';
-        if (href && href !== '#' && !href.startsWith('javascript') && !href.startsWith('mailto')) {
-            const raw = localStorage.getItem('carteraActual');
-            if (raw && !_guardadoConfirmado) {
-                e.preventDefault();
-                mostrarModalSalida(ok => { if (ok) { location.href = href; } });
-            }
-        }
-    }
+document.addEventListener('DOMContentLoaded', ()=>{
+    cargarDatos();
+    calcularProximaFecha();
+    actualizarUI();
+    renderComparativaPerfiles();
 });
 </script>
 </body>
