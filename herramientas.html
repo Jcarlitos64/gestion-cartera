@@ -78,7 +78,7 @@
             </div>
             <div style="margin-top:12px;">
                 <label for="nombreGuardar" style="font-weight:600;font-size:13px;margin-bottom:5px;display:block;">Nombre del archivo:</label>
-                <input type="text" id="nombreGuardar" value="mi-cartera.json" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:14px;">
+                <input type="text" id="nombreGuardar" value="" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:14px;">
             </div>
         </div>
     </div>
@@ -278,7 +278,12 @@ function onDrop(e){
 function guardarDatos(){
     const datos=cargarDatosLS();
     if(!datos){ toast('No hay datos que guardar.','warning'); return; }
-    let nombre=(g('nombreGuardar').value||'').trim()||'mi-cartera.json';
+    const _ng=g('nombreGuardar'); 
+    const _nv=(_ng?_ng.value:'').trim();
+    const _nn=new Date(), _ndd=String(_nn.getDate()).padStart(2,'0'),
+          _nmm=String(_nn.getMonth()+1).padStart(2,'0'), _nyy=_nn.getFullYear(),
+          _nhh=String(_nn.getHours()).padStart(2,'0'), _nmi=String(_nn.getMinutes()).padStart(2,'0');
+    let nombre=_nv||('gestion_cartera_'+_ndd+_nmm+_nyy+'_'+_nhh+_nmi+'.json');
     if(!nombre.endsWith('.json')) nombre+='.json';
     const blob=new Blob([JSON.stringify(datos,null,2)],{type:'application/json'});
     const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nombre;
@@ -386,6 +391,11 @@ document.addEventListener('DOMContentLoaded', ()=>{
     barraEstado();
     cargarAlertas();
     initApiSection();
+    const _n=new Date(), _dd=String(_n.getDate()).padStart(2,'0'),
+          _mm=String(_n.getMonth()+1).padStart(2,'0'), _yy=_n.getFullYear(),
+          _hh=String(_n.getHours()).padStart(2,'0'), _mi=String(_n.getMinutes()).padStart(2,'0');
+    const ng=document.getElementById('nombreGuardar');
+    if(ng) ng.value='gestion_cartera_'+_dd+_mm+_yy+'_'+_hh+_mi+'.json';
 });
 
 // ══════════════════════════════════════════════════════
