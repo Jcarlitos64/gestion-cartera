@@ -108,6 +108,7 @@
         <button style="background:#009688;" onclick="navegar('calculadora.html')">🧮 Calculadora</button>
                 <button style="background:#FF5722;" onclick="navegar('importar-cartera.html')">📥 Importar</button>
                 <button style="background:#795548;" onclick="navegar('ayuda.html')">❓ Ayuda</button>
+                <button style="background:#1565C0;" onclick="descargarArchivo()">⬇️ Descargar JSON</button>
             </div>
     <div id="barraEstado">Cargando datos...</div>
 </div>
@@ -1262,44 +1263,7 @@ function navegar(href) {
     location.href = href;
 }
 
-// ── Modal de cierre propio (3 botones) ───────────────────────────
-function mostrarModalCierre() {
-    if (document.getElementById('_modalCierre')) return;
-    const nombre = generarNombreCartera();
-    const ov = document.createElement('div');
-    ov.id = '_modalCierre';
-    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
-    ov.innerHTML = `
-      <div style="background:white;border-radius:18px;padding:36px 30px;max-width:420px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.4);text-align:center;">
-        <div style="font-size:52px;margin-bottom:14px;">💾</div>
-        <h3 style="font-size:19px;color:#333;margin-bottom:10px;">¿Cerrar la aplicación?</h3>
-        <p style="font-size:13px;color:#666;line-height:1.7;margin-bottom:24px;">
-          Los datos están guardados en memoria.<br>
-          ¿Quieres descargar el archivo JSON antes de salir?<br>
-          <span style="font-size:12px;color:#999;">${nombre}</span>
-        </p>
-        <div style="display:flex;flex-direction:column;gap:10px;">
-          <button id="_btnCierre_DL" style="padding:13px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">⬇️ Descargar y salir</button>
-          <button id="_btnCierre_SS" style="padding:13px;background:#f0f0f0;color:#444;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">🚪 Salir sin descargar</button>
-          <button id="_btnCierre_CA" style="padding:8px;background:none;border:none;color:#aaa;font-size:13px;cursor:pointer;">↩ Cancelar — quedarme aquí</button>
-        </div>
-      </div>`;
-    document.body.appendChild(ov);
-    document.getElementById('_btnCierre_DL').onclick = () => {
-        descargarArchivo();
-        setTimeout(() => { _navegando = true; window.close(); }, 600);
-    };
-    document.getElementById('_btnCierre_SS').onclick = () => {
-        _navegando = true; window.close();
-    };
-    document.getElementById('_btnCierre_CA').onclick = () => ov.remove();
-}
-
-// Detectar cursor saliendo por arriba → zona de X / pestaña
-document.addEventListener('mouseleave', e => {
-    if (_navegando) return;
-    if (e.clientY <= 0 && localStorage.getItem('carteraActual')) mostrarModalCierre();
-});
+// Descarga manual: usa el botón ⬇️ del menú
 
 // ================================================================
 //  BARRA DE ESTADO

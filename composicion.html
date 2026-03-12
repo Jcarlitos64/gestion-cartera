@@ -37,6 +37,7 @@
         <button style="background:#009688;" onclick="navegar('calculadora.html')">🧮 Calculadora</button>
         <button style="background:#FF5722;" onclick="navegar('importar-cartera.html')">📥 Importar</button>
         <button style="background:#795548;" onclick="navegar('ayuda.html')">❓ Ayuda</button>
+        <button style="background:#1565C0;" onclick="descargarJSON()">⬇️ Descargar JSON</button>
     </div>
     <div id="barraEstado">Cargando...</div>
 </div>
@@ -295,7 +296,11 @@ function generarNombreCartera() {
     return "gestion_cartera_"+dd+mm+yy+"_"+hh+mi+".json";
 }
 
-// _navegando evita que el modal aparezca en navegaciones internas
+
+
+
+
+// ── Descarga manual JSON ──────────────────────────────────────────
 let _navegando = false;
 
 function navegar(href) {
@@ -303,57 +308,27 @@ function navegar(href) {
     location.href = href;
 }
 
-function _nombreArchivo() {
+
+function descargarJSON() {
+    const raw = localStorage.getItem('carteraActual');
+    if (!raw) { alert('No hay datos que descargar.'); return; }
     const n=new Date(), dd=String(n.getDate()).padStart(2,'0'),
           mm=String(n.getMonth()+1).padStart(2,'0'), yy=n.getFullYear(),
           hh=String(n.getHours()).padStart(2,'0'), mi=String(n.getMinutes()).padStart(2,'0');
-    return `gestion_cartera_${dd}${mm}${yy}_${hh}${mi}.json`;
-}
-
-function _descargarJSON() {
-    const raw = localStorage.getItem('carteraActual');
-    if (!raw) return;
-    const nombre = _nombreArchivo();
+    const nombre = 'gestion_cartera_'+dd+mm+yy+'_'+hh+mi+'.json';
     const blob = new Blob([raw], {type:'application/json'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob); a.download = nombre;
     document.body.appendChild(a); a.click();
     document.body.removeChild(a); URL.revokeObjectURL(a.href);
+    const t=document.createElement('div');
+    t.style.cssText='position:fixed;bottom:20px;right:20px;background:#2e7d32;color:white;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.2);';
+    t.textContent='⬇️ Descargado: '+nombre;
+    document.body.appendChild(t);
+    setTimeout(()=>{if(t.parentNode)t.remove();},3000);
 }
-
-function mostrarModalCierre() {
-    if (document.getElementById('_modalCierre')) return;
-    const ov = document.createElement('div');
-    ov.id = '_modalCierre';
-    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
-    ov.innerHTML = `
-      <div style="background:white;border-radius:18px;padding:36px 30px;max-width:420px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.4);text-align:center;">
-        <div style="font-size:52px;margin-bottom:14px;">\u{1F4BE}</div>
-        <h3 style="font-size:19px;color:#333;margin-bottom:10px;">&iquest;Cerrar la aplicaci&oacute;n?</h3>
-        <p style="font-size:13px;color:#666;line-height:1.7;margin-bottom:24px;">
-          Los datos est&aacute;n guardados en memoria.<br>
-          &iquest;Quieres descargar el JSON antes de salir?<br>
-          <span style="font-size:12px;color:#999;">${_nombreArchivo()}</span>
-        </p>
-        <div style="display:flex;flex-direction:column;gap:10px;">
-          <button id="_btnCierre_DL" style="padding:13px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">&#11015;&#65039; Salir y descargar JSON</button>
-          <button id="_btnCierre_SS" style="padding:13px;background:#f0f0f0;color:#444;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">&#128682; Salir sin descargar</button>
-          <button id="_btnCierre_CA" style="padding:8px;background:none;border:none;color:#aaa;font-size:13px;cursor:pointer;">&#x21A9; Cancelar &mdash; quedarme aqu&iacute;</button>
-        </div>
-      </div>`;
-    document.body.appendChild(ov);
-    document.getElementById('_btnCierre_DL').onclick = () => { _descargarJSON(); _navegando = true; window.close(); };
-    document.getElementById('_btnCierre_SS').onclick = () => { _navegando = true; window.close(); };
-    document.getElementById('_btnCierre_CA').onclick = () => ov.remove();
-}
-
-document.addEventListener('mouseleave', e => {
-    if (_navegando) return;
-    if (e.clientY <= 0 && localStorage.getItem('carteraActual')) mostrarModalCierre();
-});
-
-// Sin beforeunload activo: el modal mouseleave sustituye al diálogo nativo
 
 </script>
+
 </body>
 </html>
